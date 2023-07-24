@@ -145,35 +145,39 @@ def icp(source, target):
     # Visualiser le résultat final de l'alignement.
     draw_registration_result(source, target, transform_matrix)
     # Renvoyer la matrice de transformation finale.
-    return transform_matrix_target ,cost #ajoute le coût dans les sorties
+    return transform_matrix_target, curr_cost # ajout du coût dans les sorties
 
-def multiplpe_icp(source, target):
-    
-    # init_target = target
-    
+def multiple_icp(source, target):
     # Deuxième transformation : Rotation sur l'axe X (avec 45 degrés).
     angle = np.radians(45)
     transform_matrix_1 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-    target.transform(transform_matrix)
-    transform_matrix_target_1,cost_1 = icp(source,target)
+    target_temp = copy.deepcopy(target)
+    target_temp.transform(transform_matrix_1)
+    transform_matrix_target_1, cost_1 = icp(source, target_temp)
 
     # Troisième transformation : Rotation sur l'axe Y (avec 45 degrés).
     angle = np.radians(45)
     transform_matrix_2 = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-    target.transform(transform_matrix)
-    transform_matrix_target_2,cost_2 = icp(source,target)
+    target_temp = copy.deepcopy(target)
+    target_temp.transform(transform_matrix_2)
+    transform_matrix_target_2, cost_2 = icp(source, target_temp)
 
     # Quatrième transformation : Rotation sur l'axe Z (avec 45 degrés).
     angle = np.radians(45)
     transform_matrix_3 = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    target.transform(transform_matrix)
-    transform_matrix_target_3,cost_3 = icp(source,target)
-    
-    # ajouter comparaison
-    transform_matrix_target = transform_matrix_targe_3
-    
+    target_temp = copy.deepcopy(target)
+    target_temp.transform(transform_matrix_3)
+    transform_matrix_target_3, cost_3 = icp(source, target_temp)
+
+    # Sélection de la meilleure transformation parmi les trois rotations.
+    if cost_1 <= cost_2 and cost_1 <= cost_3:
+        transform_matrix_target = transform_matrix_target_1
+    elif cost_2 <= cost_1 and cost_2 <= cost_3:
+        transform_matrix_target = transform_matrix_target_2
+    else:
+        transform_matrix_target = transform_matrix_target_3
+
     return transform_matrix_target
-    
 
 
 def run_icp(source_path, target_path):
@@ -188,6 +192,4 @@ def run_icp(source_path, target_path):
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
     # Appeler la fonction ICP pour aligner les nuages de points source et cible.
-    return icp(source, target)
-    # return multiple_icp(source, target)
-
+    return multiple_icp(source, target)
