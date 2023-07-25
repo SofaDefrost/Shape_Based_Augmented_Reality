@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jul 23 09:08:24 2023
-
-@author: tinhinane
-"""
-
 import numpy as np
 import copy
 import open3d as o3d
@@ -62,48 +54,6 @@ def icp(source, target):
     curr_cost = 1000
     prev_cost = 10000
 
-    # Définition d'une fonction locale pour calculer le coût actuel et mettre à jour la transformation si nécessaire.
-    def calculate_curr_low(transform_matrix):
-        nonlocal prev_cost, curr_iteration
-        if ((prev_cost - curr_cost) > cost_change_threshold):
-            prev_cost = curr_cost
-            target.transform(transform_matrix)
-            curr_iteration += 1
-        return curr_iteration
-
-    # Première transformation : Translation initiale.
-    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
-    calculate_curr_low(transform_matrix)
-
-    # Deuxième transformation : Rotation sur l'axe X (avec 45 degrés).
-    angle = np.radians(45)
-    transform_matrix_1 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-    calculate_curr_low(transform_matrix_1)
-
-    # Troisième transformation : Rotation sur l'axe Y (avec 45 degrés).
-    angle = np.radians(45)
-    transform_matrix_2 = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-    calculate_curr_low(transform_matrix_2)
-
-    # Quatrième transformation : Rotation sur l'axe Z (avec 45 degrés).
-    angle = np.radians(45)
-    transform_matrix_3 = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    calculate_curr_low(transform_matrix_3)
-
-    # Sélection de la meilleure transformation parmi les trois rotations.
-    if calculate_curr_low(transform_matrix_1) < calculate_curr_low(transform_matrix_2) or calculate_curr_low(transform_matrix_1) < calculate_curr_low(transform_matrix_3):
-        transform_matrix = transform_matrix_1
-    elif calculate_curr_low(transform_matrix_2) < calculate_curr_low(transform_matrix_1) or calculate_curr_low(transform_matrix_2) < calculate_curr_low(transform_matrix_3):
-        transform_matrix = transform_matrix_2
-    else:
-        transform_matrix = transform_matrix_3
-
-    # Réinitialisation des itérations et du coût pour l'algorithme ICP principal.
-    curr_iteration = 0
-    cost_change_threshold = 0.001
-    curr_cost = 1000
-    prev_cost = 10000
-
     while True:
         # Trouver les points les plus proches du nuage de points source pour chaque point du nuage de points cible.
         new_source_points = find_nearest_neighbors(source, target, 1)
@@ -143,41 +93,58 @@ def icp(source, target):
 
     print("\nIteration=", curr_iteration)
     # Visualiser le résultat final de l'alignement.
-    draw_registration_result(source, target, transform_matrix)
+    draw_registration_result(source, target, transform_matrix_target)
     # Renvoyer la matrice de transformation finale.
-    return transform_matrix_target, curr_cost # ajout du coût dans les sorties
+    return transform_matrix_target, curr_cost
 
 def multiple_icp(source, target):
+    # Créer une copie du nuage de points source pour chaque transformation initiale.
+    source_temp = copy.deepcopy(source)
+
+    # Liste des matrices de transformation et des coûts pour chaque transformation initiale.
+    transformations = []
+    costs = []
+
+    # Première transformation : Translation initiale.
+    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
+
     # Deuxième transformation : Rotation sur l'axe X (avec 45 degrés).
     angle = np.radians(45)
-    transform_matrix_1 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-    target_temp = copy.deepcopy(target)
-    target_temp.transform(transform_matrix_1)
-    transform_matrix_target_1, cost_1 = icp(source, target_temp)
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
 
     # Troisième transformation : Rotation sur l'axe Y (avec 45 degrés).
     angle = np.radians(45)
-    transform_matrix_2 = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-    target_temp = copy.deepcopy(target)
-    target_temp.transform(transform_matrix_2)
-    transform_matrix_target_2, cost_2 = icp(source, target_temp)
+    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
 
     # Quatrième transformation : Rotation sur l'axe Z (avec 45 degrés).
     angle = np.radians(45)
-    transform_matrix_3 = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    target_temp = copy.deepcopy(target)
-    target_temp.transform(transform_matrix_3)
-    transform_matrix_target_3, cost_3 = icp(source, target_temp)
+    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
 
-    # Sélection de la meilleure transformation parmi les trois rotations.
-    if cost_1 <= cost_2 and cost_1 <= cost_3:
-        transform_matrix_target = transform_matrix_target_1
-    elif cost_2 <= cost_1 and cost_2 <= cost_3:
-        transform_matrix_target = transform_matrix_target_2
-    else:
-        transform_matrix_target = transform_matrix_target_3
+    # Sélection de la meilleure transformation ayant le coût le plus bas.
+    best_idx = np.argmin(costs)# argmin ==> pour récupérer l'indice minimum 
+    best_transform_matrix = transformations[best_idx]
+    best_cost = costs[best_idx]
 
-    return transform_matrix_target
+    return best_transform_matrix, best_cost
 
 
 def run_icp(source_path, target_path):
@@ -191,5 +158,14 @@ def run_icp(source_path, target_path):
     """
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
-    # Appeler la fonction ICP pour aligner les nuages de points source et cible.
-    return multiple_icp(source, target)
+    # Appeler la fonction multiple_icp pour aligner les nuages de points source et cible.
+    best_transform_matrix, best_cost = multiple_icp(source, target)
+    print("Matrice de transformation qui a le petit coût :")
+    print(best_transform_matrix)
+    print("Coût :")
+    print(best_cost)
+
+# Chemins des fichiers de nuages de points source et cible
+source_path = "pc_reposed.ply"
+target_path = "fleur_resize.ply"
+run_icp(source_path, target_path)

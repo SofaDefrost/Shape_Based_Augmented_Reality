@@ -54,38 +54,77 @@ import open3d as o3d
 import time as tm
 import projection as proj
 import acquisition as aq
+import project_and_display as proj
 
-name_model_3D= "donner le nom du fichier du model 3D"
+name_model_3D = "donner le nom du fichier du modèle 3D"
 
-#Récupération du nuage de point en utilisant la Realsense
-name="donner un nom pour ton fichier"
-name_pc= name+'.ply'
-name_image_2D= name+'jpg'
-#appeler la fonction run_aquisition pour récupérer le nuage de point
-aq.run_acquisition(name_pc,name_image_2D)
+# Récupération du nuage de points en utilisant la Realsense
+name = "fichier"
+name_pc = name + '.ply'
+name_image_2D = name + '.jpg'
+# Appeler la fonction run_acquisition pour récupérer le nuage de points
+aq.run_acquisition(name_pc, name_image_2D)
 
+# Application du masque
+# donner le nom pour le fichier nouveau après l'application du masque
 
-#Application du masque
-#donner le nom pour le fichier nouveau aprés l'application du masque 
+pc_filtered_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
+threshold = "donner le seuil de la couleur"
+color_phase = "écrire ""rouge"" si la couleur voudrait sélectionnée est rouge, écrire ""vert"" si la couleur voudrait sélectionnée est verte, écrire ""bleu"" si la couleur voudrait sélectionnée est bleue"
+# Appeler la fonction mask
+msk.mask(name_pc, pc_filtered_name, threshold, color_phase)
 
-pc_filtred_name=name+'_masking.ply' #donner le nom pour le fichier nouveau aprés l'application du masque 
-threshold="donner le seuil de la couleur"
-color_phase= "écrire ""rouge ""si la couleur voudrait selectionnée est rouge ,écrire ""vert"" si la couleur voudrait sélectionnée est verte"
-"écrire ""bleu"" si la couleur voudrait sélectionnée est bleu"
-#Appeler la fonction mask             
-mask(name_pc,pc_filtred_name,threshold,color_phase)
+# Application de redimensionnement
+model_3D_resized_name = name + '_resized.ply'
+rz.resize(pc_filtered_name, name_model_3D, model_3D_resized_name)
 
+# Application de repositionnement
+pc_reposed_name = name + '_reposed.ply'
+translation_vector = rp.repose(pc_filtered_name, pc_reposed_name)
+Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
-#Application de redimensinnement
+# Application de l'icp
+Mr = icp.run_icp(pc_reposed_name, model_3D_resized_name)  # Matrice de rotation
 
-pc_reposing_name=name +'_resizing.ply'
+# Matrice extrinsèque
+M_ex = np.dot(Mt, Mr)
 
-point_cloud_resizing=
+# Matrice extrinsèque transposée
+M_ex_t = np.transpose(M_ex)
 
+# Matrice de calibration de la caméra realsense D415
+M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
-#Application de repositionnement
-pc_reposed= name+'_resizing.ply'
-pc_
+# Matrice de calibration de la caméra realsense D405
+M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+
+# Matrice de transformation de 90° selon X
+Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
+
+# Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
+Proj_1 = np.dot(M_ex_t, M_in)
+
+# Matrice de projection * la matrice de transformation 90°
+Projection = np.dot(Proj_1, Mat_90)
+
+# Chargement du fichier obj
+obj_name = name + '.obj'
+obj = OBJ(obj_name, swapyz=True)
+
+# Affichage
+h, w, _ = cv2.imread(name_image_2D).shape
+cv2.imshow("frame_avant", cv2.imread(name_image_2D))
+
+while True:
+
+    frame_apres = proj.project_and_display(cv2.imread(name_image_2D), obj, Projection, h, w)
+    cv2.imshow("frame_apres", frame_apres)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cv2.destroyAllWindows()
+
 
 
 
