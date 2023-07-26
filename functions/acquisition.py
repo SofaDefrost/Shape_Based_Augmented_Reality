@@ -89,10 +89,10 @@ def run_acquisition(point_cloud, image):
             break
     if not found_rgb: 
         print("The demo requires Depth camera with Color sensor") 
-        exit(0)
+        
 
-    config.enable_stream(rs.stream.depth, rs.format.z16, 30)
-    config.enable_stream(rs.stream.color, rs.format.bgr8, 30)
+    config.enable_stream(rs.stream.depth,640,480, rs.format.z16, 30)
+    config.enable_stream(rs.stream.color,640,480, rs.format.bgr8, 30)
 
 # Start streaming
     pipeline.start(config)
@@ -370,8 +370,3 @@ def run_acquisition(point_cloud, image):
 
     # Stop streaming
     pipeline.stop()
-
-# Exécution de la fonction run_acquisition avec les noms de fichiers appropriés
-point_cloud_name = "pc.ply"
-color_image_name = "image.png"
-run_acquisition(point_cloud_name, color_image_name)
