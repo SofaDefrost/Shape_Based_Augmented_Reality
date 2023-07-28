@@ -6,7 +6,7 @@ Created on Wed Jun  7 09:49:42 2023
 @author: tinhinane
 """
 import trimesh
-def resize(output_file, pc_resized, facteur_echelle):
+def Resize(output_file, pc_resized, facteur_echelle):
     mesh = trimesh.load(output_file)
     #cette ligne charge le fichier PLY situé à l'emplacement /home/tinhinane/programme python nuage de points/Etoileplus.ply et crée un objet Trimesh qui contient les données du nuage de points.
     scaled_vertices = mesh.vertices *facteur_echelle# multiplie la taille par 2 #multiplie chaque coordonnée de vertex du nuage de points par 20, ce qui augmente la taille de l'objet. Les coordonnées de vertex sont stockées dans la propriété vertices de l'objet Trimesh.

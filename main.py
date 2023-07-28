@@ -7,7 +7,14 @@ Created on Sun Jul 23 09:45:05 2023
 """
 
 """ 
-L'utilisateur doit verifier que tous les fichiers sont excistants dans le meme dossier
+Voici la correction des erreurs dans le texte :
+
+L'utilisateur doit :
+- Vérifier que tous les fichiers existent dans le même dossier.
+- Charger le chemin du modèle 3D, de l'image
+- Donner un nom au nuage de points capturé par la Realsense.
+- Fixer le seuil de couleur et la phase de la couleur.
+- Vérifier le type de la caméra utilisée afin d'utiliser la matrice de calibration spécifique à cette caméra.
 
 Dans ce main il fait appel à toutes les fonctions qui permet de faire:
     
@@ -41,87 +48,96 @@ Dans ce programme, il fait appel à plusieurs fonctions qui permettent de réali
  
     """
 
-import mask as msk
-import icp
-import translation_m as tm
-import repose as rp
-import resize as rz
-import point_cloud as pc
+import functions.mask as msk
+import functions.icp as cp
+import functions.translation_m as tm
+import functions.repose as rp
+import functions.Resize as rz
+# import functions.acquisition as aq
 import numpy as np
 import cv2
-from objloader_simple import *
+from functions.objloader_simple import OBJ
 import open3d as o3d
-import time as tm
-import projection as proj
-import acquisition as aq
-import project_and_display as proj
+#import time as tm
+import functions.project_and_display as proj
+import os
 
-name_model_3D = "donner le nom du fichier du modèle 3D"
+
+
+#Charger le model 3D
+name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "fichier"
+name = "data_exemple/fleur_3"
 name_pc = name + '.ply'
-name_image_2D = name + '.jpg'
+name_image_2D =cv2.imread( name + '.png')
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
-aq.run_acquisition(name_pc, name_image_2D)
+#aq.run_acquisition(name_pc, name_image_2D)
 
 # Application du masque
 # donner le nom pour le fichier nouveau après l'application du masque
 
-pc_filtered_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-threshold = "donner le seuil de la couleur"
-color_phase = "écrire ""rouge"" si la couleur voudrait sélectionnée est rouge, écrire ""vert"" si la couleur voudrait sélectionnée est verte, écrire ""bleu"" si la couleur voudrait sélectionnée est bleue"
-# Appeler la fonction mask
-msk.mask(name_pc, pc_filtered_name, threshold, color_phase)
+pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
+threshold = 0.222 # donner une valeur pour fixer un seuil de couleur
+color_phase= "bleu"
+msk.mask(name_pc, pc_masked_name, threshold, color_phase)
 
 # Application de redimensionnement
-model_3D_resized_name = name + '_resized.ply'
-rz.resize(pc_filtered_name, name_model_3D, model_3D_resized_name)
+name_3D="data_exemple/model_3D"
+model_3D_resized_name =name_3D + '_resized.ply'
+facteur_echelle= 0.00077
+rz.Resize(name_model_3D, model_3D_resized_name,facteur_echelle)
 
-# Application de repositionnement
+# # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
-translation_vector = rp.repose(pc_filtered_name, pc_reposed_name)
+translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
-# Application de l'icp
-Mr = icp.run_icp(pc_reposed_name, model_3D_resized_name)  # Matrice de rotation
+# # Application de l'icp
+# cp.run_icp_1(model_3D_resized_name,pc_reposed_name)
+Mr = cp.run_icp_2(pc_reposed_name, model_3D_resized_name)  # Matrice de rotation
 
-# Matrice extrinsèque
+# # Matrice extrinsèque
 M_ex = np.dot(Mt, Mr)
 
-# Matrice extrinsèque transposée
-M_ex_t = np.transpose(M_ex)
+# # Matrice extrinsèque transposée
+# M_ex_t = np.transpose(M_ex)
 
-# Matrice de calibration de la caméra realsense D415
-M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+# # Matrice de calibration de la caméra realsense D415
+# M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
-# Matrice de calibration de la caméra realsense D405
+#Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
-# Matrice de transformation de 90° selon X
+#Matrice de transformation de 90° selon X
 Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
 
-# Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
-Proj_1 = np.dot(M_ex_t, M_in)
+# # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
+Proj_1 = np.dot( M_in,M_ex)
 
-# Matrice de projection * la matrice de transformation 90°
+# # Matrice de projection * la matrice de transformation 90°
 Projection = np.dot(Proj_1, Mat_90)
 
 # Chargement du fichier obj
-obj_name = name + '.obj'
-obj = OBJ(obj_name, swapyz=True)
 
-# Affichage
-h, w, _ = cv2.imread(name_image_2D).shape
-cv2.imshow("frame_avant", cv2.imread(name_image_2D))
+obj = OBJ("data_exemple/fleur_3_resized.obj", swapyz=True)
+
+# # Affichage
+h, w, _ = name_image_2D.shape
+cv2.imshow("frame_avant", name_image_2D)
+
+#recuperer les couleurs de model 3D
+color_3D_Model = o3d.io.read_point_cloud("data_exemple/fleur_icp.ply")
+vertex_colors = np.asarray(color_3D_Model.colors)
+
 
 while True:
 
-    frame_apres = proj.project_and_display(cv2.imread(name_image_2D), obj, Projection, h, w)
-    cv2.imshow("frame_apres", frame_apres)
+     frame_apres = proj.project_and_display(name_image_2D, obj, Projection,vertex_colors)
+     cv2.imshow("frame_apres", frame_apres)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+     if cv2.waitKey(1) & 0xFF == ord('q'):        
+         break
 
 cv2.destroyAllWindows()
 

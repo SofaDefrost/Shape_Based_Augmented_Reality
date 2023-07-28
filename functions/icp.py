@@ -144,10 +144,10 @@ def multiple_icp(source, target):
     best_transform_matrix = transformations[best_idx]
     best_cost = costs[best_idx]
 
-    return best_transform_matrix, best_cost
+    return best_transform_matrix
 
 
-def run_icp(source_path, target_path):
+def run_icp_1(source_path, target_path):
     """
     Fonction pour exécuter l'algorithme ICP avec deux chemins de fichiers de nuages de points en entrée.
 
@@ -156,16 +156,22 @@ def run_icp(source_path, target_path):
 
     :return: La matrice de transformation finale (4x4 numpy array) pour aligner le nuage de points source sur le cible.
     """
+
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
     # Appeler la fonction multiple_icp pour aligner les nuages de points source et cible.
-    best_transform_matrix, best_cost = multiple_icp(source, target)
-    print("Matrice de transformation qui a le petit coût :")
-    print(best_transform_matrix)
-    print("Coût :")
-    print(best_cost)
+    best_transform_matrix= multiple_icp(source, target)
+    o3d.io.write_point_cloud("data_exemple/model_3D_reposed.ply", source)
+    return best_transform_matrix
 
-# Chemins des fichiers de nuages de points source et cible
-source_path = "pc_reposed.ply"
-target_path = "fleur_resize.ply"
-run_icp(source_path, target_path)
+
+def run_icp_2(target_path, source_path):
+    source = o3d.io.read_point_cloud(source_path)
+    target = o3d.io.read_point_cloud(target_path)
+    # Appeler la fonction multiple_icp pour aligner les nuages de points source et cible.
+    transform_matrix= icp(target, source)
+   
+    return transform_matrix
+    
+
+
