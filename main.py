@@ -43,7 +43,9 @@ Dans ce programme, il fait appel à plusieurs fonctions qui permettent de réali
 - `model_3D_name` : Le nom du fichier du modèle 3D au format PLY.
 - `point_cloud_resizing` : Le nom du fichier dans lequel le nouveau nuage de points redimensionné sera enregistré au format PLY.
 
-6- ICP : L'utilisateur doit appeler la fonction `run_icp` en fournissant les paramètres suivants : le nom du fichier du nuage de points repositionné et le modèle 3D redimensionné. (Remarque : La description ne mentionne pas les détails spécifiques de la fonction `run_icp`, comme ses paramètres exacts.)
+6- ICP : L'utilisateur doit appeler la fonction `run_icp` en fournissant les paramètres suivants : 
+    le nom du fichier du nuage de points repositionné et le modèle 3D redimensionné. 
+
 
  
     """
@@ -60,7 +62,7 @@ from functions.objloader_simple import OBJ
 import open3d as o3d
 #import time as tm
 import functions.project_and_display as proj
-import os
+
 
 
 
@@ -78,37 +80,47 @@ name_image_2D =cv2.imread( name + '.png')
 # donner le nom pour le fichier nouveau après l'application du masque
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-threshold = 0.222 # donner une valeur pour fixer un seuil de couleur
+threshold = 0.155 # donner une valeur pour fixer un seuil de couleur
 color_phase= "bleu"
 msk.mask(name_pc, pc_masked_name, threshold, color_phase)
 
 # Application de redimensionnement
 name_3D="data_exemple/model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-facteur_echelle= 0.00077
+facteur_echelle= 0.00099
 rz.Resize(name_model_3D, model_3D_resized_name,facteur_echelle)
 
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
 translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
-Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
+translation_vector[0] =-translation_vector[0]
+translation_vector[2] =translation_vector[2]
 
+Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
+Mt_t=np.transpose(Mt)
 # # Application de l'icp
-# cp.run_icp_1(model_3D_resized_name,pc_reposed_name)
-Mr = cp.run_icp_2(pc_reposed_name, model_3D_resized_name)  # Matrice de rotation
+#Mr=cp.run_icp_1(model_3D_resized_name,pc_reposed_name)
+# Mr = cp.run_icp_1( model_3D_resized_name, pc_reposed_name) 
+#Mr_1=np.transpose(Mr_icp) # Matrice de rotation
+Mr_1=cp.run_icp_2( "data_exemple/model_3D_icp.ply", pc_reposed_name)
+
 
 # # Matrice extrinsèque
-M_ex = np.dot(Mt, Mr)
-
+M_ex = np.dot(Mt,Mr_1) 
+# M_ex_1=np.transpose(M_ex)
+# M_ex=Mr
 # # Matrice extrinsèque transposée
 # M_ex_t = np.transpose(M_ex)
 
 # # Matrice de calibration de la caméra realsense D415
-# M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+#M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
 #Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
+
+angle = np.radians(-45)
+Mat_180 = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 #Matrice de transformation de 90° selon X
 Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
 
@@ -116,7 +128,14 @@ Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
 Proj_1 = np.dot( M_in,M_ex)
 
 # # Matrice de projection * la matrice de transformation 90°
-Projection = np.dot(Proj_1, Mat_90)
+
+angle = np.radians(90)
+Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), np.sin(angle), 0], [0, -np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+
+Proj_2= np.dot(Proj_1, Mat_90)
+# Projection=np.dot(Proj_2,Mat_180)
+
+Projection=np.dot(Proj_2, Mr_1)
 
 # Chargement du fichier obj
 
@@ -127,13 +146,13 @@ h, w, _ = name_image_2D.shape
 cv2.imshow("frame_avant", name_image_2D)
 
 #recuperer les couleurs de model 3D
-color_3D_Model = o3d.io.read_point_cloud("data_exemple/fleur_icp.ply")
-vertex_colors = np.asarray(color_3D_Model.colors)
+# color_3D_Model = o3d.io.read_point_cloud("data_exemple/fleur_icp.ply")
+# vertex_colors = np.asarray(color_3D_Model.colors)
 
 
 while True:
 
-     frame_apres = proj.project_and_display(name_image_2D, obj, Projection,vertex_colors)
+     frame_apres = proj.project_and_display(name_image_2D, obj, Projection,h,w)
      cv2.imshow("frame_apres", frame_apres)
 
      if cv2.waitKey(1) & 0xFF == ord('q'):        
