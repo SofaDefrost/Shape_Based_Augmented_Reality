@@ -62,7 +62,7 @@ from functions.objloader_simple import OBJ
 import open3d as o3d
 #import time as tm
 import functions.project_and_display as proj
-
+import functions.project_object_onto_image as project
 
 
 
@@ -70,7 +70,7 @@ import functions.project_and_display as proj
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_3"
+name = "data_exemple/fleur_5"
 name_pc = name + '.ply'
 name_image_2D =cv2.imread( name + '.png')
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
@@ -94,48 +94,70 @@ rz.Resize(name_model_3D, model_3D_resized_name,facteur_echelle)
 pc_reposed_name = name + '_reposed.ply'
 translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
 translation_vector[0] =-translation_vector[0]
+translation_vector[1] =translation_vector[1]
 translation_vector[2] =translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
-Mt_t=np.transpose(Mt)
+Mt_inv = np.linalg.inv(Mt)
+Mt_t= np.transpose(Mt)
+angle = np.radians(90)
+Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), np.sin(angle), 0], [0, -np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 # # Application de l'icp
 #Mr=cp.run_icp_1(model_3D_resized_name,pc_reposed_name)
 # Mr = cp.run_icp_1( model_3D_resized_name, pc_reposed_name) 
 #Mr_1=np.transpose(Mr_icp) # Matrice de rotation
-Mr_1=cp.run_icp_2( "data_exemple/model_3D_icp.ply", pc_reposed_name)
+M_icp_1, _ =cp.run_icp_1(  model_3D_resized_name,   pc_reposed_name)
+
+rx, ry, rz = cp.extract_rotation_angles(M_icp_1)
+print("Rotation autour de l'axe X:", rx, "degrés")
+print("Rotation autour de l'axe Y:", ry, "degrés")
+print("Rotation autour de l'axe Z:", rz, "degrés")
 
 
-# # Matrice extrinsèque
-M_ex = np.dot(Mt,Mr_1) 
+
+# M_icp_2 =cp.run_icp_2(pc_reposed_name, "data_exemple/model_icp.ply")
+# M_icp_2_t=np.transpose(M_icp_2)
+# M_icp_1_t =np.transpose(M_icp_1)
+# M_icp_1_t_f=M_icp_1   * 10
+
+# Mt_inv_t=np.linalg.inv(Mt)
+# M_ex= Mt @ M_icp_1
+# M_icp_inv_t=np.linalg.inv(M_icp)
+# M_icp_z= M_icp*10
+# # # Matrice extrinsèque
+# M_ex = Mt_inv @ M_icp_inv_t
 # M_ex_1=np.transpose(M_ex)
 # M_ex=Mr
 # # Matrice extrinsèque transposée
 # M_ex_t = np.transpose(M_ex)
-
+# M_icp_2_t=np.transpose(M_icp_2)
 # # Matrice de calibration de la caméra realsense D415
 #M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
-
+# M_ex= Mt @ Mat_90
 #Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+# M_in_t =np.linalg.inv(M_in)
 
-
-angle = np.radians(-45)
+angle = np.radians(120)
 Mat_180 = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 #Matrice de transformation de 90° selon X
 Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
-
+# M_ex= M_icp_2_t
 # # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
-Proj_1 = np.dot( M_in,M_ex)
+# Projection= np.dot( M_in,M_ex)
+Projection=  M_in @ M_ex
+# Proj_2= np.dot(Proj_1, Mr_1)
+# # # Matrice de projection * la matrice de transformation 90°
+# Projection=Proj_1 @ Mat_90
 
-# # Matrice de projection * la matrice de transformation 90°
-
-angle = np.radians(90)
-Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), np.sin(angle), 0], [0, -np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-
-Proj_2= np.dot(Proj_1, Mat_90)
+# Proj_2= np.linalg.inv(Proj_1)
+# #Matrice de transformation selon Z
+# Proj_2= Proj_1 @ M_icp
+# Projection= Proj_2 @ M_icp_1_t
+#Projection= Proj_2 @ M_icp
 # Projection=np.dot(Proj_2,Mat_180)
+# Projection=np.dot(Proj_1, Mat_180)
 
-Projection=np.dot(Proj_2, Mr_1)
 
 # Chargement du fichier obj
 
@@ -152,7 +174,8 @@ cv2.imshow("frame_avant", name_image_2D)
 
 while True:
 
-     frame_apres = proj.project_and_display(name_image_2D, obj, Projection,h,w)
+     frame_apres = proj.project_and_display(name_image_2D,obj, Projection,h,w)
+     
      cv2.imshow("frame_apres", frame_apres)
 
      if cv2.waitKey(1) & 0xFF == ord('q'):        

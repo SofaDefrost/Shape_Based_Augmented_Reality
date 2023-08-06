@@ -4,11 +4,11 @@ import open3d as o3d
 
 def draw_registration_result(source, target, transformation):
     """
-    Fonction pour visualiser le résultat de l'alignement entre le nuage de points source et le nuage de points cible.
+    Function to visualize the result of the alignment between the source point cloud and the target point cloud.
 
-    :param source: Le nuage de points source (objet open3d.geometry.PointCloud).
-    :param target: Le nuage de points cible (objet open3d.geometry.PointCloud).
-    :param transformation: La matrice de transformation (4x4 numpy array) pour aligner le nuage de points source sur le cible.
+    :param source: The source point cloud (open3d.geometry.PointCloud object).
+    :param target: The target point cloud (open3d.geometry.PointCloud object).
+    :param transformation: The transformation matrix (4x4 numpy array) to align the source point cloud to the target.
     """
     source_temp = copy.deepcopy(source)
     target_temp = copy.deepcopy(target)
@@ -19,13 +19,13 @@ def draw_registration_result(source, target, transformation):
 
 def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
     """
-    Fonction pour trouver les points les plus proches dans le nuage de points source pour chaque point du nuage de points cible.
+    Function to find the nearest points in the source point cloud for each point in the target point cloud.
 
-    :param source_pc: Le nuage de points source (objet open3d.geometry.PointCloud).
-    :param target_pc: Le nuage de points cible (objet open3d.geometry.PointCloud).
-    :param nearest_neigh_num: Le nombre de points les plus proches à rechercher pour chaque point cible.
+    :param source_pc: The source point cloud (open3d.geometry.PointCloud object).
+    :param target_pc: The target point cloud (open3d.geometry.PointCloud object).
+    :param nearest_neigh_num: The number of nearest points to search for each target point.
 
-    :return: Un tableau numpy contenant les points les plus proches du nuage de points source pour chaque point du nuage de points cible.
+    :return: A numpy array containing the nearest points from the source point cloud for each point in the target point cloud.
     """
     point_cloud_tree = o3d.geometry.KDTreeFlann(source_pc)
     points_arr = []
@@ -53,6 +53,7 @@ def icp(source, target):
     cost_change_threshold = 0.001
     curr_cost = 1000
     prev_cost = 10000
+    Mat_90 = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
 
     while True:
         # Trouver les points les plus proches du nuage de points source pour chaque point du nuage de points cible.
@@ -83,119 +84,133 @@ def icp(source, target):
         if ((prev_cost - curr_cost) > cost_change_threshold):
             prev_cost = curr_cost
             # Mettre à jour la matrice de transformation avec la rotation et la translation.
-            transform_matrix_target = np.hstack((R, t.T))
+            transform_matrix_target = np.hstack((np.eye(3), t.T))
             transform_matrix_target = np.vstack((transform_matrix_target, np.array([0, 0, 0, 1])))
             # Appliquer la transformation au nuage de points source.
-            source=source.transform(transform_matrix_target)
+            source.transform(transform_matrix_target)
             curr_iteration += 1
+            transform_matrix_total = transform_matrix_target @ Mat_90
         else:
             break
 
     print("\nIteration=", curr_iteration)
     # Visualiser le résultat final de l'alignement.
-    draw_registration_result(source, target, transform_matrix_target)
-    o3d.io.write_point_cloud("data_exemple/model_3D_icp3.ply", target)
-    print(transform_matrix_target)
+    # draw_registration_result(source, target, transform_matrix_target)
     # Renvoyer la matrice de transformation finale.
-    return transform_matrix_target
+    return transform_matrix_target, curr_cost
+
+def multiple_icp(source, target):
+    # Create a copy of the source point cloud for each initial transformation.
+    source_temp = copy.deepcopy(source)
+
+    # List of transformation matrices and costs for each initial transformation.
+    transformations = []
+    costs = []
+
+    # Uncomment and complete the following transformations if needed.
+
+    # # First transformation: Initial translation.
+    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
+
+    # # Second transformation: Rotation around X-axis (with 45 degrees).
+    angle = np.radians(135)
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
+
+    # # Third transformation: Rotation around Y-axis (with 45 degrees).
+    angle = np.radians(165)
+    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix,best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
+
+    # Fourth transformation: Rotation around Z-axis (with 90 degrees).
+    angle = np.radians(90)
+    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
     
+    # # Fifth transformation: Rotation around X-axis (with 180 degrees).
+    angle = np.radians(45)
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    source_temp = copy.deepcopy(source)
+    source_temp.transform(transform_matrix)
+    best_transform_matrix, best_cost = icp(source_temp, target)
+    transformations.append(best_transform_matrix)
+    costs.append(best_cost)
 
-# def multiple_icp(source, target):
-#     # Créer une copie du nuage de points source pour chaque transformation initiale.
-#     source_temp = copy.deepcopy(source)
-
-#     # Liste des matrices de transformation et des coûts pour chaque transformation initiale.
-#     transformations = []
-#     costs = []
-
-#     # Première transformation : Translation initiale.
-#     transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
-#     source_temp.transform(transform_matrix)
-#     best_transform_matrix, best_cost = icp(source_temp, target)
-#     transformations.append(best_transform_matrix)
-#     costs.append(best_cost)
-
-#     # Deuxième transformation : Rotation sur l'axe X (avec 45 degrés).
-#     # angle = np.radians(90)
-#     # transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-#     # source_temp = copy.deepcopy(source)
-#     # source_temp.transform(transform_matrix)
-#     # best_transform_matrix, best_cost = icp(source_temp, target)
-#     # transformations.append(best_transform_matrix)
-#     # costs.append(best_cost)
+    # Select the best transformation with the lowest cost.
+    best_idx = np.argmin(costs)
+    best_transform_matrix = transformations[best_idx]
+    best_cost = costs[best_idx]
     
-    
+    source.transform(best_transform_matrix)
 
-#     # # Troisième transformation : Rotation sur l'axe Y (avec 45 degrés).
-#     # angle = np.radians(90)
-#     # transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-#     # source_temp = copy.deepcopy(source)
-#     # source_temp.transform(transform_matrix)
-#     # best_transform_matrix, best_cost = icp(source_temp, target)
-#     # transformations.append(best_transform_matrix)
-#     # costs.append(best_cost)
-
-#     # # Quatrième transformation : Rotation sur l'axe Z (avec 45 degrés).
-#     # angle = np.radians(90)
-#     # transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-#     # source_temp = copy.deepcopy(source)
-#     # source_temp.transform(transform_matrix)
-#     # best_transform_matrix, best_cost = icp(source_temp, target)
-#     # transformations.append(best_transform_matrix)
-#     # costs.append(best_cost)
-    
-#     # angle = np.radians(180)
-#     # transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-#     # source_temp = copy.deepcopy(source)
-#     # source_temp.transform(transform_matrix)
-#     # best_transform_matrix, best_cost = icp(source_temp, target)
-#     # transformations.append(best_transform_matrix)
-#     # costs.append(best_cost)
-
-#     # Sélection de la meilleure transformation ayant le coût le plus bas.
-#     best_idx = np.argmin(costs)
-#     best_transform_matrix = transformations[best_idx]
-#     best_cost = costs[best_idx]
-
-#     # Enregistrer le fichier source correspondant à la meilleure transformation.
-#     best_source_pc = copy.deepcopy(source)
-#     best_source_pc.transform(best_transform_matrix)
-#     # draw_registration_result( best_source_pc, target, best_transform_matrix)
-#     # o3d.io.write_point_cloud("data_exemple/best_source.ply", best_source_pc)
-
-#     return best_transform_matrix
+    # Visualize the final alignment result.
+    draw_registration_result(source, target, best_transform_matrix)
 
 
-# def run_icp_1(source_path, target_path):
-#     """
-#     Fonction pour exécuter l'algorithme ICP avec deux chemins de fichiers de nuages de points en entrée.
-
-#     :param source_path: Le chemin du fichier du nuage de points source au format PLY.
-#     :param target_path: Le chemin du fichier du nuage de points cible au format PLY.
-
-#     :return: La matrice de transformation finale (4x4 numpy array) pour aligner le nuage de points source sur le cible.
-#     """
-
-#     source = o3d.io.read_point_cloud(source_path)
-#     target = o3d.io.read_point_cloud(target_path)
-#     # Appeler la fonction multiple_icp pour aligner les nuages de points source et cible.
-#     best_transform_matrix= multiple_icp(source, target)
-#     source_transformed = copy.deepcopy(source)
-
-#     source_transformed.transform(best_transform_matrix)
-#     output_file_path = "data_exemple/source_transformed_icp.ply"
-#     o3d.io.write_point_cloud(output_file_path, source_transformed)
-#     print("la meilleure matrice de transformation est",best_transform_matrix)
-#     return best_transform_matrix
+    # Save the source point cloud corresponding to the best transformation.
+    # best_source_pc = source
+    # best_source_pc.transform(best_transform_matrix)
+    # o3d.io.write_point_cloud("data_exemple/model_3D_icpp.ply", best_source_pc)
+    return best_transform_matrix, best_cost
 
 
-def run_icp_2(source_path, target_path):
+def run_icp_1(source_path, target_path):  # Pass the file paths as arguments
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
-    # Appeler la fonction multiple_icp pour aligner les nuages de points source et cible.
-    transform_matrix= icp(source, target)
+    # Call the multiple_icp function to align the source and target point clouds.
+    best_transform_matrix = multiple_icp(source, target)
+    # source_transformed = copy.deepcopy(source)
+
+    # source_transformed.transform(best_transform_matrix)
+    # # output_file_path = "data_exemple/source_transformed_icp.ply"
+    # # # o3d.io.write_point_cloud(output_file_path, source_transformed)
+    # print("The best transformation matrix is", best_transform_matrix)
+    return best_transform_matrix
+
+def run_icp_2(source_path, target_path):  # Pass the file paths as arguments
+    source = o3d.io.read_point_cloud(source_path)
+    target = o3d.io.read_point_cloud(target_path)
+    # Call the icp function to align the source and target point clouds.
+    transform_matrix = icp(source, target)
     print(transform_matrix)
     return transform_matrix
-    
 
 
+
+def extract_rotation_angles(transform_matrix):
+    """
+    Fonction pour extraire les angles de rotation à partir d'une matrice de transformation 4x4.
+
+    :param transform_matrix: La matrice de transformation (4x4 numpy array).
+
+    :return: Les angles de rotation autour des axes X, Y et Z (en degrés).
+    """
+    # Extraction de la rotation en radians
+    rx = np.arctan2(transform_matrix[2, 1], transform_matrix[2, 2])
+    ry = np.arctan2(-transform_matrix[2, 0], np.sqrt(transform_matrix[2, 1]**2 + transform_matrix[2, 2]**2))
+    rz = np.arctan2(transform_matrix[1, 0], transform_matrix[0, 0])
+
+    # Conversion en degrés
+    rx_deg = np.degrees(rx)
+    ry_deg = np.degrees(ry)
+    rz_deg = np.degrees(rz)
+
+    return rx_deg, ry_deg, rz_deg
+
+# Exemple d'utilisation :
