@@ -60,7 +60,7 @@ import numpy as np
 import cv2
 from functions.objloader_simple import OBJ
 import open3d as o3d
-#import time as tm
+# import time as tm
 import functions.project_and_display as proj
 import functions.project_object_onto_image as project
 
@@ -70,7 +70,7 @@ import functions.project_object_onto_image as project
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_7"
+name = "data_exemple/fleur_9"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
@@ -98,22 +98,25 @@ translation_vector[1] =translation_vector[1]
 translation_vector[2] =translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
-
+Mt_t= np.transpose(Mt)
 angle = np.radians(90)
 Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), np.sin(angle), 0], [0, -np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-cp.run_icp_1(model_3D_resized_name,pc_reposed_name) 
+ 
+M_icp_1, _=cp.run_icp_1(model_3D_resized_name,pc_reposed_name) 
 
-M_icp_2, _=cp.run_icp_2(pc_reposed_name,"data_exemple/aligned_point_cloud.ply")
-M_icp_2_z=M_icp_2 
+M_icp_2, _=cp.run_icp_2(pc_reposed_name, model_3D_resized_name)
+# M_icp_2= np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
 M_icp_2_t= np.transpose(M_icp_2)
+M_icp_1_t=np.transpose(M_icp_1)
 
-M_ex= Mt@ M_icp_2_t
 # # Matrice de calibration de la caméra realsense D415
 #M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+M_ex= M_icp_1 @M_icp_2_t
 
+M_exx=  Mt @ M_ex 
 #Matrice de calibration de la caméra realsense D405
-M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
 
 
 
@@ -121,8 +124,9 @@ M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 
 
-Proj_1= M_in @ M_ex
-Projection=  Proj_1 @ Mat_90
+Proj_1= M_in @ M_exx
+
+Projection=  Proj_1 
 
 # Chargement du fichier obj
 
