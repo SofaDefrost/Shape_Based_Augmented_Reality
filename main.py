@@ -55,7 +55,7 @@ import functions.icp as cp
 import functions.translation_m as tm
 import functions.repose as rp
 import functions.Resize as rz
-import functions.acquisition as aq
+#import functions.acquisition as aq
 import numpy as np
 import cv2
 from functions.objloader_simple import OBJ
@@ -74,7 +74,7 @@ name = "data_exemple/fleur_7"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
-aq.run_acquisition(name_pc, color_image_name)
+#aq.run_acquisition(name_pc, color_image_name)
 color_image= cv2.imread(color_image_name)
 # Application du masque
 # donner le nom pour le fichier nouveau après l'application du masque
@@ -99,13 +99,13 @@ translation_vector[2] =translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
-angle = np.radians(45)
+angle = np.radians(90)
 Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), np.sin(angle), 0], [0, -np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-# # Application de l'icp
-cp.run_icp_1(model_3D_resized_name,pc_reposed_name)
+ # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
+cp.run_icp_1(model_3D_resized_name,pc_reposed_name) 
 
 M_icp_2, _=cp.run_icp_2(pc_reposed_name,"data_exemple/aligned_point_cloud.ply")
-
+M_icp_2_z=M_icp_2 
 M_icp_2_t= np.transpose(M_icp_2)
 
 M_ex= Mt@ M_icp_2_t
@@ -116,7 +116,7 @@ M_ex= Mt@ M_icp_2_t
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 
 
-proj_1= M_ex @Mat_90
+
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 
