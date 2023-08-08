@@ -11,21 +11,20 @@ import trimesh
 
 def repose(pc_resized, pc_reposed):
     """
-    
+    Repose the point cloud mesh by centering it around its mean point.
 
     Parameters
     ----------
-    pc_resized : TYPE
-        DESCRIPTION.
-    pc_reposed : TYPE
-        DESCRIPTION.
+    pc_resized : str
+        The filename of the resized point cloud mesh in PLY format.
+    pc_reposed : str
+        The filename to save the reposed point cloud mesh.
 
     Returns
     -------
-    pt_milieu : TYPE
-        DESCRIPTION.
-
-    """
+    pt_milieu : list
+        The coordinates of the mean point before reposing.
+"""
     
     mesh = trimesh.load(pc_resized)
     milieu = np.mean(mesh.vertices)
@@ -44,8 +43,6 @@ def repose(pc_resized, pc_reposed):
     milieu_z = np.mean(tab_z)
 
     pt_milieu = [milieu_x, milieu_y, milieu_z]
-
-    print(pt_milieu)
 
     new_vertices = mesh.vertices - pt_milieu
     scaled_mesh = trimesh.Trimesh(vertices=new_vertices, faces=mesh.faces if hasattr(mesh, 'faces') else None)
