@@ -1,3 +1,33 @@
+"""Ce programme est une application de visualisation de nuage de points à partir des données en temps réel provenant d'une caméra RealSense. 
+Voici une description et le rôle de chaque fonction dans le programme :
+
+    1- AppState: C'est une classe qui stocke l'état actuel de l'application, tel que l'orientation de la vue, l'échelle, la position de la caméra, etc.
+
+    2- reset: Une méthode de la classe AppState qui réinitialise les paramètres de la caméra à leur valeur par défaut.
+
+    3- rotation (propriété): Une propriété de la classe AppState qui retourne la matrice de rotation en fonction des angles de pitch et yaw (inclinaison et lacet).
+
+    4- pivot (propriété): Une propriété de la classe AppState qui retourne le pivot de la caméra en fonction de la distance et de la translation.
+
+    5- mouse_cb: Une fonction qui gère les événements de la souris pour contrôler la caméra, tels que la rotation, la translation et le zoom.
+
+    6- project: Une fonction qui effectue une projection perspective des points 3D sur l'écran 2D, en fonction des intrinsèques de la caméra.
+
+    7- view: Une fonction qui effectue une transformation de vue des points 3D en fonction de la position et de l'orientation de la caméra.
+
+    8- line3d: Une fonction qui trace une ligne 3D à partir de deux points dans l'espace et les projette sur l'écran pour affichage.
+
+    9- grid: Une fonction qui affiche une grille 3D pour aider à la visualisation de la scène.
+
+    10- axes: Une fonction qui affiche les axes x, y, z dans la scène.
+
+    11- frustum: Une fonction qui affiche le frustum de la caméra (le volume visible) en fonction des intrinsèques de la caméra.
+
+    12- pointcloud: Une fonction qui affiche le nuage de points en effectuant l'uv-mapping pour la couleur des points à partir de l'image couleur correspondante.
+
+    13- run_acquisition: La fonction principale du programme. Elle configure les flux de données de la caméra RealSense, gère les événements de la souris et affiche le nuage de points 
+    en utilisant les fonctions décrites ci-dessus."""
+
 import math
 import time
 import cv2
@@ -200,10 +230,7 @@ def run_acquisition(point_cloud, image):
             v = view(verts)
             s = v[:, 2].argsort()[::-1]
             proj = project(v[s])
-        # Painter's algo, sort points from back to front
-
-        # get reverse sorted indices by z (in view-space)
-        # https://gist.github.com/stevenvo/e3dad127598842459b68
+        
        
         else:
           proj = project(view(verts))
@@ -321,11 +348,8 @@ def run_acquisition(point_cloud, image):
             state.color ^= True
 
         if key == ord("s"):
-            
-            cv2.imwrite(image, color_image)
-
-        if key == ord("e"):
             points.export_to_ply(point_cloud, mapped_frame)
+            cv2.imwrite(image, color_image)
 
         if key in (27, ord("q")) or cv2.getWindowProperty(state.WIN_NAME, cv2.WND_PROP_AUTOSIZE) < 0:
             break
