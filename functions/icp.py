@@ -352,7 +352,7 @@ Returns:
         best_cost = cost
 
     print_icp_result(angle, cost, best_transform_matrix)
-    angle = np.radians(-90)
+    angle = np.radians(90)
     Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
     
     best = best_transform_matrix @ Mat_90

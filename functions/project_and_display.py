@@ -51,17 +51,17 @@ import numpy as np
 
 def project_and_display(frame, obj, projection, h, w, scale_factor=0.000023):
     """
-    Fonction pour projeter et afficher les points 3D d'un objet sur une image.
+Function to project and display 3D points of an object onto an image.
 
-    :param frame: L'image (matrice numpy) sur laquelle projeter les points.
-    :param obj: L'objet 3D contenant les coordonnées des sommets (vertices) de l'objet.
-    :param projection: La matrice de projection (3x4 numpy array) pour la projection des points 3D sur l'image.
-    :param h: Hauteur de l'image.
-    :param w: Largeur de l'image.
-    :param scale_factor: Facteur d'échelle pour ajuster l'échelle des points 3D projetés. (facultatif)
+:param frame: The image (numpy matrix) onto which to project the points.
+:param obj: The 3D object containing the vertex coordinates (vertices) of the object.
+:param projection: The projection matrix (3x4 numpy array) for projecting 3D points onto the image.
+:param h: Height of the image.
+:param w: Width of the image.
+:param scale_factor: Scale factor to adjust the scale of the projected 3D points. (optional)
 
-    :return: L'image avec les points 3D projetés affichés.
-    """
+:return: The image with displayed projected 3D points.
+"""
     vertices = obj.vertices
 
     # Ajuster l'échelle des points 3D projetés selon le besoin
