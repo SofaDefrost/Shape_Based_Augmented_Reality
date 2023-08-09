@@ -337,9 +337,6 @@ def run_acquisition(point_cloud, image):
         if key == ord("p"):
             state.paused ^= True
 
-        if key == ord("d"):
-            state.decimate = (state.decimate + 1) % 3
-            decimate.set_option(rs.option.filter_magnitude, 2 ** state.decimate)
 
         if key == ord("z"):
             state.scale ^= True

@@ -130,10 +130,14 @@ Returns:
     # Initialize the best transformation and cost.
     best_transform_matrix = None
     best_cost = np.inf
-
+    
+    # Matrice de transformation de 90° selon X
+    angle = np.radians(-90)
+    Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    
     # Transformations: Rotation around X-axis.
     angle = np.radians(90)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -143,7 +147,7 @@ Returns:
         best_cost = cost
     
     angle = np.radians(30)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -163,7 +167,7 @@ Returns:
         best_cost = cost
     
     angle = np.radians(120)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -173,7 +177,7 @@ Returns:
         best_cost = cost
         
     angle = np.radians(-120)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -183,7 +187,7 @@ Returns:
           best_cost = cost   
          
     angle = np.radians(180)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -204,7 +208,7 @@ Returns:
     
     # Transformation: Rotation around Y-axis.
     angle = np.radians(90)
-    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -214,7 +218,7 @@ Returns:
         best_cost = cost
     
     angle = np.radians(-90)
-    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -234,7 +238,7 @@ Returns:
         best_cost = cost
         
     angle = np.radians(-180)
-    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -267,7 +271,7 @@ Returns:
         
     # Transformations: Rotation around Z-axis 
     angle = np.radians(90)
-    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -277,7 +281,7 @@ Returns:
         best_cost = cost
         
     angle = np.radians(120)
-    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -287,7 +291,7 @@ Returns:
           best_cost = cost
          
     angle = np.radians(255)
-    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -298,7 +302,7 @@ Returns:
 
     #  transformations: Rotation around X-axis
     angle = np.radians(-45)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -308,7 +312,7 @@ Returns:
         best_cost = cost
     
     angle = np.radians(132)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -342,7 +346,7 @@ Returns:
         best_cost = cost
         
     angle = np.radians(60)
-    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    transform_matrix = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]]) 
     source_temp = copy.deepcopy(source)
     source_temp.transform(transform_matrix)
     _, cost = icp(source_temp, target)
@@ -351,28 +355,34 @@ Returns:
         best_transform_matrix = transform_matrix
         best_cost = cost
 
-    print_icp_result(angle, cost, best_transform_matrix)
-    angle = np.radians(90)
-    Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+    print_icp_result(angle, best_cost, best_transform_matrix)
+   
     
-    best = best_transform_matrix @ Mat_90
+    best = best_transform_matrix 
     # Save the source point cloud corresponding to the best transformation.
     best_source_pc = copy.deepcopy(source)
     best_source_pc=best_source_pc.transform(best)
-    
+    source=source.transform(best_transform_matrix)
     # Visualize the final alignment result with the best transformation.
-    draw_registration_result(  best_source_pc,target, best)
+    # draw_registration_result(source, target, best_transform_matrix)
+    # Visualize the final alignment result with the best transformation.
+    # draw_registration_result(  best_source_pc,target, best)
     
     return best, best_cost
 
 
 
-def run_icp_1(source_path, target_path): 
+def run_icp_1(source_path, target_path,pc_after_multiple_icp): 
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
     # Call the multiple_icp function to align the source and target point clouds.
     best_transform_matrix,_ = multiple_icp(source, target)
- 
+    best = best_transform_matrix 
+    # Save the source point cloud corresponding to the best transformation.
+    best_source_pc = copy.deepcopy(source)
+    best_source_pc=best_source_pc.transform(best)
+   
+    o3d.io.write_point_cloud(pc_after_multiple_icp, best_source_pc)
     return best_transform_matrix, _
 
 def run_icp_2(source_path, target_path): 

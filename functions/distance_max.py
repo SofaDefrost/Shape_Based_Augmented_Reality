@@ -4,11 +4,13 @@ import math
 
 def distance_max(model):
     """
-    Cette fonction calcule la distance maximale entre les points d'un nuage de points.
+This function calculates the maximum distance between points in a point cloud.
 
-    :param model: Le nom du fichier du nuage de points au format PLY.
-    :return: La distance maximale entre les points du nuage de points.
-    """
+:param model: The filename of the point cloud in PLY format.
+:return: The maximum distance between points in the point cloud.
+  
+ """
+
     cloud = o3d.io.read_point_cloud(model)
     points = np.asarray(cloud.points)
 
