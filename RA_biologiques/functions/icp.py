@@ -16,7 +16,7 @@ def draw_registration_result(source, target, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
     source_temp.transform(transformation)
-    o3d.visualization.draw_geometries([source_temp, target_temp], zoom=2, front=[0.5, -0.1, -0.1], lookat=[0, 0, 0], up=[-0.3402, -0.9189, -0.1996])
+    o3d.visualization.draw_geometries([source_temp, target_temp], zoom=1, front=[0.6, -0.1, -0.1], lookat=[0, 0, 0], up=[-0.3402, -0.222, -0.1996])
 
 
 
@@ -94,19 +94,12 @@ Returns:
             break
 
     
-    print_icp_progress(curr_iteration, curr_cost)
+    
     #draw_registration_result(source, target, transform_matrix) 
    
     return transform_matrix, curr_cost
 
 
-def print_icp_progress(iteration, cost):
-    print(f"Iteration={iteration}, Cost={cost:.4f}")
-    
-    
-def print_icp_result(angle, cost, transform_matrix):
-    print("La meilleure matrice qui a le plus petit cout est:/n")
-    print(f"Angle={np.degrees(angle):.2f} degrees, Cost={cost:.4f}, Transform Matrix:{transform_matrix}")
 
 
 def multiple_icp(source, target):
@@ -355,7 +348,7 @@ Returns:
         best_transform_matrix = transform_matrix
         best_cost = cost
 
-    print_icp_result(angle, best_cost, best_transform_matrix)
+    
    
     
     best = best_transform_matrix 

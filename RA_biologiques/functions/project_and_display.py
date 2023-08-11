@@ -8,6 +8,9 @@ Created on Mon Jul 24 11:10:07 2023
 import numpy as np
 import cv2
 
+import numpy as np
+import cv2
+
 def project_and_display(frame, obj, projection, colors):
     vertices = obj.vertices
     scale_matrix = np.eye(3)  # Ajustez l'échelle selon le besoin
@@ -21,10 +24,15 @@ def project_and_display(frame, obj, projection, colors):
 
     # Affichage des points projetés sur l'image avec les couleurs réelles
     for i, p in enumerate(projected_points.astype(int)):
-        color = tuple(colors[i])  # Récupérer la couleur du vertex
-        cv2.circle(frame, (p[0], p[1]), 1, color, -1)
+        if 0 <= p[0] < frame.shape[1] and 0 <= p[1] < frame.shape[0]:
+            color = tuple(colors[i] * 255)  # Convertir la couleur à l'échelle 0-255
+            cv2.circle(frame, (p[0], p[1]), 1, color, -1)
 
     return frame
+
+
+
+
 # import numpy as np
 # import cv2
 
