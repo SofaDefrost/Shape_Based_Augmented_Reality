@@ -69,7 +69,6 @@ import functions.Resize as rz
 #import functions.acquisition as aq
 from functions.objloader_simple import OBJ
 import functions.project_and_display as proj
-import functions.project_object_onto_image as project
 import functions.ply2obj as po
 
 
@@ -116,9 +115,12 @@ Mt_t= np.transpose(Mt)
 
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
 pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
-M_icp_1, _=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
-print("Veuillez patienter un instant pour que l'icp_2 s'exécute.")
+print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
+print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+print("Please wait a moment for ICP_2 to execute!!")
 M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
+
 
 
 M_icp_2_t= np.transpose(M_icp_2)
