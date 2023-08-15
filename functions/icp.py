@@ -93,21 +93,7 @@ Returns:
         else:
             break
 
-    
-    print_icp_progress(curr_iteration, curr_cost)
-    #draw_registration_result(source, target, transform_matrix) 
-   
     return transform_matrix, curr_cost
-
-
-def print_icp_progress(iteration, cost):
-    print(f"Iteration={iteration}, Cost={cost:.4f}")
-    
-    
-def print_icp_result(angle, cost, transform_matrix):
-    print("La meilleure matrice qui a le plus petit cout est:/n")
-    print(f"Angle={np.degrees(angle):.2f} degrees, Cost={cost:.4f}, Transform Matrix:{transform_matrix}")
-
 
 def multiple_icp(source, target):
     """
@@ -355,7 +341,7 @@ Returns:
         best_transform_matrix = transform_matrix
         best_cost = cost
 
-    print_icp_result(angle, best_cost, best_transform_matrix)
+    
    
     
     best = best_transform_matrix 
@@ -363,29 +349,46 @@ Returns:
     best_source_pc = copy.deepcopy(source)
     best_source_pc=best_source_pc.transform(best)
     source=source.transform(best_transform_matrix)
-    # Visualize the final alignment result with the best transformation.
-    # draw_registration_result(source, target, best_transform_matrix)
-    # Visualize the final alignment result with the best transformation.
-    # draw_registration_result(  best_source_pc,target, best)
+
     
     return best, best_cost
 
 
 
 def run_icp_1(source_path, target_path,pc_after_multiple_icp): 
-    source = o3d.io.read_point_cloud(source_path)
-    target = o3d.io.read_point_cloud(target_path)
+    
+   """
+    Function to perform Iterative Closest Point (ICP) registration between source and target point clouds
+    with the objective of applying different transformation matrices to the object model
+    and ultimately saving a file with minimized cost.
+    
+    :param source_path: Path to the source point cloud file.
+    :param target_path: Path to the target point cloud file.
+    :param pc_after_multiple_icp: Path to save the point cloud after applying ICP.
+    :return: Best transformation matrix and an underscore placeholder.
+    """
+
+   source = o3d.io.read_point_cloud(source_path)
+   target = o3d.io.read_point_cloud(target_path)
     # Call the multiple_icp function to align the source and target point clouds.
-    best_transform_matrix,_ = multiple_icp(source, target)
-    best = best_transform_matrix 
+   best_transform_matrix,_ = multiple_icp(source, target)
+   best = best_transform_matrix 
     # Save the source point cloud corresponding to the best transformation.
-    best_source_pc = copy.deepcopy(source)
-    best_source_pc=best_source_pc.transform(best)
-   
-    o3d.io.write_point_cloud(pc_after_multiple_icp, best_source_pc)
-    return best_transform_matrix, _
+   best_source_pc = copy.deepcopy(source)
+   best_source_pc=best_source_pc.transform(best)
+   o3d.io.write_point_cloud(pc_after_multiple_icp, best_source_pc)
+   return best_transform_matrix, _
 
 def run_icp_2(source_path, target_path): 
+    
+    """
+   Function to perform Iterative Closest Point (ICP) registration between source and target point clouds.
+   
+   :param source_path: Path to the source point cloud file.
+   :param target_path: Path to the target point cloud file.
+   :return: Transformation matrix for alignment and an underscore placeholder.
+   """
+    
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
     # Call the icp function to align the source and target point clouds.
