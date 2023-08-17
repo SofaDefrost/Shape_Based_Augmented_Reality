@@ -67,7 +67,7 @@ import functions.repose as rp
 import functions.Resize as rz
 import functions.angles as an
 #import functions.resize as rzz
-#import functions.acquisition as aq
+import realsense.acquisition as aq
 from functions.objloader_simple import OBJ
 import functions.project_and_display as proj
 import functions.ply2obj as po
