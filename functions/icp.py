@@ -16,7 +16,19 @@ def draw_registration_result(source, target, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
     source_temp.transform(transformation)
-    o3d.visualization.draw_geometries([source_temp, target_temp], zoom=2, front=[0.5, -0.1, -0.1], lookat=[0, 0, 0], up=[-0.3402, -0.9189, -0.1996])
+
+    def key_callback(vis, key):
+        # Check if the pressed key is 'Q'
+        if key == ord('q'):
+            vis.close()  # Close the visualization window
+
+    vis = o3d.visualization.VisualizerWithKeyCallback()
+    vis.create_window()
+    vis.add_geometry(source_temp)
+    vis.add_geometry(target_temp)
+    vis.register_key_callback(ord('q'), key_callback)
+    vis.run()
+    vis.destroy_window()
 
 
 

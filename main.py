@@ -65,6 +65,7 @@ import functions.icp as cp
 import functions.translation_m as tm
 import functions.repose as rp
 import functions.Resize as rz
+import functions.angles as an
 #import functions.resize as rzz
 #import functions.acquisition as aq
 from functions.objloader_simple import OBJ
@@ -76,7 +77,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_5"
+name = "data_exemple/fleur_7"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -121,30 +122,34 @@ print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 print("Please wait a moment for ICP_2 to execute!!")
 M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
 
-
-
 M_icp_2_t= np.transpose(M_icp_2)
 M_icp_1_t=np.transpose(M_icp_1)
 
-# # Matrice de calibration de la caméra realsense D415
-#M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
-
-M_ex =  M_icp_1_t @ M_icp_2_t
-
-M_ex=  M_icp_1 @ M_icp_2
-M_ex = np.transpose(M_ex)
-
-M_exx=   Mt @ M_ex
+# Matrice de calibration de la caméra realsense D415
+# M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
 #Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
+M_ex=   M_icp_1 @ M_icp_2
+#M_ex =  M_icp_1_t @ M_icp_2_t
+matrix= an.angles(M_ex)
+
+# # M_ex =  np.transpose(M_ex)
+# M_exx=  Mt @ M_ex 
+# matrix = np.array([[-0.38488, 0, -0.922966, 0],
+#                     [0.89589, 0.240441, -0.373589, 0],
+#                     [0.221919, -0.970664, -0.0925412, 0],
+#                     [0, 0, 0, 1]])
+
+# matrix_t = np.transpose(matrix)
+
+angle = np.radians(-90)
+Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
-Proj_1= M_in @ M_exx
-angle = np.radians(90)
-
-# Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-# Projection=  Proj_1 @ Mat_90
-Projection=  Proj_1
+# Proj_1= M_in @ M_exx
+Proj_1=Mt @ matrix
+Projection= M_in @  Proj_1 
 
 #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name= name_3D +'.obj'
