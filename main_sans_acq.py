@@ -60,6 +60,7 @@ entre le modèle 3D et le nuage de points filtré et repositionné, puis récup�
 import numpy as np
 import cv2
 import open3d as o3d
+import functions.matrix_function as matrix_fcn
 import functions.mask as msk
 import functions.icp as cp
 import functions.translation_m as tm
@@ -76,7 +77,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_12"
+name = "data_exemple/fleur_3"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -102,14 +103,16 @@ rz.Resize(name_model_3D, model_3D_resized_name,scaling_factor)
 
 
 # # Application de repositionnement
-pc_reposed_name = name + '_reposed.ply'
-translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
+target_pc_reposed_name = name + '_reposed.ply'
+translation_vector = rp.repose(pc_masked_name, target_pc_reposed_name)
 translation_vector[0] = -translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 Mt_t= np.transpose(Mt)
+
+
 
 # ##001
 #  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
@@ -123,23 +126,23 @@ Mt_t= np.transpose(Mt)
 # M_icp_2_t = np.transpose(M_icp_2)
 # M_icp_1_t = np.transpose(M_icp_1)
 
-# # Matrice de calibration de la caméra realsense D415
-# # M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
-# # Matrice de calibration de la caméra realsense D405
-# M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
-
 # # M_ex=   M_icp_1 @ M_icp_2
 # #M_ex =  M_icp_1_t @ M_icp_2_t
 # M_ex =   M_icp_1_t
 
 # matrix= an.angles(M_ex)
+
+# print("avant fct angles :")
+# print(M_ex)
+# print("apres fct angles :")
+# print(matrix)
+
 # # matrix = M_ex
 # ##001
 
-print("avant fct angles :")
-print(M_ex)
-print("apres fct angles :")
-print(matrix)
+# matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-120) @ matrix_fcn.create_rot_matrix_y(20) 
+
+
 
 # # M_ex =  np.transpose(M_ex)
 # M_exx=  Mt @ M_ex 
@@ -158,9 +161,21 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 # Proj_1= M_in @ M_exx
 
 # Proj_1 = Mt   # pour prendre le fichier source avec les préorientation enregistrées
-Proj_1 = Mt @ matrix # version avec matrice 1er ICP
+Proj_1 = Mt #@ matrix # version avec matrice 1er ICP
+# Proj_1 = matrix
 
-Projection= M_in @  Proj_1 
+
+#### MATRICE DE CALIBRATION DE LA CAMERA ######
+
+# # Matrice de calibration de la caméra realsense D415
+# # M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+# # Matrice de calibration de la caméra realsense D405
+M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
+
+###############################################
+
+# Projection=  Proj_1 
+Projection= M_in @  Proj_1
 
 # Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name_source = name_3D +'.obj'
