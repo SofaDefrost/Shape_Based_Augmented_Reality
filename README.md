@@ -35,7 +35,7 @@ Pour les deux fonctions suivantes, vous devez choisir en fonction des résultats
     - Facteur de redimensionnement.
     
 # Prérecquis :
-Librairies python nécessaires : pyrealsense2 et cv2
+Librairies python nécessaires : pyrealsense2 et opencv-python, trimesh, open3d, scipy
 ```console
 pip3 install pyrealsense2
 pip3 install opencv-python
@@ -46,6 +46,7 @@ pip3 install open3d
 pip3 install scipy
 pip3 install math
 pip3 install numpy
+```
 
 # Description générale du programme :
 
