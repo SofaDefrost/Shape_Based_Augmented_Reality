@@ -1,0 +1,7 @@
+﻿[submodule "realsense"]
+	path = realsense
+	url = git@gitlab.inria.fr:defrost/hardware/realsense.git
+	
+# [submodule "libbar"]
+# 	path = include/bar
+# 	url = git://bar.com/git/lib.git
