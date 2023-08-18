@@ -359,8 +359,8 @@ Returns:
     best = best_transform_matrix 
     # Save the source point cloud corresponding to the best transformation.
     best_source_pc = copy.deepcopy(source)
-    best_source_pc=best_source_pc.transform(best)
-    source=source.transform(best_transform_matrix)
+    best_source_pc = best_source_pc.transform(best)
+    source = source.transform(best_transform_matrix)
 
     
     return best, best_cost
@@ -389,6 +389,7 @@ def run_icp_1(source_path, target_path,pc_after_multiple_icp):
    best_source_pc = copy.deepcopy(source)
    best_source_pc=best_source_pc.transform(best)
    o3d.io.write_point_cloud(pc_after_multiple_icp, best_source_pc)
+   
    return best_transform_matrix, _
 
 def run_icp_2(source_path, target_path): 

@@ -30,13 +30,14 @@ def angles(transform_matrix):
 
     angle_z, angle_y, angle_x = euler_angles
 
+    angle_xx = angle_x
     angle_zz = angle_z
     angle_yy = angle_y
 
     # Matrices de rotation individuelles
     Mx = np.array([[1, 0, 0, 0],
-                   [0, np.cos(angle_x), -np.sin(angle_x), 0],
-                   [0, np.sin(angle_x), np.cos(angle_x), 0],
+                   [0, np.cos(angle_xx), -np.sin(angle_xx), 0],
+                   [0, np.sin(angle_xx), np.cos(angle_xx), 0],
                    [0, 0, 0, 1]])
 
     My = np.array([[np.cos(angle_yy), 0, np.sin(angle_yy), 0],

@@ -76,7 +76,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_3"
+name = "data_exemple/fleur_1"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -112,12 +112,12 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 Mt_t= np.transpose(Mt)
 
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
+pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
 print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
+M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp_name) 
 print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 print("Please wait a moment for ICP_2 to execute!!")
-M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
+M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp_name)
 
 M_icp_2_t= np.transpose(M_icp_2)
 M_icp_1_t=np.transpose(M_icp_1)
@@ -154,15 +154,22 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 # Proj_1= M_in @ M_exx
-Proj_1 = Mt @ matrix
+
+Proj_1 = Mt   # pour prendre le fichier source avec les préorientation enregistrées
+# Proj_1 = Mt @ matrix # version avec matrice 1er ICP
+
 Projection= M_in @  Proj_1 
 
-#Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
-obj_file_name= name_3D +'.obj'
-po.convert_ply_to_obj(model_3D_resized_name, obj_file_name)
+# Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
+obj_file_name_source = name_3D +'.obj'
+
+po.convert_ply_to_obj(pc_after_multiple_icp_name, obj_file_name_source) # pour prendre le fichier source avec les préorientation enregistrées
+# po.convert_ply_to_obj(model_3D_resized_name, obj_file_name_source) # version avec matrice 1er ICP
+
+
 # Chargement du fichier obj
 
-obj = OBJ(obj_file_name, swapyz=True)
+obj = OBJ(obj_file_name_source, swapyz=True)
 
 # # Affichage
 h, w, _ = color_image.shape
@@ -171,7 +178,6 @@ cv2.imshow("frame_avant", color_image)
 #recuperer les couleurs du l'objet 3D
 # color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
 # vertex_colors = np.asarray(color_3D_Model.colors)
-
 
 while True:
 
