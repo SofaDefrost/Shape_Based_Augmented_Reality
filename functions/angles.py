@@ -32,13 +32,13 @@ def angles(transform_matrix):
                    [0, np.sin(angle_x), np.cos(angle_x), 0],
                    [0, 0, 0, 1]])
 
-    My = np.array([[np.cos(angle_yy), 0, np.sin(angle_yy), 0],
+    My = np.array([[np.cos(angle_y), 0, np.sin(angle_y), 0],
                    [0, 1, 0, 0],
                    [-np.sin(angle_yy), 0, np.cos(angle_yy), 0],
                    [0, 0, 0, 1]])
 
-    Mz = np.array([[np.cos(angle_zz), -np.sin(angle_zz), 0, 0],
-                   [np.sin(angle_zz), np.cos(angle_zz), 0, 0],
+    Mz = np.array([[np.cos(angle_z), -np.sin(angle_z), 0, 0],
+                   [np.sin(angle_z), np.cos(angle_z), 0, 0],
                    [0, 0, 0, 0],
                    [0, 0, 0, 1]])
 
