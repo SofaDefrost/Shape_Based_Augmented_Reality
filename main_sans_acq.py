@@ -76,7 +76,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_1"
+name = "data_exemple/fleur_12"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -111,28 +111,30 @@ translation_vector[2] = translation_vector[2]
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 Mt_t= np.transpose(Mt)
 
- # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
-print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp_name) 
-print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
-print("Please wait a moment for ICP_2 to execute!!")
-M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp_name)
+# ##001
+#  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
+# pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
+# print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp_name) 
+# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+# print("Please wait a moment for ICP_2 to execute!!")
+# M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp_name)
 
-M_icp_2_t= np.transpose(M_icp_2)
-M_icp_1_t=np.transpose(M_icp_1)
+# M_icp_2_t = np.transpose(M_icp_2)
+# M_icp_1_t = np.transpose(M_icp_1)
 
-# Matrice de calibration de la caméra realsense D415
-# M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
-# Matrice de calibration de la caméra realsense D405
-M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
+# # Matrice de calibration de la caméra realsense D415
+# # M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+# # Matrice de calibration de la caméra realsense D405
+# M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
 
-# M_ex=   M_icp_1 @ M_icp_2
-#M_ex =  M_icp_1_t @ M_icp_2_t
-M_ex =   M_icp_1_t
+# # M_ex=   M_icp_1 @ M_icp_2
+# #M_ex =  M_icp_1_t @ M_icp_2_t
+# M_ex =   M_icp_1_t
 
-matrix= an.angles(M_ex)
-# matrix = M_ex
+# matrix= an.angles(M_ex)
+# # matrix = M_ex
+# ##001
 
 print("avant fct angles :")
 print(M_ex)
@@ -155,16 +157,16 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 # Proj_1= M_in @ M_exx
 
-Proj_1 = Mt   # pour prendre le fichier source avec les préorientation enregistrées
-# Proj_1 = Mt @ matrix # version avec matrice 1er ICP
+# Proj_1 = Mt   # pour prendre le fichier source avec les préorientation enregistrées
+Proj_1 = Mt @ matrix # version avec matrice 1er ICP
 
 Projection= M_in @  Proj_1 
 
 # Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name_source = name_3D +'.obj'
 
-po.convert_ply_to_obj(pc_after_multiple_icp_name, obj_file_name_source) # pour prendre le fichier source avec les préorientation enregistrées
-# po.convert_ply_to_obj(model_3D_resized_name, obj_file_name_source) # version avec matrice 1er ICP
+# po.convert_ply_to_obj(pc_after_multiple_icp_name, obj_file_name_source) # pour prendre le fichier source avec les préorientation enregistrées
+po.convert_ply_to_obj(model_3D_resized_name, obj_file_name_source) # version avec matrice 1er ICP
 
 
 # Chargement du fichier obj
