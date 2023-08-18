@@ -98,7 +98,7 @@ msk.mask(name_pc, pc_masked_name, threshold, color_phase)
 # Application de redimensionnement
 name_3D="data_exemple/model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-scaling_factor= 0.00099
+scaling_factor = 0.00099
 rz.Resize(name_model_3D, model_3D_resized_name,scaling_factor)
 # rzz.resize(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
 

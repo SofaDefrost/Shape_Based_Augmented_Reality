@@ -76,7 +76,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_7"
+name = "data_exemple/fleur_3"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -95,7 +95,7 @@ msk.mask(name_pc, pc_masked_name, threshold, color_phase)
 # Application de redimensionnement
 name_3D="data_exemple/model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-scaling_factor= 0.00099
+scaling_factor = 0.00099
 rz.Resize(name_model_3D, model_3D_resized_name,scaling_factor)
 # rzz.resize(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
 
@@ -124,11 +124,20 @@ M_icp_1_t=np.transpose(M_icp_1)
 
 # Matrice de calibration de la caméra realsense D415
 # M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
-#Matrice de calibration de la caméra realsense D405
+# Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
-M_ex=   M_icp_1 @ M_icp_2
+
+# M_ex=   M_icp_1 @ M_icp_2
 #M_ex =  M_icp_1_t @ M_icp_2_t
+M_ex =   M_icp_1_t
+
 matrix= an.angles(M_ex)
+# matrix = M_ex
+
+print("avant fct angles :")
+print(M_ex)
+print("apres fct angles :")
+print(matrix)
 
 # # M_ex =  np.transpose(M_ex)
 # M_exx=  Mt @ M_ex 
@@ -145,7 +154,7 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 # Proj_1= M_in @ M_exx
-Proj_1=Mt @ matrix
+Proj_1 = Mt @ matrix
 Projection= M_in @  Proj_1 
 
 #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
