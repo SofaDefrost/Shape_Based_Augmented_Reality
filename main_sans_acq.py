@@ -77,7 +77,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_3"
+name = "data_exemple/fleur_18"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -115,16 +115,16 @@ Mt_t= np.transpose(Mt)
 
 
 # ##001
-#  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-# pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
-# print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp_name) 
-# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
-# print("Please wait a moment for ICP_2 to execute!!")
-# M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp_name)
+ # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
+pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
+print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,target_pc_reposed_name,pc_after_multiple_icp_name) 
+print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+print("Please wait a moment for ICP_2 to execute!!")
+M_icp_2, _=cp.run_icp_2(target_pc_reposed_name, pc_after_multiple_icp_name)
 
-# M_icp_2_t = np.transpose(M_icp_2)
-# M_icp_1_t = np.transpose(M_icp_1)
+M_icp_2_t = np.transpose(M_icp_2)
+M_icp_1_t = np.transpose(M_icp_1)
 
 # # M_ex=   M_icp_1 @ M_icp_2
 # #M_ex =  M_icp_1_t @ M_icp_2_t
@@ -140,7 +140,7 @@ Mt_t= np.transpose(Mt)
 # # matrix = M_ex
 # ##001
 
-# matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-120) @ matrix_fcn.create_rot_matrix_y(20) 
+matrix = matrix_fcn.create_rot_matrix_z(-100) @ matrix_fcn.create_rot_matrix_x(-90) @ matrix_fcn.create_rot_matrix_y(0) 
 
 
 
@@ -153,15 +153,15 @@ Mt_t= np.transpose(Mt)
 
 # matrix_t = np.transpose(matrix)
 
-angle = np.radians(-90)
-Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(-90) # pour appliquer une rotation de 90 afin de faire coller les référentiels
+# Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
 # Proj_1= M_in @ M_exx
 
 # Proj_1 = Mt   # pour prendre le fichier source avec les préorientation enregistrées
-Proj_1 = Mt #@ matrix # version avec matrice 1er ICP
+Proj_1 = Mt @ matrix # version avec matrice 1er ICP
 # Proj_1 = matrix
 
 
@@ -175,7 +175,7 @@ M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0
 ###############################################
 
 # Projection=  Proj_1 
-Projection= M_in @  Proj_1
+Projection = M_in @  Proj_1
 
 # Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name_source = name_3D +'.obj'
