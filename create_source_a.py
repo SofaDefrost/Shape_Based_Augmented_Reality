@@ -13,11 +13,11 @@ import os
 
 source = o3d.io.read_point_cloud("./data_exemple/FleurDeLisThing.ply")
 
-transform_matrix = mf.create_rot_matrix_x(90)  # Assurez-vous que cette fonction existe dans matrix_function
+transform_matrix = mf.create_rot_matrix_x(20)  # Assurez-vous que cette fonction existe dans matrix_function
 
 source_temp = copy.deepcopy(source)
 source_a = source_temp.transform(transform_matrix)
 
-output_filename = "./data_exemple/source_a.ply"
+output_filename = "./data_exemple/source_b.ply"
 o3d.io.write_point_cloud(output_filename, source_a)
 

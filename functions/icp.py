@@ -3,6 +3,9 @@ import copy
 
 import open3d as o3d
 
+from scipy.spatial.transform import Rotation as Rot
+
+
 def draw_registration_result(source, target, transformation):
     """
     Function to visualize the result of the alignment between the source point cloud and the target point cloud.
@@ -78,6 +81,8 @@ Returns:
     curr_cost = 1000
     prev_cost = 10000
 
+    euler_angle_sum = [0,0,0]
+
     while True:
         new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
 
@@ -93,13 +98,21 @@ Returns:
         t = target_centroid - R @ source_centroid
         t = np.reshape(t, (1, 3))
         curr_cost = np.linalg.norm(target_repos - (R @ source_repos.T).T)
-       
+
+        print(R)
+        rotation_matrix = R[:3, :3]
+        rotation = Rot.from_matrix(rotation_matrix)
+        euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
+           
+        euler_angle_sum = euler_angle_sum + euler_angles
+        print(euler_angles)
+        print(euler_angle_sum)
 
         if prev_cost - curr_cost > cost_change_threshold:
             prev_cost = curr_cost
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source= source.transform(transform_matrix)# Il manque une parenthèse fermante pour la fonction multiple_icp
+            source= source.transform(transform_matrix) # Il manque une parenthèse fermante pour la fonction multiple_icp
            
             curr_iteration += 1
         else:
