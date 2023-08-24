@@ -120,7 +120,7 @@ Mt_t= np.transpose(Mt)
 pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
 print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
 M_icp_1, cost=cp.run_icp_1(source_path = model_3D_resized_name,target_path = target_pc_reposed_name,pc_after_multiple_icp = pc_after_multiple_icp_name) 
-print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 # print("Please wait a moment for ICP_2 to execute!!")
 # M_icp_2, _=cp.run_icp_2(target_pc_reposed_name, pc_after_multiple_icp_name)
 

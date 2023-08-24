@@ -5,6 +5,32 @@ import open3d as o3d
 import functions.matrix_function as mf
 from scipy.spatial.transform import Rotation as Rot
 
+def draw_two_pc(source, target):
+    """
+    Function to visualize the result of the alignment between the source point cloud and the target point cloud.
+
+    :param source: The source point cloud (open3d.geometry.PointCloud object).
+    :param target: The target point cloud (open3d.geometry.PointCloud object).
+    :param transformation: The transformation matrix (4x4 numpy array) to align the source point cloud to the target.
+    """
+    source_temp = copy.deepcopy(source)
+    target_temp = copy.deepcopy(target)
+    source_temp.paint_uniform_color([1, 0.706, 0])
+    target_temp.paint_uniform_color([0, 0.651, 0.929])
+
+    def key_callback(vis, key):
+        # Check if the pressed key is 'Q'
+        if key == ord('q'):
+            vis.close()  # Close the visualization window
+
+    vis = o3d.visualization.VisualizerWithKeyCallback()
+    vis.create_window()
+    vis.add_geometry(source_temp)
+    vis.add_geometry(target_temp)
+    vis.register_key_callback(ord('q'), key_callback)
+    vis.run()
+    vis.destroy_window()
+
 
 def draw_registration_result(source, target, transformation):
     """
@@ -99,7 +125,7 @@ Returns:
        
     print(curr_cost)
     
-    # draw_registration_result(source, target, transform_matrix)
+    draw_registration_result(source, target, transform_matrix)
     return transform_matrix, curr_cost
 
 
@@ -170,6 +196,8 @@ Returns:
         else:
             break
 
+    draw_registration_result(source, target, transform_matrix)
+
     return transform_matrix, curr_cost
 
 def multiple_icp(source, target):
@@ -202,7 +230,7 @@ def multiple_icp(source, target):
                 source_temp = copy.deepcopy(source)
                 source_temp.transform(transform_matrix)
 
-             
+                # _, cost = quick_icp(source_temp, target)
                 _, cost = icp(source_temp, target)
                 # _, cost = distance_between_pc(source_temp, target) # ne fonctionne pas : utiliser la distance de chamfer ?
 
