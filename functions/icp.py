@@ -182,7 +182,7 @@ Returns:
         rotation = Rot.from_matrix(rotation_matrix)
         euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
            
-        euler_angle_sum = euler_angle_sum + euler_angles
+        # euler_angle_sum = euler_angle_sum + euler_angles # for debug
         # print(euler_angles)
         # print(euler_angle_sum)
 
@@ -196,7 +196,7 @@ Returns:
         else:
             break
 
-    draw_registration_result(source, target, transform_matrix)
+    # draw_registration_result(source, target, transform_matrix)
 
     return transform_matrix, curr_cost
 
@@ -239,7 +239,7 @@ def multiple_icp(source, target):
                 # source_temp_points = np.asarray(source_temp.points)
                 # cost = np.linalg.norm(target_points - source_temp)
                 
-                print("We keep :")
+                print("We test:")
                 print([angle_x,angle_y,angle_z])
                 print(cost)
 
@@ -247,6 +247,9 @@ def multiple_icp(source, target):
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
+                    print("We keep :")
+                    print([angle_x,angle_y,angle_z])
+                    print(cost)
                     print(best_transform_matrix)
     
     # print("We keep finally :")

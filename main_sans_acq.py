@@ -114,18 +114,17 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 Mt_t= np.transpose(Mt)
 
 
-
 # ##001
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
 pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
 print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
 M_icp_1, cost=cp.run_icp_1(source_path = model_3D_resized_name,target_path = target_pc_reposed_name,pc_after_multiple_icp = pc_after_multiple_icp_name) 
-# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 # print("Please wait a moment for ICP_2 to execute!!")
 # M_icp_2, _=cp.run_icp_2(target_pc_reposed_name, pc_after_multiple_icp_name)
 
 # M_icp_2_t = np.transpose(M_icp_2)
-# M_icp_1_t = np.transpose(M_icp_1)
+M_icp_1_t = np.transpose(M_icp_1)
 
 # # M_ex=   M_icp_1 @ M_icp_2
 # #M_ex =  M_icp_1_t @ M_icp_2_t
@@ -142,7 +141,7 @@ M_icp_1, cost=cp.run_icp_1(source_path = model_3D_resized_name,target_path = tar
 # ##001
 
 # matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-90) @ matrix_fcn.create_rot_matrix_y(0) 
-matrix = M_icp_1 @ matrix_fcn.create_rot_matrix_x(-90) 
+matrix = M_icp_1_t @ matrix_fcn.create_rot_matrix_x(-90) 
 # print(matrix)
 
 # # M_ex =  np.transpose(M_ex)
