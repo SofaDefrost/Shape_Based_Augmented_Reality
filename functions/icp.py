@@ -210,9 +210,9 @@ def multiple_icp(source, target):
     #     for angle_y in range(0, 5, 5):
     #         for angle_z in range(-100, -90, 10):
         
-    for angle_x in range(-40, 40, 10):
+    for angle_x in range(-20, 20, 10):
         for angle_y in range(-10, 10, 10):
-            for angle_z in range(-40, 40, 10):
+            for angle_z in range(-20, 20, 10):
                 
                 M_x = mf.create_rot_matrix_x(angle_x)
                 M_y = mf.create_rot_matrix_y(angle_y)
