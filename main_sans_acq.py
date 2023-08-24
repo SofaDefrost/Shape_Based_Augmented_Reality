@@ -77,7 +77,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_18"
+name = "data_exemple/fleur_14"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -142,7 +142,7 @@ Mt_t= np.transpose(Mt)
 # # matrix = M_ex
 # ##001
 
-matrix = matrix_fcn.create_rot_matrix_z(-100) @ matrix_fcn.create_rot_matrix_x(-80) @ matrix_fcn.create_rot_matrix_y(0) 
+matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-90) @ matrix_fcn.create_rot_matrix_y(0) 
 
 print(matrix)
 
