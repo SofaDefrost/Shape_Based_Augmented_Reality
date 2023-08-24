@@ -2,7 +2,7 @@ import numpy as np
 import copy
 
 import open3d as o3d
-
+import functions.matrix_function as mf
 from scipy.spatial.transform import Rotation as Rot
 
 
@@ -52,6 +52,58 @@ def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
         points_arr.append(source_pc.points[idx[0]])
     return np.asarray(points_arr)
 
+def quick_icp(source, target):
+    
+    """
+Iterative Closest Point (ICP) Alignment Function
+
+This function performs Iterative Closest Point (ICP) alignment between a source point cloud
+and a target point cloud. It aims to find the transformation matrix that aligns the source
+cloud with the target cloud by minimizing the distance between their corresponding points.
+
+Parameters:
+    source (o3d.geometry.PointCloud): The source point cloud.
+    target (o3d.geometry.PointCloud): The target point cloud.
+
+Returns:
+    transform_matrix (numpy.ndarray): The transformation matrix that aligns the source cloud with the target cloud.
+    curr_cost (float): The final cost of the alignment after convergence.
+"""
+    source.paint_uniform_color([0.5, 0.5, 0.5])
+    target.paint_uniform_color([0, 0, 1])
+    target_points = np.asarray(target.points)
+
+    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
+    source.transform(transform_matrix)
+
+    curr_iteration = 0
+    cost_change_threshold = 0.001
+    curr_cost = 1000
+    prev_cost = 10000
+
+    
+    new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
+
+    source_centroid = np.mean(new_source_points, axis=0)
+    target_centroid = np.mean(target_points, axis=0)
+    source_repos = np.asarray([new_source_points[ind] - source_centroid for ind in range(len(new_source_points))])
+    target_repos = np.asarray([target_points[ind] - target_centroid for ind in range(len(target_points))])
+
+    cov_mat = target_repos.transpose() @ source_repos
+
+    U, X, Vt = np.linalg.svd(cov_mat)
+    R = U @ Vt
+    t = target_centroid - R @ source_centroid
+    t = np.reshape(t, (1, 3))
+    curr_cost = np.linalg.norm(target_repos - (R @ source_repos.T).T)
+       
+    print(curr_cost)
+    
+    # draw_registration_result(source, target, transform_matrix)
+    return transform_matrix, curr_cost
+
+
+
 def icp(source, target):
     
     """
@@ -99,14 +151,14 @@ Returns:
         t = np.reshape(t, (1, 3))
         curr_cost = np.linalg.norm(target_repos - (R @ source_repos.T).T)
 
-        print(R)
+        # print(R)
         rotation_matrix = R[:3, :3]
         rotation = Rot.from_matrix(rotation_matrix)
         euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
            
         euler_angle_sum = euler_angle_sum + euler_angles
-        print(euler_angles)
-        print(euler_angle_sum)
+        # print(euler_angles)
+        # print(euler_angle_sum)
 
         if prev_cost - curr_cost > cost_change_threshold:
             prev_cost = curr_cost
@@ -130,9 +182,9 @@ def multiple_icp(source, target):
     #     for angle_y in range(0, 5, 5):
     #         for angle_z in range(-100, -90, 10):
         
-    for angle_x in range(-120, -80, 10):
-        for angle_y in range(-20, 20, 10):
-            for angle_z in range(-180, -90, 10):
+    for angle_x in range(-40, 40, 10):
+        for angle_y in range(-10, 10, 10):
+            for angle_z in range(-40, 40, 10):
                 
                 M_x = mf.create_rot_matrix_x(angle_x)
                 M_y = mf.create_rot_matrix_y(angle_y)
@@ -151,8 +203,8 @@ def multiple_icp(source, target):
                 source_temp.transform(transform_matrix)
 
              
-                # _, cost = icp(source_temp, target)
-                _, cost = distance_between_pc(source_temp, target)
+                _, cost = icp(source_temp, target)
+                # _, cost = distance_between_pc(source_temp, target) # ne fonctionne pas : utiliser la distance de chamfer ?
 
                 
                 # target_points = np.asarray(target.points)

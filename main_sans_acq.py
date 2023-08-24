@@ -77,7 +77,7 @@ import functions.ply2obj as po
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_14"
+name = "data_exemple/fleur_3"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -101,7 +101,6 @@ rz.Resize(name_model_3D, model_3D_resized_name,scaling_factor)
 # rzz.resize(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
 
 
-
 # # Application de repositionnement
 target_pc_reposed_name = name + '_reposed.ply'
 translation_vector = rp.repose(pc_masked_name, target_pc_reposed_name)
@@ -116,12 +115,12 @@ Mt_t= np.transpose(Mt)
 
 
 
-# # ##001
-#  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-# pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
-# print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,target_pc_reposed_name,pc_after_multiple_icp_name) 
-# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+# ##001
+ # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
+pc_after_multiple_icp_name = "data_exemple/pc_after_multiple_icp.ply" 
+print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+M_icp_1, cost=cp.run_icp_1(source_path = model_3D_resized_name,target_path = target_pc_reposed_name,pc_after_multiple_icp = pc_after_multiple_icp_name) 
+print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 # print("Please wait a moment for ICP_2 to execute!!")
 # M_icp_2, _=cp.run_icp_2(target_pc_reposed_name, pc_after_multiple_icp_name)
 
@@ -142,9 +141,9 @@ Mt_t= np.transpose(Mt)
 # # matrix = M_ex
 # ##001
 
-matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-90) @ matrix_fcn.create_rot_matrix_y(0) 
-
-print(matrix)
+# matrix = matrix_fcn.create_rot_matrix_z(0) @ matrix_fcn.create_rot_matrix_x(-90) @ matrix_fcn.create_rot_matrix_y(0) 
+matrix = M_icp_1 @ matrix_fcn.create_rot_matrix_x(-90) 
+# print(matrix)
 
 # # M_ex =  np.transpose(M_ex)
 # M_exx=  Mt @ M_ex 
