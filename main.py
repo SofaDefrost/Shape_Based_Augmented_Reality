@@ -64,17 +64,24 @@ import functions.mask as msk
 import functions.icp as cp
 import functions.translation_m as tm
 import functions.repose as rp
-import functions.Resize as rz
-import functions.angles as an
+import functions.resize as rz
+import functions.filter_referential  as an
 #import functions.resize as rzz
 import realsense.acquisition as aq
 from functions.objloader_simple import OBJ
 import functions.project_and_display as proj
 import functions.ply2obj as po
-
+import realsense.utils.hsv as apply_hsv
+import realsense.filtre_hsv_realsense as get_filtre_hsv
+import realsense.utils.convert as cv
+############### Calibration et Loading ####################
 
 #Charger le model 3D
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
+
+###########################################################
+
+################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
 name = "data_exemple/fleur_7"
@@ -83,26 +90,43 @@ color_image_name = name + '.png'
 
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
 
-#aq.run_acquisition(name_pc, color_image_name)
+# aq.run_acquisition(name_pc, color_image_name)
 
 color_image= cv2.imread(color_image_name)
+
+###########################################################
+
+###################### Masquage ###########################
+
+# Détermination du masque
+
+points,couleurs=cv.ply_to_points_and_colors(name_pc)
+mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 # Application du masque
 # donner le nom pour le fichier nouveau après l'application du masque
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-threshold = 0.155 # donner une valeur pour fixer un seuil de couleur
-color_phase= "blue"
-msk.mask(name_pc, pc_masked_name, threshold, color_phase)
+
+points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
+
+cv.create_ply_file_without_colors(points_filtrés,pc_masked_name)
+
+###########################################################
+
+
+######################### Redimensionnemnt du modèle 3D ##################################
 
 # Application de redimensionnement
 name_3D="data_exemple/model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
 scaling_factor = 0.00099
-rz.Resize(name_model_3D, model_3D_resized_name,scaling_factor)
-# rzz.resize(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
+rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
+# rz.Resize_auto(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
 
+###########################################################
 
+################### Repositionnment du repère de la caméra dans celui de l'objet #####################
 
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
@@ -114,42 +138,44 @@ translation_vector[2] = translation_vector[2]
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 Mt_t= np.transpose(Mt)
 
- # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
-print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
-print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
-print("Please wait a moment for ICP_2 to execute!!")
-M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
+###########################################################
 
-M_icp_2_t= np.transpose(M_icp_2)
-M_icp_1_t=np.transpose(M_icp_1)
+###################### Matrice ICP #########################
+
+ # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
+# pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
+# print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
+# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+# print("Please wait a moment for ICP_2 to execute!!")
+# M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
+
+# M_icp_2_t= np.transpose(M_icp_2) # Vu que c'est des matrice de rotation la transposée est égale à l'inverse
+# M_icp_1_t=np.transpose(M_icp_1)  # Vu que c'est des matrice de rotation la transposée est égale à l'inverse
+
+###########################################################
+
+############### Calcul des points caméra ###################
 
 # Matrice de calibration de la caméra realsense D415
 # M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+
 #Matrice de calibration de la caméra realsense D405
 M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
-M_ex=   M_icp_1 @ M_icp_2
-#M_ex =  M_icp_1_t @ M_icp_2_t
-matrix= an.angles(M_ex)
+# M_ex=   M_icp_1 @ M_icp_2
+# matrix= an.angles(M_ex)
 
-# # M_ex =  np.transpose(M_ex)
-# M_exx=  Mt @ M_ex 
-# matrix = np.array([[-0.38488, 0, -0.922966, 0],
-#                     [0.89589, 0.240441, -0.373589, 0],
-#                     [0.221919, -0.970664, -0.0925412, 0],
-#                     [0, 0, 0, 1]])
-
-# matrix_t = np.transpose(matrix)
-
-angle = np.radians(-90)
-Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(-90)
+# Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
-# Proj_1= M_in @ M_exx
-Proj_1=Mt @ matrix
-Projection= M_in @  Proj_1 
+
+Projection= M_in @  Mt # @ matrix 
+
+###########################################################
+
+################# Affiche et exporte #######################
 
 #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name= name_3D +'.obj'
