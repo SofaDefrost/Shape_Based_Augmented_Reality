@@ -74,6 +74,7 @@ import functions.ply2obj as po
 import realsense.utils.hsv as apply_hsv
 import realsense.filtre_hsv_realsense as get_filtre_hsv
 import realsense.utils.convert as cv
+import functions.recover_realsense_matrix as rc
 ############### Calibration et Loading ####################
 
 #Charger le model 3D
@@ -136,42 +137,48 @@ translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
-Mt_t= np.transpose(Mt)
 
 ###########################################################
 
 ###################### Matrice ICP #########################
 
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-# pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
-# print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
-# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
-# print("Please wait a moment for ICP_2 to execute!!")
-# M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
+pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
+print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
+M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp) 
+print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+print("Please wait a moment for ICP_2 to execute!!")
+M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
 
-# M_icp_2_t= np.transpose(M_icp_2) # Vu que c'est des matrice de rotation la transposée est égale à l'inverse
-# M_icp_1_t=np.transpose(M_icp_1)  # Vu que c'est des matrice de rotation la transposée est égale à l'inverse
+M_icp_2_t= np.transpose(M_icp_2) # Vu que c'est des matrices de rotation la transposée est égale à l'inverse
+M_icp_1_t=np.transpose(M_icp_1)  # Vu que c'est des matrices de rotation la transposée est égale à l'inverse
 
 ###########################################################
 
 ############### Calcul des points caméra ###################
 
-# Matrice de calibration de la caméra realsense D415
-# M_in = np.array([[629.538, 0, 320.679, 0], [0, 629.538, 234.088, 0], [0, 0, 1, 0]])  # Matrice intrinsèque
+# Matrice de calibration
+calibration_matrix = rc.recover_matrix_calib()
+print(calibration_matrix)
+M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+# M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
 
-#Matrice de calibration de la caméra realsense D405
-M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe
-# M_ex=   M_icp_1 @ M_icp_2
-# matrix= an.angles(M_ex)
 
-# angle = np.radians(-90)
-# Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+
+M_ex=   M_icp_1 
+
+M_icp_1_inv = np.linalg.inv(M_icp_1)
+M_icp_2_inv = np.linalg.inv(M_icp_2)
+
+print(M_icp_2_inv)
+
+angle = np.radians(-90)
+Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 
 
 # Matrice de projection ==> Matrice extrinsèque transposée * Matrice intrinsèque
-
-Projection= M_in @  Mt # @ matrix 
+ 
+Projection= M_in @  Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_90
 
 ###########################################################
 

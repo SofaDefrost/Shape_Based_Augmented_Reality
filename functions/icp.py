@@ -158,9 +158,7 @@ Returns:
     cost_change_threshold = 0.001
     curr_cost = 1000
     prev_cost = 10000
-
     euler_angle_sum = [0,0,0]
-
     while True:
         new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
 
@@ -177,7 +175,6 @@ Returns:
         t = np.reshape(t, (1, 3))
         curr_cost = np.linalg.norm(target_repos - (R @ source_repos.T).T)
 
-        # print(R)
         rotation_matrix = R[:3, :3]
         rotation = Rot.from_matrix(rotation_matrix)
         euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
@@ -191,13 +188,11 @@ Returns:
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
             source= source.transform(transform_matrix) # Il manque une parenthèse fermante pour la fonction multiple_icp
-           
             curr_iteration += 1
         else:
             break
 
-    # draw_registration_result(source, target, transform_matrix)
-
+    #draw_registration_result(source, target, transform_matrix)
     return transform_matrix, curr_cost
 
 def multiple_icp(source, target):
@@ -209,10 +204,10 @@ def multiple_icp(source, target):
     # for angle_x in range(-90, -70, 10):
     #     for angle_y in range(0, 5, 5):
     #         for angle_z in range(-100, -90, 10):
-        
+    best_angles=[]
     for angle_x in range(-20, 20, 10):
-        for angle_y in range(-10, 10, 10):
-            for angle_z in range(-20, 20, 10):
+        for angle_y in range(-20, 20, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
+            for angle_z in range(-20, 20, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
                 
                 M_x = mf.create_rot_matrix_x(angle_x)
                 M_y = mf.create_rot_matrix_y(angle_y)
@@ -221,7 +216,7 @@ def multiple_icp(source, target):
                 # matrix = M_x @ M_y
                 # transform_matrix=matrix@ M_z
                 
-                transform_matrix = M_z @ M_x @ M_y
+                transform_matrix = M_x @ M_y @ M_z 
                 
 
                 # print(best_transform_matrix)
@@ -249,12 +244,14 @@ def multiple_icp(source, target):
                     best_cost = cost
                     print("We keep :")
                     print([angle_x,angle_y,angle_z])
+                    best_angles=[angle_x,angle_y,angle_z]
                     print(cost)
                     print(best_transform_matrix)
     
-    # print("We keep finally :")
-    # print(best_transform_matrix)
-
+    print("We keep finally :")
+    print(best_transform_matrix)
+    print("Best angles :")
+    print(best_angles)    
     return best_transform_matrix, best_cost
 
 
