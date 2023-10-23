@@ -76,9 +76,9 @@ import realsense.filtre_hsv_realsense as get_filtre_hsv
 import realsense.utils.convert as cv
 import functions.recover_realsense_matrix as rc
 import transformations as tf
-############### Calibration et Loading ####################
+############### Loading ####################
 
-#Charger le model 3D
+# Charger le model 3D
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 ###########################################################
@@ -113,6 +113,7 @@ pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau a
 points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
 
 cv.create_ply_file_without_colors(points_filtrés,pc_masked_name)
+
 
 ###########################################################
 

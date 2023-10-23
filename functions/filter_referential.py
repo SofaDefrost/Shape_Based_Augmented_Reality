@@ -22,8 +22,8 @@ def angles(transform_matrix):
     # Obtenir les angles d'Euler (en radians) sous forme d'un vecteur (roll, pitch, yaw)
     euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
     
-    print("ROTATION :")
-    print(euler_angles)
+    # print("ROTATION :")
+    # print(euler_angles)
 
     # Extraction des angles individuels
     # angle_z, angle_y, angle_x = np.radians(euler_angles)

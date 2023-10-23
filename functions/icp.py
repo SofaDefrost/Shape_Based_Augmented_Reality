@@ -130,7 +130,7 @@ Returns:
 
 
 
-def icp(source, target,transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])):
+def icp(source, target):
     
     """
 Iterative Closest Point (ICP) Alignment Function
@@ -150,7 +150,8 @@ Returns:
     source.paint_uniform_color([0.5, 0.5, 0.5])
     target.paint_uniform_color([0, 0, 1])
     target_points = np.asarray(target.points)
-
+    
+    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
     source.transform(transform_matrix)
 
     curr_iteration = 0
@@ -204,10 +205,13 @@ def multiple_icp(source, target):
     # for angle_x in range(-90, -70, 10):
     #     for angle_y in range(0, 5, 5):
     #         for angle_z in range(-100, -90, 10):
+
+    print("If you want faster results (for example: for tests) you can change the range of the angles (in multiple_icp)")
+
     best_angles=[]
-    for angle_x in range(-20, 20, 10):
-        for angle_y in range(-20, 20, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
-            for angle_z in range(50, 60, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
+    for angle_x in range(-20, 20, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
+        for angle_y in range(-20, 20, 10): # Idem
+            for angle_z in range(-20, 50, 10): # Idem
                 
                 M_x = mf.create_rot_matrix_x(angle_x)
                 M_y = mf.create_rot_matrix_y(angle_y)
@@ -233,25 +237,17 @@ def multiple_icp(source, target):
                 # target_points = np.asarray(target.points)
                 # source_temp_points = np.asarray(source_temp.points)
                 # cost = np.linalg.norm(target_points - source_temp)
-                
-                print("We test:")
-                print([angle_x,angle_y,angle_z])
-                print(cost)
-
         
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
-                    print("We keep :")
-                    print([angle_x,angle_y,angle_z])
                     best_angles=[angle_x,angle_y,angle_z]
-                    print(cost)
-                    print(best_transform_matrix)
     
     print("We keep finally :")
     print(best_transform_matrix)
     print("Best angles :")
-    print(best_angles)    
+    print(best_angles)
+    print("With a cost of", best_cost)    
     return best_transform_matrix, best_cost
 
 
