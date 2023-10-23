@@ -231,6 +231,30 @@ def translation_matrix(direction):
     M[:3, 3] = direction[:3]
     return M
 
+# Fonction pour créer la matrice de rotation autour de l'axe X
+def rotation_matrix_x(alpha):
+    return numpy.array([
+        [1, 0, 0],
+        [0, numpy.cos(alpha), -numpy.sin(alpha)],
+        [0, numpy.sin(alpha), numpy.cos(alpha)]
+    ])
+
+# Fonction pour créer la matrice de rotation autour de l'axe Y
+def rotation_matrix_y(beta):
+    return numpy.array([
+        [numpy.cos(beta), 0, numpy.sin(beta)],
+        [0, 1, 0],
+        [-numpy.sin(beta), 0, numpy.cos(beta)]
+    ])
+
+# Fonction pour créer la matrice de rotation autour de l'axe Z
+def rotation_matrix_z(gamma):
+    return numpy.array([
+        [numpy.cos(gamma), -numpy.sin(gamma), 0],
+        [numpy.sin(gamma), numpy.cos(gamma), 0],
+        [0, 0, 1]
+    ])
+
 
 def translation_from_matrix(matrix):
     """Return translation vector from translation matrix.

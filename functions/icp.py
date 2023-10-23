@@ -130,7 +130,7 @@ Returns:
 
 
 
-def icp(source, target):
+def icp(source, target,transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])):
     
     """
 Iterative Closest Point (ICP) Alignment Function
@@ -151,7 +151,6 @@ Returns:
     target.paint_uniform_color([0, 0, 1])
     target_points = np.asarray(target.points)
 
-    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
     source.transform(transform_matrix)
 
     curr_iteration = 0
@@ -159,6 +158,7 @@ Returns:
     curr_cost = 1000
     prev_cost = 10000
     euler_angle_sum = [0,0,0]
+
     while True:
         new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
 
@@ -207,7 +207,7 @@ def multiple_icp(source, target):
     best_angles=[]
     for angle_x in range(-20, 20, 10):
         for angle_y in range(-20, 20, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
-            for angle_z in range(-20, 20, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
+            for angle_z in range(50, 60, 10): # En théorie il faut mettre la même plage de donnée que pour x mais la pour les tests : s'est trop longs
                 
                 M_x = mf.create_rot_matrix_x(angle_x)
                 M_y = mf.create_rot_matrix_y(angle_y)

@@ -27,13 +27,18 @@ def rotation_matrix_z(gamma):
     ])
 
 # Angles de rotation autour des axes X, Y et Z (en radians)
-alpha = np.radians(10) # Exemple : rotation de 45 degrés autour de l'axe X
+alpha = np.radians(-10) # Exemple : rotation de 45 degrés autour de l'axe X
 beta = np.radians(-10)   # Exemple : rotation de 30 degrés autour de l'axe Y
 gamma = np.radians(10)  # Exemple : rotation de 60 degrés autour de l'axe Z
 
 # Calcul de la matrice de rotation composite RXYZ
 R_XYZ = np.dot(rotation_matrix_x(alpha), np.dot(rotation_matrix_y(beta), rotation_matrix_z(gamma)))
-
+R_XYZ_tr=np.transpose(R_XYZ)
+R_XYZ_inv=np.linalg.inv(R_XYZ)
 # Affichage de la matrice de rotation composite
 print("Matrice de rotation RXYZ :")
 print(R_XYZ)
+print("Matrice de rotation R_XYZ inversée :")
+print(R_XYZ_inv)
+print("Matrice de rotation R_XYZ transposée  :")
+print(R_XYZ_tr)

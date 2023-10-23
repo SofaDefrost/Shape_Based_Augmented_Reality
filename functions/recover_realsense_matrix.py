@@ -14,8 +14,7 @@ def recover_matrix_calib():
     fx, fy, cx, cy = depth_intrinsics.fx, depth_intrinsics.fy, depth_intrinsics.ppx, depth_intrinsics.ppy
 
     # Matrice de calibration
-    print("Matrice de calibration:")
-    calibration_matrix = np.array([[fx, 0, cx-100],
+    calibration_matrix = np.array([[fx, 0, cx],
                                    [0, fy, cy],
                                    [0, 0, 1]], dtype=np.float32)
     return calibration_matrix

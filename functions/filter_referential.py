@@ -20,7 +20,7 @@ def angles(transform_matrix):
     # print(rotation)
 
     # Obtenir les angles d'Euler (en radians) sous forme d'un vecteur (roll, pitch, yaw)
-    euler_angles = rotation.as_euler('zyx', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
+    euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
     
     print("ROTATION :")
     print(euler_angles)
@@ -56,4 +56,4 @@ def angles(transform_matrix):
     matrix_1a = Mx @ My
     matrix_1 = matrix_1a @ Mz
 
-    return matrix_1
+    return matrix_1,[np.degrees(angle_xx),np.degrees(angle_yy),np.degrees(angle_zz)]
