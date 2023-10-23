@@ -1,40 +1,23 @@
-## Augmented_Reality
+# Augmented_Reality
 
-# Mode d'emploi 
+Ce programme permet de supperposer une modèle 3D à un nuage de points capturé par une caméra RealSense et d'en faire un affichage.
+
+## Mode d'emploi 
 
 Il faut executer le code python main.py :
 ```console
 python3 main.py
 ```
+## Points importants
 L'utilisateur doit prendre en compte les points suivants :
 
-**Important**:
-- Si vous souhaitez exécuter le programme contenant un exemple sans refaire l'acquisition, veuillez exécuter "main_sans_acq.py". En revanche, si vous souhaitez réaliser une acquisition, veuillez exécuter le fichier "main_acq.py".
-- Placez votre fichier objet 3D dans le dossier "data_exemple".
-- Indiquez le chemin vers le modèle 3D.
-- Attribuez un nom au nuage de points et à l'image optique en utilisant la variable "name".
-- **Pendant la capture, l'utilisateur devra appuyer sur la touche S du clavier pour démarrer la capture et la touche Q pour l'arrêter, dans le cas de l'exécution de "main_acq.py"**.
-- Configurez le seuil de couleur et la plage de couleurs.
+- **Pendant la capture, l'utilisateur devra appuyer sur la touche S du clavier pour effectuer la capture et la touche Q pour l'arrêter**.
 - Vérifiez le type de caméra utilisée pour appliquer la matrice de calibration spécifique à cette caméra.
-- Si l'objet 3D possède ses propres couleurs spécifiques, l'utilisateur doit appeler ou décommenter l'appel à la fonction "project_and_display". Dans le cas contraire, il doit décommenter la ligne contenant la fonction "project_and_display_without_colors".
 - N'oubliez pas de fermer la fenêtre d'affichage de "l'ICP" afin d'avoir l'affichage de la réalité augmentée.
-- Pour arrêter l'affichage, il suffit de cliquer sur la touche Q.
+- Pour arrêter cet affichage, il suffit de cliquer sur la touche Q.
 
-Pour les deux fonctions suivantes, vous devez choisir en fonction des résultats souhaités :
-
-- **Redimensionnement automatique** (redimensionnement avec 'r' en minuscule) : Cette fonction "resize" permet de redimensionner le modèle 3D et le nuage de points filtré et repositionné. L'utilisateur doit fournir les paramètres suivants :
-    - `nom_nuage_points_repositionne` : Nom du fichier du nuage de points repositionnés au format PLY.
-    - `nom_modele_3D` : Nom du fichier du modèle 3D au format PLY.
-    - `nuage_points_redimensionne` : Nom du fichier dans lequel le nouveau nuage de points redimensionné sera enregistré au format PLY.
-
-- **Distance maximale** : Cette fonction "max_distance" calcule la distance maximale entre le modèle 3D et le nuage de points filtré et repositionné, puis récupère cette valeur.
-
-- **Redimensionnement avec seuil** (redimensionnement avec 'R' en majuscule) :
-    - `nom_nuage_points_repositionne` : Nom du fichier du nuage de points repositionnés.
-    - Nom du fichier de sortie après le redimensionnement.
-    - Facteur de redimensionnement.
     
-# Prérecquis :
+## Prérecquis :
 Librairies python nécessaires : pyrealsense2 et opencv-python, trimesh, open3d, scipy
 ```console
 pip3 install pyrealsense2
@@ -48,31 +31,29 @@ pip3 install math
 pip3 install numpy
 ```
 
-# Description générale du programme :
+## Description générale du programme :
 
 Ce programme utilise plusieurs fonctions pour effectuer les étapes suivantes :
 
 1. **Acquisition** : Cette fonction permet de récupérer un nuage de points en se connectant à la caméra RealSense. Pour l'utiliser, l'utilisateur doit d'abord initialiser le nom du fichier du nuage de points ainsi que le nom de l'image optique. Ensuite, appelez la fonction `run_acquisition` en fournissant les paramètres suivants :
     - `nom_fichier_nuage_points` (nom du fichier du nuage de points) et `nom_image_2D`.
 
-2. **Masquage** : Cette fonction permet de filtrer le nuage de points pour ne sélectionner que la couleur de l'objet. Elle prend les paramètres suivants :
-    - `nom_nuage_points` : Nom du fichier du nuage de points généré par la fonction d'acquisition.
-    - `nom_nuage_points_filtre` : Nom du fichier dans lequel le nuage de points sera enregistré après l'application du masque.
-    - `seuil` : Seuil utilisé pour filtrer les points en fonction de la couleur ou des coordonnées.
-    - `phase_couleur` : Permet de sélectionner quelle plage de couleurs conserver, par exemple, dans le spectre rouge (intervalle [0-1]) et dans la colonne 0.
+1. **Détermination et application d'un masque** : Cette fonction permet de filtrer le nuage de points avec un masque hsv :
+    - Lors de l'éxécution de la fonction *determinemask* plusieures fenêtres s'ouvrent. Ces dernières permettent déterminer le masque hsv à appliquer à notre capture. Parmis elles, une permet à l'utilisateur de paramétrer le masque à l'aide de curseurs. Au fur et à mesure de sa configuration, l'utilisateur voit le retour de l'application de son masque sur une autre fenêtre. Une fois que ce dernier est satisfait par son choix, il peut l'exporter en appuyant sur la touche 'q'.
+    - Le masque hsv est alors exporté.
+    - On applique ensuite ce masque au nuage de points.
 
-3. **Repositionnement** : Cette fonction permet de "repositionner" correctement les points du nuage de points.
+1. **Redimensionnement** : Cette étape permet de redimensionner le nuage de points cible (un modèle CAO par exemple) en réduisant ou en augmentant la taille de ses sommets.
 
-4. **Redimensionnement** : Cette fonction permet de redimensionner un nuage de points en réduisant ou en augmentant la taille de ses sommets.
+1. **Repositionnement** : Cette étape permet de "repositionner" correctement les points du nuage de points.
 
-5. **Angles** : Cette fonction permet d'inverser les angles de l'axe 'Y' et 'Z' du nuage de points.
+1. **Translation** : Cette étape permet de déterminer la translation à effectuer à notre nuage de points pour que ce dernier puisse se superposer à notre modèle 3D.
 
-6. **ICP** : Cette fonction permet d'aligner deux nuages de points et de récupérer la meilleure matrice initiale ainsi que la matrice d'alignement.
+1. **ICP 1** : Cette étape permet de trouver la bonne configuration initiale pour notre nuage de points pour la seconde ICP. En effet, lors de cette étape, on parcours l'ensemble des rotations possibles (à 10° près) et on conserve celle qui l'ICP de plus faible cout. Cette étape permet de déterminer "grossièrement" la position du nuage de points.
 
-7. **Translation_m** : Cette fonction permet de convertir le vecteur de translation en une matrice de transformation 4x4.
+1. **ICP 2** : Maintenant que l'on connait les rotations à appliquer à notre nuaae de point à 10 ° près, on fait un dernier ICP à partir de cette position. Ce dernier permettra d'obtenir avec précision la position du nuage de points.
 
-8. **Project_and_display** : Cette fonction projette le nuage de points de l'objet 3D, qui contient ses couleurs spécifiques, sur une image optique.
+1. **Points de projections** : Puisque l'on est dans un cadre de réalité augmenté, on cherche à pouvoir superposer un modèle 3D à notre nuage de points (c'est à dire l'inverse que ce que l'on fait depuis le début !). Il faut donc recalculer la position des points de ce modèle 3D dans le repère dans la vue de la camèra. On n'oublie pas de considérer la matrice intrinséque de la caméra (qui gérer les déformations dues à la distance focale, les lentilles...)
 
-9. **Project_and_display_without_colors** : Cette fonction est utilisée pour un fichier modèle 3D qui ne contient pas de couleurs.
+1. **Afficher les résulats** : Il ne reste plus qu'à afficher la superposition finale de notre modèle 3D sur notre nuage de points.
 
-10. **Ply2obj** : Cette fonction réalise la conversion d'un fichier .ply en un fichier .obj.
