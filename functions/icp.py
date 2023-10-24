@@ -129,7 +129,6 @@ Returns:
     return transform_matrix, curr_cost
 
 
-
 def icp(source, target):
     
     """
@@ -186,9 +185,12 @@ Returns:
             prev_cost = curr_cost
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source= source.transform(transform_matrix) # Il manque une parenthèse fermante pour la fonction multiple_icp
+            source= source.transform(transform_matrix) 
             curr_iteration += 1
         else:
+            transform_matrix = np.hstack((R, t.T))
+            transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
+            source= source.transform(transform_matrix) 
             break
 
     #draw_registration_result(source, target, transform_matrix)
