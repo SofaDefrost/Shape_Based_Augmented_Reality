@@ -147,11 +147,10 @@ Returns:
     transform_matrix (numpy.ndarray): The transformation matrix that aligns the source cloud with the target cloud.
     curr_cost (float): The final cost of the alignment after convergence.
 """
-    source.paint_uniform_color([0.5, 0.5, 0.5])
-    target.paint_uniform_color([0, 0, 1])
     target_points = np.asarray(target.points)
     
-    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
+    transform_matrix = np.identity(4)
+
     source.transform(transform_matrix)
 
     curr_iteration = 0
@@ -159,9 +158,8 @@ Returns:
     curr_cost = 1000
     prev_cost = 10000
     euler_angle_sum = [0,0,0]
-
     while True:
-        new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
+        new_source_points = find_nearest_neighbors(source, target, 1)
 
         source_centroid = np.mean(new_source_points, axis=0)
         target_centroid = np.mean(target_points, axis=0)
@@ -195,6 +193,7 @@ Returns:
 
     #draw_registration_result(source, target, transform_matrix)
     return transform_matrix, curr_cost
+
 
 def multiple_icp(source, target):
     # Initialize the best transformation and cost.

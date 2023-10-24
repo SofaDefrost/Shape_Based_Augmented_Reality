@@ -76,6 +76,8 @@ import realsense.filtre_hsv_realsense as get_filtre_hsv
 import realsense.utils.convert as cv
 import functions.recover_realsense_matrix as rc
 import functions.transformations as tf
+from realsense.utils import filtrage_bruit as bruit
+
 ############### Loading ####################
 
 # Charger le model 3D
@@ -92,7 +94,7 @@ color_image_name = name + '.png'
 
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
 
-# aq.run_acquisition(name_pc, color_image_name)
+#aq.run_acquisition(name_pc, color_image_name)
 
 color_image= cv2.imread(color_image_name)
 
@@ -112,11 +114,16 @@ pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau a
 
 points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
 
-cv.create_ply_file_without_colors(points_filtrés,pc_masked_name)
-
-
 ###########################################################
 
+####################### Filtrage Bruit #####################
+# Peut être pas super utile...
+
+name_bruit=name+'_filtré_bruit.ply'
+point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
+cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
+
+###########################################################
 
 ######################### Redimensionnemnt du modèle 3D ##################################
 
@@ -133,7 +140,7 @@ rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
-translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
+translation_vector = rp.repose(name_bruit, pc_reposed_name)
 translation_vector[0] = -translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
@@ -179,7 +186,7 @@ M_icp_2_inv = np.linalg.inv(M_icp_2) # Idem
 
 # On recalcule la matrice de rotation associée au second ICP parce que sinon ça ne marche pas (¯\_(ツ)_/¯)
 _,angles_ICP2_inv=an.angles(M_icp_2_inv)
-print("Voici les angles d'ICP2",angles_ICP2_inv)
+print("Voici les angles d'ICP2_inv",angles_ICP2_inv)
 
 # Angles de rotation autour des axes X, Y et Z (en radians)
 alpha = np.radians(angles_ICP2_inv[0]) 
