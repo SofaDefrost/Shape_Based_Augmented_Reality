@@ -210,7 +210,7 @@ Returns:
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
             source_temp= source_temp.transform(transform_matrix) 
             break
-        
+
     return transform_matrix_cumulee, curr_cost
 
 
@@ -307,10 +307,7 @@ def run_icp_2(source_path, target_path):
     
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
-    print("Source début:", np.asarray(source.points))
     # Call the icp function to align the source and target point clouds.
     transform_matrix,_ = icp(source, target)
-    print("Source fin:", np.asarray(source.points))
     draw_registration_result(source, target, transform_matrix)
-    # print("Transformation matrix",transform_matrix)
     return transform_matrix, _

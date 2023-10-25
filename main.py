@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Jul 23 09:45:05 2023
+Updated on Wed Oct 23 11:44:38 2023
 
-@author: tinhinane
+@author: Tinhinane and Thibaud
 """
 
 """ 
@@ -88,7 +89,7 @@ name_model_3D = "data_exemple/FleurDeLisThing.ply"
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_7"
+name = "data_exemple/fleur"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -146,19 +147,21 @@ translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
+# print("Matrice de translation:",Mt)
 
 ###########################################################
 
 ###################### Matrice ICP #########################
 
- # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
-pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
-print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp)
-# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
-print("Please wait a moment for ICP_2 to execute!!")
+print("Please wait a moment for ICP to execute!!")
 M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
-# print("M_icp_2 :",M_icp_2)
+# print("M_icp :",M_icp_2)
+
+M_icp_2_inv = np.linalg.inv(M_icp_2) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
+
+_,angles_ICP2=an.angles(M_icp_2)
+print("Voici les angles de l'ICP : ",angles_ICP2)
+
 ###########################################################
 
 ########## Calcul des points de projections ###############
@@ -171,7 +174,7 @@ M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
 calibration_matrix = rc.recover_matrix_calib()
 M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
 # M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane
-M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster
+# M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main
 
 #### Matrice pour replaquer le modèle 3D ####
 # (Initialement le modéle n'est pas dans la position que l'on souhaite)
@@ -179,14 +182,9 @@ M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0,
 angle = np.radians(-90)
 Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 
-#### Matrices des ICP ####
-
-# M_icp_1_inv = np.linalg.inv(M_icp_1) # Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
-M_icp_2_inv = np.linalg.inv(M_icp_2) # Idem
-
 #### Calcul final de la projection ####
 
-Projection= M_in @  Mt @ M_icp_2_inv @ Mat_90
+Projection= M_in @ Mt @ M_icp_2_inv @ Mat_90  
 
 ###########################################################
 
@@ -207,16 +205,14 @@ cv2.imshow("frame_avant", color_image)
 # color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
 # vertex_colors = np.asarray(color_3D_Model.colors)
 
-
 while True:
 
-     frame_apres = proj.project_and_display_without_colors(color_image,obj, Projection, h, w)
+    frame_apres = proj.project_and_display_without_colors(color_image,obj, Projection, h, w)
     #Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
      #frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors )
-     cv2.imshow("frame_apres", frame_apres)
-
-     if cv2.waitKey(1) & 0xFF == ord('q'):        
-         break
+    cv2.imshow("frame_apres", frame_apres)
+    if cv2.waitKey(1) & 0xFF == ord('q'):        
+        break
 
 cv2.destroyAllWindows()
 
