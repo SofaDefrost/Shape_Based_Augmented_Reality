@@ -94,7 +94,7 @@ color_image_name = name + '.png'
 
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
 
-#aq.run_acquisition(name_pc, color_image_name)
+# aq.run_acquisition(name_pc, color_image_name)
 
 color_image= cv2.imread(color_image_name)
 
@@ -154,11 +154,11 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
  # Application de l'icp  avec  plusieurs matrices de transformation et d'enregister le fichier qui a le plus petit cout 
 pc_after_multiple_icp="data_exemple/pc_after_multiple_icp.ply" 
 print("Carry out the first ICP execution to obtain the best suitable initial matrix that has the lowest cost.")
-M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp)
-print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
+# M_icp_1, cost=cp.run_icp_1(model_3D_resized_name,pc_reposed_name,pc_after_multiple_icp)
+# print("The best matrix is:", M_icp_1, "with a low cost of:",cost )
 print("Please wait a moment for ICP_2 to execute!!")
-M_icp_2, _=cp.run_icp_2(pc_reposed_name, pc_after_multiple_icp)
-
+M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
+# print("M_icp_2 :",M_icp_2)
 ###########################################################
 
 ########## Calcul des points de projections ###############
@@ -181,26 +181,12 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 
 #### Matrices des ICP ####
 
-M_icp_1_inv = np.linalg.inv(M_icp_1) # Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
+# M_icp_1_inv = np.linalg.inv(M_icp_1) # Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
 M_icp_2_inv = np.linalg.inv(M_icp_2) # Idem
-
-# On recalcule la matrice de rotation associée au second ICP parce que sinon ça ne marche pas (¯\_(ツ)_/¯)
-_,angles_ICP2_inv=an.angles(M_icp_2_inv)
-print("Voici les angles d'ICP2_inv",angles_ICP2_inv)
-
-# Angles de rotation autour des axes X, Y et Z (en radians)
-alpha = np.radians(angles_ICP2_inv[0]) 
-beta = np.radians(angles_ICP2_inv[1])  
-gamma = np.radians(angles_ICP2_inv[2]) 
-
-# Calcul de la matrice de rotation composite RXYZ
-R_XYZ = np.dot(tf.rotation_matrix_x(alpha), np.dot(tf.rotation_matrix_y(beta), tf.rotation_matrix_z(gamma)))
-R_XYZ = np.hstack((R_XYZ, np.zeros((3, 1))))
-R_XYZ = np.vstack((R_XYZ, np.array([0, 0, 0, 1])))
 
 #### Calcul final de la projection ####
 
-Projection= M_in @  Mt @ M_icp_1_inv @ R_XYZ @ Mat_90
+Projection= M_in @  Mt @ M_icp_2_inv @ Mat_90
 
 ###########################################################
 

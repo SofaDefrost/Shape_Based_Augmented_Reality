@@ -45,7 +45,6 @@ def draw_registration_result(source, target, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
     source_temp.transform(transformation)
-
     def key_callback(vis, key):
         # Check if the pressed key is 'Q'
         if key == ord('q'):
@@ -60,6 +59,9 @@ def draw_registration_result(source, target, transformation):
     vis.destroy_window()
 
 
+import open3d as o3d
+import numpy as np
+from scipy.spatial import cKDTree
 
 def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
     """
@@ -71,12 +73,26 @@ def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
 
     :return: A numpy array containing the nearest points from the source point cloud for each point in the target point cloud.
     """
-    point_cloud_tree = o3d.geometry.KDTreeFlann(source_pc)
-    points_arr = []
-    for point in target_pc.points:
-        [_, idx, _] = point_cloud_tree.search_knn_vector_3d(point, nearest_neigh_num)
-        points_arr.append(source_pc.points[idx[0]])
-    return np.asarray(points_arr)
+    source_points = np.asarray(source_pc.points)
+    target_points = np.asarray(target_pc.points)
+
+    # Create a KD-Tree from the source points
+    source_kdtree = cKDTree(source_points)
+
+    # Find nearest neighbors for each point in the target point cloud
+    distances, indices = source_kdtree.query(target_points, k=nearest_neigh_num)
+
+    # Retrieve the nearest neighbor points
+    nearest_neighbors = source_points[indices]
+
+    return nearest_neighbors
+
+    # point_cloud_tree = o3d.geometry.KDTreeFlann(source_pc)
+    # points_arr = []
+    # for point in target_pc.points:
+    #     [_, idx, _] = point_cloud_tree.search_knn_vector_3d(point, nearest_neigh_num)
+    #     points_arr.append(source_pc.points[idx[0]])
+    # return np.asarray(points_arr)
 
 def quick_icp(source, target):
     
@@ -149,16 +165,19 @@ Returns:
     target_points = np.asarray(target.points)
     
     transform_matrix = np.identity(4)
+    
+    source_temp = copy.deepcopy(source)
 
-    source.transform(transform_matrix)
+    source_temp.transform(transform_matrix)
 
     curr_iteration = 0
     cost_change_threshold = 0.001
     curr_cost = 1000
     prev_cost = 10000
     euler_angle_sum = [0,0,0]
+    transform_matrix_cumulee=np.identity(4)
     while True:
-        new_source_points = find_nearest_neighbors(source, target, 1)
+        new_source_points = find_nearest_neighbors(source_temp, target, 1)
 
         source_centroid = np.mean(new_source_points, axis=0)
         target_centroid = np.mean(target_points, axis=0)
@@ -166,7 +185,6 @@ Returns:
         target_repos = np.asarray([target_points[ind] - target_centroid for ind in range(len(target_points))])
 
         cov_mat = target_repos.transpose() @ source_repos
-
         U, X, Vt = np.linalg.svd(cov_mat)
         R = U @ Vt
         t = target_centroid - R @ source_centroid
@@ -180,21 +198,20 @@ Returns:
         # euler_angle_sum = euler_angle_sum + euler_angles # for debug
         # print(euler_angles)
         # print(euler_angle_sum)
-
         if prev_cost - curr_cost > cost_change_threshold:
             prev_cost = curr_cost
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source= source.transform(transform_matrix) 
+            source_temp= source_temp.transform(transform_matrix) 
             curr_iteration += 1
+            transform_matrix_cumulee=transform_matrix_cumulee @ transform_matrix
         else:
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source= source.transform(transform_matrix) 
+            source_temp= source_temp.transform(transform_matrix) 
             break
-
-    #draw_registration_result(source, target, transform_matrix)
-    return transform_matrix, curr_cost
+        
+    return transform_matrix_cumulee, curr_cost
 
 
 def multiple_icp(source, target):
@@ -290,7 +307,10 @@ def run_icp_2(source_path, target_path):
     
     source = o3d.io.read_point_cloud(source_path)
     target = o3d.io.read_point_cloud(target_path)
+    print("Source début:", np.asarray(source.points))
     # Call the icp function to align the source and target point clouds.
     transform_matrix,_ = icp(source, target)
+    print("Source fin:", np.asarray(source.points))
     draw_registration_result(source, target, transform_matrix)
+    # print("Transformation matrix",transform_matrix)
     return transform_matrix, _
