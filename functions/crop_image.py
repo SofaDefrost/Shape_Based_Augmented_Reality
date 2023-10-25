@@ -78,5 +78,5 @@ def crop_image(image_path):
     cv2.destroyAllWindows()
 
 # Appel de la fonction
-image_path = "fleur_6.jpg"
+image_path = "fleur.jpg"
 crop_image(image_path)
