@@ -95,7 +95,7 @@ color_image_name = name + '.png'
 
 # Appeler la fonction run_acquisition pour récupérer le nuage de points
 
-# aq.run_acquisition(name_pc, color_image_name)
+aq.run_acquisition(name_pc, color_image_name)
 
 color_image= cv2.imread(color_image_name)
 
@@ -174,7 +174,7 @@ print("Voici les angles de l'ICP : ",angles_ICP2)
 calibration_matrix = rc.recover_matrix_calib()
 M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
 # M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane
-# M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main
+M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main
 
 #### Matrice pour replaquer le modèle 3D ####
 # (Initialement le modéle n'est pas dans la position que l'on souhaite)
