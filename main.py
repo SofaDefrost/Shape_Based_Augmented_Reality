@@ -77,7 +77,9 @@ import realsense.filtre_hsv_realsense as get_filtre_hsv
 import realsense.utils.convert as cv
 import functions.recover_realsense_matrix as rc
 import functions.transformations as tf
+import crop_points_cloud as cr
 from realsense.utils import filtrage_bruit as bruit
+from realsense.utils import realsense_pc as rpc
 
 ############### Loading ####################
 
@@ -93,11 +95,20 @@ name = "data_exemple/fleur"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
-# Appeler la fonction run_acquisition pour récupérer le nuage de points
+# Appeler la fonction points_and_colors_realsense pour récupérer le nuage de points et les couleurs
 
-aq.run_acquisition(name_pc, color_image_name)
-
+points,couleurs=aq.points_and_colors_realsense(color_image_name)
+couleurs_ligne=rpc.colors_relasense_sofa(couleurs)
+cv.create_ply_file(points,couleurs_ligne,"test1.ply")
 color_image= cv2.imread(color_image_name)
+
+###########################################################
+
+#################### Selectionner Zone ####################
+
+points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,couleurs_ligne)
+
+cv.create_ply_file(points_crop,couleurs_crop,"test2.ply")
 
 ###########################################################
 
@@ -105,7 +116,6 @@ color_image= cv2.imread(color_image_name)
 
 # Détermination du masque
 
-points,couleurs=cv.ply_to_points_and_colors(name_pc)
 mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 # Application du masque
@@ -113,16 +123,9 @@ mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
 
-points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
+points_filtrés,_= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
 
-###########################################################
-
-####################### Filtrage Bruit #####################
-# Peut être pas super utile...
-
-name_bruit=name+'_filtré_bruit.ply'
-point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
-cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
+cv.create_ply_file_without_colors(points_filtrés,pc_masked_name)
 
 ###########################################################
 
@@ -141,7 +144,7 @@ rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
-translation_vector = rp.repose(name_bruit, pc_reposed_name)
+translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
 translation_vector[0] = -translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
