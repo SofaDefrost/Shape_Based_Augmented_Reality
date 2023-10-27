@@ -91,7 +91,7 @@ name_model_3D = "data_exemple/FleurDeLisThing.ply"
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur_cool"
+name = "data_exemple/foie"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -121,7 +121,7 @@ mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
 
-points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
+points_filtrés,colors= apply_hsv.mask(points,couleurs,mask_hsv)
 
 ###########################################################
 
@@ -166,7 +166,9 @@ print("Please wait a moment for ICP to execute!!")
 M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
 # print("M_icp :",M_icp_2)
 
-def transformation_matrix_to_euler_xyz(transformation_matrix): # J'ai aucune idée de pourquoi ce truc doti être la mais si ce n'ets pas le cas ça ne marche pas...
+# Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
+
+def transformation_matrix_to_euler_xyz(transformation_matrix):
     # Extraire la sous-matrice de rotation 3x3
     rotation_matrix = transformation_matrix[:3, :3]
     
@@ -175,10 +177,19 @@ def transformation_matrix_to_euler_xyz(transformation_matrix): # J'ai aucune id�
     
     return euler_angles
 
+def matrix_from_angles(angle_x, angle_y, angle_z):
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, :3] = tf.euler_matrix(angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
+    return rotation_matrix
+
 angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
 print("Voici les angles de l'ICP : ",angles_ICP2)
 
-M_icp_2_inv = np.linalg.inv(M_icp_2) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
+x=-angles_ICP2[0]
+y=-angles_ICP2[1] # Utile ?
+z=angles_ICP2[2]
+
+M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
 
 
 ###########################################################
