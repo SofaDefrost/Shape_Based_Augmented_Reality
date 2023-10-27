@@ -91,31 +91,29 @@ name_model_3D = "data_exemple/FleurDeLisThing.ply"
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur"
+name = "data_exemple/fleur_cool"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
 # Appeler la fonction points_and_colors_realsense pour récupérer le nuage de points et les couleurs
 
-points,couleurs=aq.points_and_colors_realsense(color_image_name)
-couleurs_ligne=rpc.colors_relasense_sofa(couleurs)
-cv.create_ply_file(points,couleurs_ligne,"test1.ply")
+aq.run_acquisition(name_pc, color_image_name)
+
 color_image= cv2.imread(color_image_name)
 
 ###########################################################
 
-#################### Selectionner Zone ####################
+# #################### Selectionner Zone ####################
 
-points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,couleurs_ligne)
+# points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,colors)
 
-cv.create_ply_file(points_crop,couleurs_crop,"test2.ply")
-
-###########################################################
+# ###########################################################
 
 ###################### Masquage ###########################
 
 # Détermination du masque
 
+points,couleurs=cv.ply_to_points_and_colors(name_pc)
 mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 # Application du masque
@@ -123,13 +121,21 @@ mask_hsv=get_filtre_hsv.determinemaskhsv()
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
 
-points_filtrés,_= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
-
-cv.create_ply_file_without_colors(points_filtrés,pc_masked_name)
+points_filtrés,_= apply_hsv.mask(points,couleurs,mask_hsv)
 
 ###########################################################
 
-######################### Redimensionnemnt du modèle 3D ##################################
+####################### Filtrage Bruit #####################
+# Peut être pas super utile...
+
+name_bruit=name+'_filtré_bruit.ply'
+point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
+cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
+
+###########################################################
+
+
+######################### Redimensionnement du modèle 3D ##################################
 
 # Application de redimensionnement
 name_3D="data_exemple/model_3D"
@@ -144,7 +150,7 @@ rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
-translation_vector = rp.repose(pc_masked_name, pc_reposed_name)
+translation_vector = rp.repose(name_bruit, pc_reposed_name)
 translation_vector[0] = -translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
@@ -160,10 +166,20 @@ print("Please wait a moment for ICP to execute!!")
 M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
 # print("M_icp :",M_icp_2)
 
+def transformation_matrix_to_euler_xyz(transformation_matrix): # J'ai aucune idée de pourquoi ce truc doti être la mais si ce n'ets pas le cas ça ne marche pas...
+    # Extraire la sous-matrice de rotation 3x3
+    rotation_matrix = transformation_matrix[:3, :3]
+    
+    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
+    euler_angles = tf.euler_from_matrix(rotation_matrix, 'sxyz')  # 'sxyz' order for XYZ Euler angles
+    
+    return euler_angles
+
+angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
+print("Voici les angles de l'ICP : ",angles_ICP2)
+
 M_icp_2_inv = np.linalg.inv(M_icp_2) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
 
-_,angles_ICP2=an.angles(M_icp_2)
-print("Voici les angles de l'ICP : ",angles_ICP2)
 
 ###########################################################
 
@@ -187,7 +203,7 @@ Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np
 
 #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ M_icp_2_inv @ Mat_90  
+Projection= M_in @ Mt @ M_icp_2_inv @ Mat_90
 
 ###########################################################
 

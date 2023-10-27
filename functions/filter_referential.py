@@ -1,59 +1,27 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 17 15:52:12 2023
-
-@author: tinhinane
-"""
-
 import numpy as np
-from scipy.spatial.transform import Rotation as R
+import transformations as tf
 
-def angles(transform_matrix):
-    # Extraire la partie de rotation de la matrice (3x3)
-    rotation_matrix = transform_matrix[:3, :3]
-
-    # Convertir la matrice de rotation en objet Rotation
-    rotation = R.from_matrix(rotation_matrix)
-
-    # print("ROTATION :")
-    # print(rotation)
-
-    # Obtenir les angles d'Euler (en radians) sous forme d'un vecteur (roll, pitch, yaw)
-    euler_angles = rotation.as_euler('xyz', degrees=True)  # 'zyx' signifie que les rotations sont appliquées dans l'ordre ZYX
+def transformation_matrix_to_euler_xyz(transformation_matrix):
+    # Extraire la sous-matrice de rotation 3x3
+    rotation_matrix = transformation_matrix[:3, :3]
     
-    # print("ROTATION :")
-    # print(euler_angles)
+    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
+    euler_angles = tf.euler_from_matrix(rotation_matrix, 'sxyz')  # 'sxyz' order for XYZ Euler angles
+    
+    return euler_angles
 
-    # Extraction des angles individuels
-    # angle_z, angle_y, angle_x = np.radians(euler_angles)
+# Define a function to create a 4x4 rotation matrix from XYZ angles in radians
+def matrix_from_angles(angle_x, angle_y, angle_z):
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, :3] = tf.euler_matrix(angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
+    return rotation_matrix
 
-    angle_z, angle_y, angle_x = euler_angles
+# # Example usage to compute and print Euler angles
+# angles_in_radians = (np.radians(32), np.radians(67), np.radians(95))
+# rotation_matrix = matrix_from_angles(*angles_in_radians)
+# X, Y, Z = transformation_matrix_to_euler_xyz(rotation_matrix)
+# print("X (Pitch): {:.2f} radians".format(X))
+# print("Y (Yaw): {:.2f} radians".format(Y))
+# print("Z (Roll): {:.2f} radians".format(Z))
 
-    angle_xx = angle_x
-    angle_zz = angle_z
-    angle_yy = angle_y
 
-    # Matrices de rotation individuelles
-    Mx = np.array([[1, 0, 0, 0],
-                   [0, np.cos(angle_xx), -np.sin(angle_xx), 0],
-                   [0, np.sin(angle_xx), np.cos(angle_xx), 0],
-                   [0, 0, 0, 1]])
-
-    My = np.array([[np.cos(angle_yy), 0, np.sin(angle_yy), 0],
-                   [0, 1, 0, 0],
-                   [-np.sin(angle_yy), 0, np.cos(angle_yy), 0],
-                   [0, 0, 0, 1]])
-
-    Mz = np.array([[np.cos(angle_zz), -np.sin(angle_zz), 0, 0],
-                   [np.sin(angle_zz), np.cos(angle_zz), 0, 0],
-                   [0, 0, 1, 0],
-                   [0, 0, 0, 1]])
-
-    # # Matrice de transformation finale
-    # matrix_1 = np.dot(Mx,My, Mz)
-
-    matrix_1a = Mx @ My
-    matrix_1 = matrix_1a @ Mz
-
-    return matrix_1,[np.degrees(angle_xx),np.degrees(angle_yy),np.degrees(angle_zz)]
