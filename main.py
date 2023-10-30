@@ -84,14 +84,14 @@ from realsense.utils import realsense_pc as rpc
 ############### Loading ####################
 
 # Charger le model 3D
-name_model_3D = "data_exemple/FleurDeLisThing.ply"
+name_model_3D = "labo_biologie/foie_spectrometre.ply"
 
 ###########################################################
 
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/foie"
+name = "labo_biologie/foie"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -128,7 +128,7 @@ points_filtrés,colors= apply_hsv.mask(points,couleurs,mask_hsv)
 ####################### Filtrage Bruit #####################
 # Peut être pas super utile...
 
-name_bruit=name+'_filtré_bruit.ply'
+name_bruit=name+'_filtre_bruit.ply'
 point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
 cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 
@@ -138,11 +138,11 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 ######################### Redimensionnement du modèle 3D ##################################
 
 # Application de redimensionnement
-name_3D="data_exemple/model_3D"
+name_3D="model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
 scaling_factor = 0.00099
 rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
-# rz.Resize_auto(model_3D_masked_name,pc_masked_name,model_3D_resized_name) # Call the function to perform automatic resizing
+# rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
 
 ###########################################################
 
@@ -166,6 +166,7 @@ print("Please wait a moment for ICP to execute!!")
 M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
 # print("M_icp :",M_icp_2)
 
+# On ajuste la matrice dICP dans le repère de la caméra
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
 
 def transformation_matrix_to_euler_xyz(transformation_matrix):

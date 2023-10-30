@@ -36,6 +36,20 @@ This function calculates the maximum distance between points in a point cloud.
     print("La distance maximale du nuage de points:", max_distance)
     return max_distance#!/usr/bin/env python3
 
+def compute_max_distance(point_cloud):
+    # Récupérer les coordonnées des points sous forme de tableau NumPy
+    points = np.asarray(point_cloud.points)
+
+    max_distance = 0.0
+    num_points = len(points)
+
+    for i in range(num_points):
+        for j in range(i + 1, num_points):
+            distance = np.linalg.norm(points[i] - points[j])
+            if distance > max_distance:
+                max_distance = distance
+
+    return max_distance
 
 def Resize_pas_auto(output_file, pc_resized, scaling_factor):
     """
@@ -62,25 +76,25 @@ def resize_auto(pc_filtred_name, model_3D_name, point_cloud_resizing):
     Cette fonction redimensionne un nuage de points 3D à partir de deux fichiers au format PLY,
     en utilisant le rapport des distances maximales entre les points des deux nuages de points.
 
-    :param pc_filtred_name: Le nom du fichier du nuage de points filtré aprés l'application du masque au format PLY.
+    :param pc_filtred_name: Le nom du fichier du nuage de points filtré après l'application du masque au format PLY.
     :param model_3D_name: Le nom du fichier du modèle 3D au format PLY.
     :param point_cloud_resizing: Le nom du fichier dans lequel le nouveau nuage de points redimensionné
                                  sera enregistré au format PLY.
     """
-    # Chargement du modèle 3D représenté par le fichier model_3D_name à l'aide de la bibliothèque trimesh.
-    mesh = trimesh.load(model_3D_name)
+    # Charger les nuages de points filtré et modèle 3D
+    pc_filtred = o3d.io.read_point_cloud(pc_filtred_name)
+    model_3D = o3d.io.read_point_cloud(model_3D_name)
 
-    # Calcul des distances maximales entre les points des nuages de points model_3D_name et pc_reposing_name.
-    l1 = distance_max(model_3D_name)
-    l2 = distance_max(pc_filtred_name)
+    # Calculer les distances maximales des deux nuages de points
+    max_dist_pc_filtred = compute_max_distance(pc_filtred)
+    max_dist_model_3D = compute_max_distance(model_3D)
 
-    # Redimensionnement du nuage de points model_3D_name en multipliant chaque coordonnée de vertex
-    # par le rapport des distances maximales l1/l2. Cela ajuste la taille de l'objet.
-    scaled_vertices = mesh.vertices * (l1 / l2)
+    # Calculer le facteur de redimensionnement basé sur les distances maximales
+    scaling_factor = max_dist_model_3D / max_dist_pc_filtred
 
-    # Création d'un nouveau Trimesh à partir des nouvelles coordonnées de vertex scaled_vertices
-    # et des faces originales du nuage de points d'origine mesh.faces. Les faces sont stockées dans la propriété faces de l'objet Trimesh.
-    scaled_mesh = trimesh.Trimesh(scaled_vertices, faces=mesh.faces if hasattr(mesh, 'faces') else None)
+    # Redimensionner le nuage de points filtré
+    pc_filtred.scale(scaling_factor, center=pc_filtred.get_center())
 
-    # Exportation du nouveau nuage de points redimensionné dans le fichier point_cloud_resizing au format PLY.
-    scaled_mesh.export(point_cloud_resizing)
+    # Enregistrer le nuage de points redimensionné
+    o3d.io.write_point_cloud(point_cloud_resizing, pc_filtred)
+

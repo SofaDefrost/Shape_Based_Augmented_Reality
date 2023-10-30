@@ -49,4 +49,35 @@ def repose(pc_resized, pc_reposed):
 
     scaled_mesh.export(pc_reposed)
     return pt_milieu
-    
+
+
+def repose_obj(pc_resized, pc_reposed):
+    """
+    Repose the point cloud mesh by centering it around its mean point.
+
+    Parameters
+    ----------
+    pc_resized : str
+        The filename of the resized point cloud mesh in OBJ format.
+    pc_reposed : str
+        The filename to save the reposed point cloud mesh in OBJ format.
+
+    Returns
+    -------
+    pt_milieu : list
+        The coordinates of the mean point before reposing.
+    """
+    mesh = trimesh.load_mesh(pc_resized)  # Charge le fichier OBJ
+
+    # Calcul du point moyen
+    mean_point = np.mean(mesh.vertices, axis=0)
+    pt_milieu = mean_point.tolist()
+
+    # Centrage autour du point moyen
+    new_vertices = mesh.vertices - mean_point
+    reposed_mesh = trimesh.Trimesh(vertices=new_vertices, faces=mesh.faces)
+
+    # Exporte le fichier repositionné au format OBJ
+    reposed_mesh.export(pc_reposed)
+
+    return pt_milieu
