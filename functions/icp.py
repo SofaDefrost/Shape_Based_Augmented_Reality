@@ -3,6 +3,8 @@ import copy
 
 import open3d as o3d
 import functions.matrix_function as mf
+import functions.repose as rep
+import functions.transformations as tf
 from scipy.spatial.transform import Rotation as Rot
 
 def draw_two_pc(source, target):
@@ -213,49 +215,57 @@ Returns:
 
     return transform_matrix_cumulee, curr_cost
 
+def weighted_average_euclidean_distance(list_a, list_b):
+    # Si les listes ont des dimensions différentes, ajustez-les pour avoir la même dimension en ajoutant des zéros
+    if len(list_a) > len(list_b):
+        num_zeros = len(list_a) - len(list_b)
+        zero_array = np.zeros((num_zeros, len(list_b[0])))
+        list_b = np.concatenate((list_b, zero_array))
+    elif len(list_b) > len(list_a):
+        num_zeros = len(list_b) - len(list_a)
+        zero_array = np.zeros((num_zeros, len(list_a[0])))
+        list_a = np.concatenate((list_a, zero_array))
+    total_distance = 0
+    for coord_a in list_a:
+        min_distance = float('inf')  # Initialiser la distance minimale à l'infini
+        for coord_b in list_b:
+            distance = np.linalg.norm(np.array(coord_a) - np.array(coord_b))
+            min_distance = min(min_distance, distance)
+        total_distance += min_distance
 
-def multiple_icp(source, target):
-    # Initialize the best transformation and cost.
-    best_transform_matrix = None
+    weighted_avg_distance = total_distance / len(list_a)
+    return weighted_avg_distance
+
+def ply_to_points_and_colors(file_path):
+    # prend un fichier .ply et le converti en nuage de points et en couleur format RGB entre 0 et 255
+    ply_data = o3d.io.read_point_cloud(file_path)
+    points = np.array(ply_data.points)
+    colors = np.array(ply_data.colors)* 255
+
+    return points, colors
+
+def find_the_best_pre_rotation(source_path, target_path):
+    target,_ = ply_to_points_and_colors(target_path)
+    source,_=ply_to_points_and_colors(source_path)
+
+    # Initialize the best cost.
     best_cost = np.inf
-
-    # Iterate through angles for each axis
-    # for angle_x in range(-90, -70, 10):
-    #     for angle_y in range(0, 5, 5):
-    #         for angle_z in range(-100, -90, 10):
-
     print("If you want faster results (for example: for tests) you can change the range of the angles (in multiple_icp)")
-
     best_angles=[]
-    for angle_x in range(-20, 20, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
-        for angle_y in range(-20, 20, 10): # Idem
-            for angle_z in range(-20, 50, 10): # Idem
+    for angle_x in range(0, 10, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
+        for angle_y in range(0, 10, 10): # Idem
+            for angle_z in range(-180, 180, 45): # Idem
                 
-                M_x = mf.create_rot_matrix_x(angle_x)
-                M_y = mf.create_rot_matrix_y(angle_y)
-                M_z = mf.create_rot_matrix_z(angle_z)
-                
-                # matrix = M_x @ M_y
-                # transform_matrix=matrix@ M_z
-                
+                M_x = tf.rotation_matrix_x(angle_x)
+                M_y = tf.rotation_matrix_y(angle_y)
+                M_z = tf.rotation_matrix_z(angle_z)
+                          
                 transform_matrix = M_x @ M_y @ M_z 
                 
-
-                # print(best_transform_matrix)
-
-                # Apply transformation to a copy of the source point cloud
-                source_temp = copy.deepcopy(source)
-                source_temp.transform(transform_matrix)
-
-                # _, cost = quick_icp(source_temp, target)
-                _, cost = icp(source_temp, target)
-                # _, cost = distance_between_pc(source_temp, target) # ne fonctionne pas : utiliser la distance de chamfer ?
-
-                
-                # target_points = np.asarray(target.points)
-                # source_temp_points = np.asarray(source_temp.points)
-                # cost = np.linalg.norm(target_points - source_temp)
-        
+                source_rotated=[np.dot(point,transform_matrix) for point in source]
+                # il faut reset le centre 
+                source_reposed=rep.repose_points(source_rotated)
+                cost = weighted_average_euclidean_distance(source_reposed, target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
@@ -266,36 +276,9 @@ def multiple_icp(source, target):
     print("Best angles :")
     print(best_angles)
     print("With a cost of", best_cost)    
-    return best_transform_matrix, best_cost
+    return best_transform_matrix
 
-
-
-def run_icp_1(source_path, target_path,pc_after_multiple_icp): 
-    
-   """
-    Function to perform Iterative Closest Point (ICP) registration between source and target point clouds
-    with the objective of applying different transformation matrices to the object model
-    and ultimately saving a file with minimized cost.
-    
-    :param source_path: Path to the source point cloud file.
-    :param target_path: Path to the target point cloud file.
-    :param pc_after_multiple_icp: Path to save the point cloud after applying ICP.
-    :return: Best transformation matrix and an underscore placeholder.
-    """
-
-   source = o3d.io.read_point_cloud(source_path)
-   target = o3d.io.read_point_cloud(target_path)
-    # Call the multiple_icp function to align the source and target point clouds.
-   best_transform_matrix,_ = multiple_icp(source, target)
-   best = best_transform_matrix 
-    # Save the source point cloud corresponding to the best transformation.
-   best_source_pc = copy.deepcopy(source)
-   best_source_pc=best_source_pc.transform(best)
-   o3d.io.write_point_cloud(pc_after_multiple_icp, best_source_pc)
-   
-   return best_transform_matrix, _
-
-def run_icp_2(source_path, target_path): 
+def run_icp(source_path, target_path): 
     
     """
    Function to perform Iterative Closest Point (ICP) registration between source and target point clouds.

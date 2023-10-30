@@ -50,6 +50,38 @@ def repose(pc_resized, pc_reposed):
     scaled_mesh.export(pc_reposed)
     return pt_milieu
 
+def repose_points(points):
+    """
+    Repose the point cloud mesh by centering it around its mean point.
+
+    Parameters
+    ----------
+    pc_resized : list
+        The  point cloud mesh.
+
+    Returns
+    -------
+    pc_respoed : list
+        The list reposed.
+"""
+    tab_x = []
+    tab_y = []
+    tab_z = []
+
+    for i in points:
+        tab_x.append(i[0])
+        tab_y.append(i[1])
+        tab_z.append(i[2])
+
+    milieu_x = np.mean(tab_x)
+    milieu_y = np.mean(tab_y)
+    milieu_z = np.mean(tab_z)
+
+    pt_milieu = [milieu_x, milieu_y, milieu_z]
+
+    new_vertices =[point - pt_milieu for point in points]
+
+    return new_vertices
 
 def repose_obj(pc_resized, pc_reposed):
     """

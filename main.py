@@ -60,6 +60,7 @@ entre le modèle 3D et le nuage de points filtré et repositionné, puis récup�
     """
 import numpy as np
 import cv2
+import copy
 import open3d as o3d
 import functions.mask as msk
 import functions.icp as cp
@@ -132,7 +133,7 @@ color_image= cv2.imread(color_image_name)
 
 points,couleurs=cv.ply_to_points_and_colors(name_pc)
 mask_hsv=get_filtre_hsv.interface_hsv_image(color_image_name)
-print(mask_hsv)
+
 # Application du masque
 # donner le nom pour le fichier nouveau après l'application du masque
 
@@ -176,11 +177,20 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 # print("Matrice de translation:",Mt)
 
 ###########################################################
+M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
+
+pc_reposed_name_after_pre_rotations=name+"_after_pre_rotations.ply"
+p,c=cv.ply_to_points_and_colors(pc_reposed_name)
+source_rotated=[np.dot(point,M_icp_1) for point in p]
+cv.create_ply_file_without_colors(source_rotated,pc_reposed_name_after_pre_rotations)
+M_icp_1_inv = np.linalg.inv(M_icp_1)
+M_icp_1_inv = np.hstack((M_icp_1_inv, np.array([[0], [0], [0]])))
+M_icp_1_inv = np.vstack((M_icp_1_inv, np.array([0, 0, 0, 1])))
 
 ###################### Matrice ICP #########################
 
 print("Please wait a moment for ICP to execute!!")
-M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
+M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name_after_pre_rotations)#(pc_reposed_name
 # print("M_icp :",M_icp_2)
 
 # On ajuste la matrice dICP dans le repère de la caméra
@@ -218,7 +228,7 @@ Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin
 
 #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ M_icp_2_inv @ Mat_y @ Mat_x 
+Projection= M_in @ Mt @ M_icp_2_inv @ M_icp_1_inv @ Mat_y @ Mat_x 
 
 ###########################################################
 
