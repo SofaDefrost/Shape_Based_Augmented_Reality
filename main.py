@@ -138,9 +138,9 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 ######################### Redimensionnement du modèle 3D ##################################
 
 # Application de redimensionnement
-name_3D="model_3D"
+name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-scaling_factor = 0.00099
+scaling_factor = 0.0011
 rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 # rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
 
@@ -211,11 +211,13 @@ M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0,
 # (Initialement le modéle n'est pas dans la position que l'on souhaite)
 
 angle = np.radians(-90)
-Mat_90 = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+angle = np.radians(180)
+Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 
 #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ M_icp_2_inv @ Mat_90
+Projection= M_in @ Mt @ M_icp_2_inv @ Mat_y @ Mat_x 
 
 ###########################################################
 
