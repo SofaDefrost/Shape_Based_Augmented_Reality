@@ -73,13 +73,29 @@ from functions.objloader_simple import OBJ
 import functions.project_and_display as proj
 import functions.ply2obj as po
 import realsense.utils.hsv as apply_hsv
-import realsense.filtre_hsv_realsense as get_filtre_hsv
+import realsense.utils.interface_hsv_image as get_filtre_hsv
 import realsense.utils.convert as cv
 import functions.recover_realsense_matrix as rc
 import functions.transformations as tf
 import crop_points_cloud as cr
 from realsense.utils import filtrage_bruit as bruit
 from realsense.utils import realsense_pc as rpc
+
+# Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
+
+def transformation_matrix_to_euler_xyz(transformation_matrix):
+    # Extraire la sous-matrice de rotation 3x3
+    rotation_matrix = transformation_matrix[:3, :3]
+    
+    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
+    euler_angles = tf.euler_from_matrix(rotation_matrix, 'sxyz')  # 'sxyz' order for XYZ Euler angles
+    
+    return euler_angles
+
+def matrix_from_angles(angle_x, angle_y, angle_z):
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, :3] = tf.euler_matrix(angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
+    return rotation_matrix
 
 ############### Loading ####################
 
@@ -104,6 +120,7 @@ color_image= cv2.imread(color_image_name)
 ###########################################################
 
 # #################### Selectionner Zone ####################
+# Provoque des problèmes
 
 # points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,colors)
 
@@ -114,8 +131,8 @@ color_image= cv2.imread(color_image_name)
 # Détermination du masque
 
 points,couleurs=cv.ply_to_points_and_colors(name_pc)
-mask_hsv=get_filtre_hsv.determinemaskhsv()
-
+mask_hsv=get_filtre_hsv.interface_hsv_image(color_image_name)
+print(mask_hsv)
 # Application du masque
 # donner le nom pour le fichier nouveau après l'application du masque
 
@@ -167,22 +184,6 @@ M_icp_2, _=cp.run_icp_2(model_3D_resized_name,pc_reposed_name)
 # print("M_icp :",M_icp_2)
 
 # On ajuste la matrice dICP dans le repère de la caméra
-# Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
-
-def transformation_matrix_to_euler_xyz(transformation_matrix):
-    # Extraire la sous-matrice de rotation 3x3
-    rotation_matrix = transformation_matrix[:3, :3]
-    
-    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
-    euler_angles = tf.euler_from_matrix(rotation_matrix, 'sxyz')  # 'sxyz' order for XYZ Euler angles
-    
-    return euler_angles
-
-def matrix_from_angles(angle_x, angle_y, angle_z):
-    rotation_matrix = np.eye(4)
-    rotation_matrix[:3, :3] = tf.euler_matrix(angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
-    return rotation_matrix
-
 angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
 print("Voici les angles de l'ICP : ",angles_ICP2)
 
