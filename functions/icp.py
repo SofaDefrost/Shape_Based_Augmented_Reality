@@ -265,16 +265,15 @@ def find_the_best_pre_rotation(source_path, target_path):
         for angle_y in range(0, 10, 10): # Idem
             for angle_z in range(-180, 180, 20): # Idem
                 print([angle_x,angle_y,angle_z])
-                M_x = tf.rotation_matrix_x(angle_x)
-                M_y = tf.rotation_matrix_y(angle_y)
-                M_z = tf.rotation_matrix_z(angle_z)
+                M_x = tf.rotation_matrix_x(np.radians(angle_x))
+                M_y = tf.rotation_matrix_y(np.radians(angle_y))
+                M_z = tf.rotation_matrix_z(np.radians(angle_z))
                           
                 transform_matrix = M_x @ M_y @ M_z 
                 
                 source_rotated=[np.dot(point,transform_matrix) for point in source]
-                # il faut reset le centre 
-                source_reposed=rep.repose_points(source_rotated)
-                cost = weighted_average_euclidean_distance(source_reposed, target)
+                
+                cost = weighted_average_euclidean_distance(source_rotated, target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
