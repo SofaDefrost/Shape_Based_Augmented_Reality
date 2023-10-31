@@ -215,6 +215,8 @@ Returns:
 
     return transform_matrix_cumulee, curr_cost
 
+import numpy as np
+
 def weighted_average_euclidean_distance(list_a, list_b):
     # Si les listes ont des dimensions différentes, ajustez-les pour avoir la même dimension en ajoutant des zéros
     if len(list_a) > len(list_b):
@@ -225,16 +227,23 @@ def weighted_average_euclidean_distance(list_a, list_b):
         num_zeros = len(list_b) - len(list_a)
         zero_array = np.zeros((num_zeros, len(list_a[0])))
         list_a = np.concatenate((list_a, zero_array))
+        
+    # Calculer les normes de chaque élément de list_b
+    norms_b = np.linalg.norm(list_b, axis=1)
+    
     total_distance = 0
     for coord_a in list_a:
-        min_distance = float('inf')  # Initialiser la distance minimale à l'infini
-        for coord_b in list_b:
-            distance = np.linalg.norm(np.array(coord_a) - np.array(coord_b))
-            min_distance = min(min_distance, distance)
+        # Calculer la distance euclidienne entre coord_a et tous les éléments de list_b
+        distances = np.linalg.norm(list_b - coord_a, axis=1)
+        
+        # Sélectionner la distance minimale pour coord_a
+        min_distance = np.min(distances)
+        
         total_distance += min_distance
 
     weighted_avg_distance = total_distance / len(list_a)
     return weighted_avg_distance
+
 
 def ply_to_points_and_colors(file_path):
     # prend un fichier .ply et le converti en nuage de points et en couleur format RGB entre 0 et 255
@@ -254,8 +263,8 @@ def find_the_best_pre_rotation(source_path, target_path):
     best_angles=[]
     for angle_x in range(0, 10, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
         for angle_y in range(0, 10, 10): # Idem
-            for angle_z in range(-180, 180, 45): # Idem
-                
+            for angle_z in range(-180, 180, 20): # Idem
+                print([angle_x,angle_y,angle_z])
                 M_x = tf.rotation_matrix_x(angle_x)
                 M_y = tf.rotation_matrix_y(angle_y)
                 M_z = tf.rotation_matrix_z(angle_z)
