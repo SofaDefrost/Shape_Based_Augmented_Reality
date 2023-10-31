@@ -101,14 +101,14 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 ############### Loading ####################
 
 # Charger le model 3D
-name_model_3D = "labo_biologie/foie_spectrometre.ply"
+name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 ###########################################################
 
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "labo_biologie/foie"
+name = "data_exemple/fleur"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
@@ -158,7 +158,7 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 # Application de redimensionnement
 name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-scaling_factor = 0.0011 #0.00099 #0.0011
+scaling_factor = 0.001 # 0.00099 #0.0011
 rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 # rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
 
@@ -177,6 +177,9 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 # print("Matrice de translation:",Mt)
 
 ###########################################################
+
+################ Matrice de pré-rotation ###################
+
 M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
 model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
 p,c=cv.ply_to_points_and_colors(model_3D_resized_name)
@@ -186,7 +189,7 @@ cv.create_ply_file_without_colors(source_rotated,model_3D_after_pre_rotations)
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
 
-# M_icp_1_inv = np.linalg.inv(M_icp_1) (pas utile je crois)
+###########################################################
 
 ###################### Matrice ICP #########################
 
