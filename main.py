@@ -101,20 +101,20 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 ############### Loading ####################
 
 # Charger le model 3D
-name_model_3D = "data_exemple/FleurDeLisThing.ply"
+name_model_3D = "labo_biologie/foie_spectrometre.ply"
 
 ###########################################################
 
 ################### Acquisition ###########################
 
 # Récupération du nuage de points en utilisant la Realsense
-name = "data_exemple/fleur"
+name = "labo_biologie/foie"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
 # Appeler la fonction points_and_colors_realsense pour récupérer le nuage de points et les couleurs
 
-aq.run_acquisition(name_pc, color_image_name)
+# aq.run_acquisition(name_pc, color_image_name)
 
 color_image= cv2.imread(color_image_name)
 
@@ -159,8 +159,8 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
 scaling_factor = 0.001 # 0.00099 #0.0011
-rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
-# rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
+# rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
+rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
 
 ###########################################################
 

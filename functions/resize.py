@@ -8,46 +8,22 @@ Created on Fri Jul 21 18:08:11 2023
 import trimesh
 import open3d as o3d
 import numpy as np
-import math
-
-def distance_max(model):
-    """
-This function calculates the maximum distance between points in a point cloud.
-
-:param model: The filename of the point cloud in PLY format.
-:return: The maximum distance between points in the point cloud.
-  
- """
-
-    cloud = o3d.io.read_point_cloud(model)
-    points = np.asarray(cloud.points)
-
-    max_distance = 0.0
-
-    for i in range(len(points)):
-        for j in range(len(points)):
-            dx = points[j][0] - points[i][0]
-            dy = points[j][1] - points[i][1]
-            dz = points[j][2] - points[i][2]
-            dist = math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
-            if dist > max_distance:
-                max_distance = dist
-
-    print("La distance maximale du nuage de points:", max_distance)
-    return max_distance#!/usr/bin/env python3
 
 def compute_max_distance(point_cloud):
     # Récupérer les coordonnées des points sous forme de tableau NumPy
     points = np.asarray(point_cloud.points)
 
-    max_distance = 0.0
-    num_points = len(points)
+    if len(points) < 2:
+        return 0.0
 
-    for i in range(num_points):
-        for j in range(i + 1, num_points):
-            distance = np.linalg.norm(points[i] - points[j])
-            if distance > max_distance:
-                max_distance = distance
+    # Calculer toutes les distances entre les points en une seule opération
+    pairwise_distances = np.linalg.norm(points[:, np.newaxis] - points, axis=2)
+
+    # Ignorer les distances entre un point et lui-même (diagonale)
+    np.fill_diagonal(pairwise_distances, 0.0)
+
+    # Trouver la distance maximale
+    max_distance = np.max(pairwise_distances)
 
     return max_distance
 
@@ -71,6 +47,7 @@ def Resize_pas_auto(output_file, pc_resized, scaling_factor):
     # Export the resized mesh to the specified file.
     scaled_mesh.export(pc_resized)
 
+
 def resize_auto(pc_filtred_name, model_3D_name, point_cloud_resizing):
     """
     Cette fonction redimensionne un nuage de points 3D à partir de deux fichiers au format PLY,
@@ -84,17 +61,13 @@ def resize_auto(pc_filtred_name, model_3D_name, point_cloud_resizing):
     # Charger les nuages de points filtré et modèle 3D
     pc_filtred = o3d.io.read_point_cloud(pc_filtred_name)
     model_3D = o3d.io.read_point_cloud(model_3D_name)
-
+    
     # Calculer les distances maximales des deux nuages de points
     max_dist_pc_filtred = compute_max_distance(pc_filtred)
     max_dist_model_3D = compute_max_distance(model_3D)
 
     # Calculer le facteur de redimensionnement basé sur les distances maximales
-    scaling_factor = max_dist_model_3D / max_dist_pc_filtred
+    scaling_factor = max_dist_pc_filtred / max_dist_model_3D
+    Resize_pas_auto(model_3D_name,point_cloud_resizing,scaling_factor)
 
-    # Redimensionner le nuage de points filtré
-    pc_filtred.scale(scaling_factor, center=pc_filtred.get_center())
-
-    # Enregistrer le nuage de points redimensionné
-    o3d.io.write_point_cloud(point_cloud_resizing, pc_filtred)
 
