@@ -181,33 +181,39 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
 ################ Matrice de pré-rotation ###################
 
-M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
-model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
-p,c=cv.ply_to_points_and_colors(model_3D_resized_name)
-source_rotated=[np.dot(point,M_icp_1) for point in p]
-cv.create_ply_file_without_colors(source_rotated,model_3D_after_pre_rotations)
+# M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
+# model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
+# p,c=cv.ply_to_points_and_colors(model_3D_resized_name)
+# source_rotated=[np.dot(point,M_icp_1) for point in p]
+# cv.create_ply_file_without_colors(source_rotated,model_3D_after_pre_rotations)
 
-M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
-M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
+# M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
+# M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
 
+###########################################################
+
+###################### TEST ###############################
+M_icp, M_rotation = cp.rotation_icp(model_3D_resized_name,pc_reposed_name)
+M_icp_inv = np.linalg.inv(M_icp)
+M_rotation_inv=np.linalg.inv(M_rotation)
 ###########################################################
 
 ###################### Matrice ICP #########################
 
-print("Please wait a moment for ICP to execute!!")
-M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la version avec pré-rotation
-# M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
-# print("M_icp :",M_icp_2)
+# print("Please wait a moment for ICP to execute!!")
+# M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la version avec pré-rotation
+# # M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
+# # print("M_icp :",M_icp_2)
 
-# On ajuste la matrice dICP dans le repère de la caméra
-angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
-print("Voici les angles de l'ICP : ",angles_ICP2)
+# # On ajuste la matrice dICP dans le repère de la caméra
+# angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
+# print("Voici les angles de l'ICP : ",angles_ICP2)
 
-x=-angles_ICP2[0]
-y=-angles_ICP2[1] # Utile ?
-z=angles_ICP2[2]
+# x=-angles_ICP2[0]
+# y=-angles_ICP2[1] # Utile ?
+# z=angles_ICP2[2]
 
-M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
+# M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
 
 
 ###########################################################
@@ -234,7 +240,7 @@ Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin
 
 #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ M_icp_1 @ M_icp_2_inv @ Mat_y @ Mat_x 
+Projection= M_in @ Mt @ M_icp_inv @ M_rotation_inv @ Mat_y @ Mat_x 
 
 ###########################################################
 
