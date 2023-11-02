@@ -252,36 +252,6 @@ def ply_to_points_and_colors(file_path):
     colors = np.array(ply_data.colors)* 255
 
     return points, colors
-def rotation_icp(source_path,target_path):
-    target,_ = ply_to_points_and_colors(target_path)
-    source,_=ply_to_points_and_colors(source_path)
-
-    # Initialize the best cost.
-    best_cost = np.inf
-    print("If you want faster results (for example: for tests) you can change the range of the angles (in multiple_icp)")
-    best_angles=[]
-    for angle_x in range(0, 10, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
-        for angle_y in range(0, 10, 10): # Idem
-            for angle_z in range(-180, 180, 90): # Idem
-                print([angle_x,angle_y,angle_z])
-                M_x = tf.rotation_matrix_x(np.radians(angle_x))
-                M_y = tf.rotation_matrix_y(np.radians(angle_y))
-                M_z = tf.rotation_matrix_z(np.radians(angle_z))
-                          
-                rotation_matrix = M_x @ M_y @ M_z 
-                
-                source_rotated=[np.dot(point,rotation_matrix) for point in source]
-                
-                transform_matrix,cost = icp(source_rotated, target)
-                if cost < best_cost:
-                    best_transform_matrix = transform_matrix
-                    best_rotation_matrix = rotation_matrix
-                    best_cost = cost
-                    best_angles=[angle_x,angle_y,angle_z]
-    
-    print("Best angles :")
-    print(best_angles)
-    return best_transform_matrix, best_rotation_matrix
 
 def find_the_best_pre_rotation(source_path, target_path):
     target,_ = ply_to_points_and_colors(target_path)
