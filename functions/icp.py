@@ -263,7 +263,7 @@ def find_the_best_pre_rotation(source_path, target_path):
     best_angles=[]
     for angle_x in range(0, 10, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
         for angle_y in range(0, 10, 10): # Idem
-            for angle_z in range(-180, 180, 45): # Idem
+            for angle_z in range(-180, 180, 10): # Idem
                 print([angle_x,angle_y,angle_z])
                 M_x = tf.rotation_matrix_x(np.radians(angle_x))
                 M_y = tf.rotation_matrix_y(np.radians(angle_y))

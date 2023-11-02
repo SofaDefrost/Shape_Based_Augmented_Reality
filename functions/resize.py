@@ -3,7 +3,7 @@
 """
 Created on Fri Jul 21 18:08:11 2023
 
-@author: tinhinane
+@author: Tinhinane and Thibaud
 """
 import trimesh
 import open3d as o3d

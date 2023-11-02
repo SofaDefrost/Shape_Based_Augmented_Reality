@@ -8,8 +8,6 @@ Updated on Wed Oct 23 11:44:38 2023
 """
 
 """ 
-
-
 L'utilisateur doit prendre en compte les points suivants :
 
 **Important**:
@@ -28,26 +26,28 @@ l'utilisateur doit d'abord initialiser le nom du fichier du nuage de points et l
 Ensuite, appelez la fonction `run_acquisition` en fournissant les paramètres suivants : 
     `nom_fichier_nuage_points` (nom du fichier du nuage de points) et `nom_image_2D`.
 
-2. **Masquage** : Cette fonction permet de filtrer le nuage de points et de sélectionner uniquement la couleur de l'objet. Elle prend les paramètres suivants :
+2. **Masquage** : Cette fonction permet de filtrer le nuage de points selon un filtre hsv. Elle prend les paramètres suivants :
 
-- `nom_nuage_points` : Nom du fichier du nuage de points généré par la fonction d'acquisition.
-- `nom_nuage_points_filtre` : Nom du fichier dans lequel le nuage de points sera enregistré après l'application du masque.
-- `seuil` : Seuil utilisé pour filtrer les points en fonction de la couleur ou des coordonnées.
-- `phase_couleur` : Permet de sélectionner quelle phase des couleurs conserver, soit dans le rouge (intervalle [0-1]) et dans la colonne 0.
+- `points` : Liste des coordonées du nuages de points
+- `couleurs` : Liste des couleurs associées à ce nuage de points
+- `mask` : Masque hsv à appliquer 
 
-3. **Repositionnement** : Cette fonction "repose" les points du nuage de points pour les repositionner correctement. (Remarque : La description ne mentionne pas de paramètres spécifiques pour cette fonction.)
+3. **Filtrage Bruit** : Cette fonction permet de filtrer le nuage de points pour éviter le bruit environnant. La fonction crée une interface TKinter qui permet de selectionner la taille du rayon de filtrage (par rapport au centre de masse) :
 
-4. **Redimensionnement automatique** (resize avec 'r' en minuscule) : Cette fonction "resize" permet de redimensionner le modèle 3D et le nuage de points filtré et repositionné. L'utilisateur doit fournir les paramètres suivants :
+- `points` : Liste des coordonées du nuages de points
+- `couleurs` : Liste des couleurs associées à ce nuage de points
+
+4. **Repositionnement** : Cette fonction "repose" les points du nuage de points pour les repositionner correctement. (Remarque : La description ne mentionne pas de paramètres spécifiques pour cette fonction.)
+
+5. **Redimensionnement automatique** (resize_auto) : Cette fonction permet de redimensionner le modèle 3D et le nuage de points filtré et repositionné. L'utilisateur doit fournir les paramètres suivants :
 
 - `nom_nuage_points_repositionne` : Nom du fichier du nuage de points repositionnés au format PLY.
 - `nom_modele_3D` : Nom du fichier du modèle 3D au format PLY.
 - `nuage_points_redimensionne` : Nom du fichier dans lequel le nouveau nuage de points redimensionné sera enregistré au format PLY.
 
- **Distance maximale** : Cette fonction "max_distance" calcule la distance maximale 
-entre le modèle 3D et le nuage de points filtré et repositionné, puis récupère cette valeur. 
 
 
-4. **Redimensionnement avec seuil** (redimensionnement avec 'R' en majuscule) :
+6. **Redimensionnement avec seuil** (Resize_pas_auto) :
     - `nom_nuage_points_repositionne`
     - Nom du fichier de sortie après le redimensionnement
     - Facteur de redimensionnement
@@ -121,7 +121,8 @@ color_image= cv2.imread(color_image_name)
 ###########################################################
 
 # #################### Selectionner Zone ####################
-# Provoque des problèmes
+
+# Provoque des problèmes mais en théorie la fonction marche bien (en fait manque juste les dimmensions de l'image associée au nuage de points)
 
 # points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,colors)
 
@@ -160,7 +161,7 @@ name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
 scaling_factor = 0.001 # 0.00099 #0.0011
 # rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
-rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing
+rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing (peut crash si nuage de points trop gros)
 
 ###########################################################
 
