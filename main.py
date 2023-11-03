@@ -81,6 +81,7 @@ import functions.transformations as tf
 import crop_points_cloud as cr
 from realsense.utils import filtrage_bruit as bruit
 from realsense.utils import realsense_pc as rpc
+from realsense.utils import reduction_densite_pc as dens
 
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
 
@@ -156,12 +157,30 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 
 ######################### Redimensionnement du modèle 3D ##################################
 
+# Pour le resize pas auto 
+
 # Application de redimensionnement
 name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
-scaling_factor = 0.00099 #0.0011
-rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
-# rz.resize_auto(name_bruit,name_model_3D,model_3D_resized_name) # Call the function to perform automatic resizing (peut crash si nuage de points trop gros)
+# scaling_factor = 0.00099 #0.0011
+# rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
+
+# Pour le resize auto
+name_model_3D_reduit_densite=name_model_3D
+nuage_de_point_trop_gros=True
+
+# On divise le nombre de points par dux jusqu'à ce que ce sot suffisant pour l'algo de resize automatique
+while nuage_de_point_trop_gros:
+    try:
+        rz.resize_auto(name_bruit,name_model_3D_reduit_densite,model_3D_resized_name) # Call the function to perform automatic resizing
+        nuage_de_point_trop_gros=False
+    except Exception as e:
+        # Code à exécuter en cas d'erreur
+        print("Trop de points dans le nuage de point pour la fonction de resize automatique, on re-essaie en divisant le nombre de points du nuage par deux !")
+        name_model_3D_reduit_densite=name_3D+"_reduit_densite.ply"
+        dens.reduction_densite_pc(name_model_3D,name_model_3D_reduit_densite,0.5)
+        name_model_3D=name_model_3D_reduit_densite
+
 
 ###########################################################
 
