@@ -269,7 +269,6 @@ obj = OBJ(obj_file_name, swapyz=True)
 # # Affichage
 h, w, _ = color_image.shape
 cv2.imshow("frame_avant", color_image)
-
 #recuperer les couleurs du l'objet 3D
 # color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
 # vertex_colors = np.asarray(color_3D_Model.colors)

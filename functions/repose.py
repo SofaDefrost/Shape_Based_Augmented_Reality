@@ -27,7 +27,6 @@ def repose(pc_resized, pc_reposed):
 """
     
     mesh = trimesh.load(pc_resized)
-    milieu = np.mean(mesh.vertices)
 
     tab_x = []
     tab_y = []
