@@ -82,6 +82,7 @@ import crop_points_cloud as cr
 from realsense.utils import filtrage_bruit as bruit
 from realsense.utils import realsense_pc as rpc
 from realsense.utils import reduction_densite_pc as dens
+from scipy.spatial import cKDTree
 
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
 
@@ -115,8 +116,12 @@ color_image_name = name + '.png'
 
 # Appeler la fonction points_and_colors_realsense pour récupérer le nuage de points et les couleurs
 
-aq.run_acquisition(name_pc, color_image_name)
+# aq.run_acquisition(name_pc, color_image_name)
+# color_image= cv2.imread(color_image_name)
 
+points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
+couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
+cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
 color_image= cv2.imread(color_image_name)
 
 ###########################################################
@@ -169,7 +174,7 @@ model_3D_resized_name =name_3D + '_resized.ply'
 name_model_3D_reduit_densite=name_model_3D
 nuage_de_point_trop_gros=True
 
-# On divise le nombre de points par dux jusqu'à ce que ce sot suffisant pour l'algo de resize automatique
+# On divise le nombre de points par deux jusqu'à ce que ce soit suffisant pour l'algo de resize automatique
 while nuage_de_point_trop_gros:
     try:
         rz.resize_auto(name_bruit,name_model_3D_reduit_densite,model_3D_resized_name) # Call the function to perform automatic resizing
@@ -189,7 +194,7 @@ while nuage_de_point_trop_gros:
 # # Application de repositionnement
 pc_reposed_name = name + '_reposed.ply'
 translation_vector = rp.repose(name_bruit, pc_reposed_name)
-translation_vector[0] = -translation_vector[0]
+translation_vector[0] = translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
 
@@ -200,89 +205,160 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
 ################ Matrice de pré-rotation ###################
 
-# M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
-# model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
-# p,c=cv.ply_to_points_and_colors(model_3D_resized_name)
-# source_rotated=[np.dot(point,M_icp_1) for point in p]
-# cv.create_ply_file_without_colors(source_rotated,model_3D_after_pre_rotations)
+M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
+model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
+p,c=cv.ply_to_points_and_colors(model_3D_resized_name)
+source_rotated=[np.dot(point,M_icp_1) for point in p]
+cv.create_ply_file_without_colors(source_rotated,model_3D_after_pre_rotations)
 
-# M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
-# M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
+M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
+M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
+
+M_icp_1_inv = np.linalg.inv(M_icp_1)
 
 ###########################################################
 
 ###################### Matrice ICP #########################
 
-# print("Please wait a moment for ICP to execute!!")
-# M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la version avec pré-rotation
-# # M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
-# # print("M_icp :",M_icp_2)
+print("Please wait a moment for ICP to execute!!")
+M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la version avec pré-rotation
+# M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
+# print("M_icp :",M_icp_2)
 
-# # On ajuste la matrice dICP dans le repère de la caméra
-# angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
-# print("Voici les angles de l'ICP : ",angles_ICP2)
+# On ajuste la matrice dICP dans le repère de la caméra
+angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
+print("Voici les angles de l'ICP : ",angles_ICP2)
 
-# x=-angles_ICP2[0]
-# y=-angles_ICP2[1] # Utile ?
-# z=angles_ICP2[2]
+x=-angles_ICP2[0]
+y=angles_ICP2[1] # Utile ?
+z=-angles_ICP2[2]
 
-# M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
+M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
 
 
 ###########################################################
 
 ########## Calcul des points de projections ###############
 
-# Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
-# Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
+# # Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
+# # Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
 
-#### Matrice de calibration (Matrice intrinsèque) ####
+# #### Matrice de calibration (Matrice intrinsèque) ####
 
-calibration_matrix = rc.recover_matrix_calib()
-M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-# M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
-# M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
+# calibration_matrix = rc.recover_matrix_calib()
+# M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+# M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
+# # M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
+# # M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
 
-#### Matrice pour replaquer le modèle 3D ####
-# (Initialement le modéle n'est pas dans la position que l'on souhaite)
+# #### Matrice pour replaquer le modèle 3D ####
+# # (Initialement le modéle n'est pas dans la position que l'on souhaite)
 
-angle = np.radians(-90)
-Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-angle = np.radians(180)
-Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(-90)
+# Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(180)
+# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 
-#### Calcul final de la projection ####
+# #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ Mat_y @ Mat_x 
+# Projection= M_in @ Mt @ Mat_y @ Mat_x 
 
 ###########################################################
 
-################# Affiche et exporte #######################
+################# Affiche et exporte Thiaud #######################
 
-#Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
-obj_file_name= name_3D +'.obj'
-po.convert_ply_to_obj(model_3D_resized_name, obj_file_name)
-# Chargement du fichier obj
+angle = np.radians(180)
+Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
-obj = OBJ(obj_file_name, swapyz=True)
+model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
+M=Mt @ M_icp_1_inv @ M_icp_2_inv
+model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points))))
+model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
+cv.create_ply_file_without_colors(model_3D_resized_name_points,"test.ply")
+model_3D_points,_=cv.ply_to_points_and_colors("test.ply")
 
-# # Affichage
-h, w, _ = color_image.shape
-cv2.imshow("frame_avant", color_image)
-#recuperer les couleurs du l'objet 3D
-# color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
-# vertex_colors = np.asarray(color_3D_Model.colors)
+points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_acquisition_originale], dtype=np.float64)
+
+# Créer un arbre KD à partir du second nuage de points
+tree = cKDTree(points_acquisition_originale)
+
+# Liste pour stocker les indices des points les plus proches dans le second nuage
+indices_des_plus_proches = []
+
+# Pour chaque point dans le premier nuage
+for point in model_3D_points:
+    # Rechercher le point le plus proche dans le second nuage
+    distance, indice_plus_proche = tree.query(point)
+    
+    # Ajouter l'indice du point le plus proche à la liste
+    indices_des_plus_proches.append(indice_plus_proche)
+
+for indice in indices_des_plus_proches:
+    couleurs_acquisition_originale[indice][0]=0
+    couleurs_acquisition_originale[indice][1]=0
+    couleurs_acquisition_originale[indice][2]=255
+    couleurs_acquisition_originale[indice+640][0]=0
+    couleurs_acquisition_originale[indice+640][1]=0
+    couleurs_acquisition_originale[indice+640][2]=255
+    couleurs_acquisition_originale[indice-640][0]=0
+    couleurs_acquisition_originale[indice-640][1]=0
+    couleurs_acquisition_originale[indice-640][2]=255
+    couleurs_acquisition_originale[indice+640-1][0]=0
+    couleurs_acquisition_originale[indice+640-1][1]=0
+    couleurs_acquisition_originale[indice+640-1][2]=255
+    couleurs_acquisition_originale[indice-640-1][0]=0
+    couleurs_acquisition_originale[indice-640-1][1]=0
+    couleurs_acquisition_originale[indice-640-1][2]=255
+    couleurs_acquisition_originale[indice+640+1][0]=0
+    couleurs_acquisition_originale[indice+640+1][1]=0
+    couleurs_acquisition_originale[indice+640+1][2]=255
+    couleurs_acquisition_originale[indice-640+1][0]=0
+    couleurs_acquisition_originale[indice-640+1][1]=0
+    couleurs_acquisition_originale[indice-640+1][2]=255
+    couleurs_acquisition_originale[indice+1][0]=0
+    couleurs_acquisition_originale[indice+1][1]=0
+    couleurs_acquisition_originale[indice+1][2]=255
+    couleurs_acquisition_originale[indice-1][0]=0
+    couleurs_acquisition_originale[indice-1][1]=0
+    couleurs_acquisition_originale[indice-1][2]=255
+
+cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"projection.png")
+color_image= cv2.imread(name+"projection.png")
 
 while True:
-
-    frame_apres = proj.project_and_display_without_colors(color_image,obj, Projection, h, w)
-    # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
-    # frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors )
-    cv2.imshow("frame_apres", frame_apres)
-    if cv2.waitKey(1) & 0xFF == ord('q'):        
+    cv2.imshow("projection",color_image)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cv2.destroyAllWindows()
+
+#####################################################################
+################# Affiche et exporte Tinhinane ######################
+
+# #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
+# obj_file_name= name_3D +'.obj'
+# po.convert_ply_to_obj(model_3D_resized_name, obj_file_name)
+# # Chargement du fichier obj
+
+# obj = OBJ(obj_file_name, swapyz=True)
+
+# # # Affichage
+# h, w, _ = color_image.shape
+# cv2.imshow("frame_avant", color_image)
+# #recuperer les couleurs du l'objet 3D
+# # color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
+# # vertex_colors = np.asarray(color_3D_Model.colors)
+
+# while True:
+
+#     frame_apres = proj.project_and_display_without_colors(color_image,obj, Projection, h, w)
+#     # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
+#     # frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors )
+#     cv2.imshow("frame_apres", frame_apres)
+#     if cv2.waitKey(1) & 0xFF == ord('q'):        
+#         break
+
+# cv2.destroyAllWindows()
 
 
 

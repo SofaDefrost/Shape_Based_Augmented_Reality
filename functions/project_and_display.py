@@ -54,8 +54,7 @@ Function to project 3D object points onto an image without applying the unique c
   :return: The input frame with the projected points displayed.
   """
     vertices = np.array(obj.vertices)  # Conversion de la liste en un tableau NumPy
-
-    # Transformation des points 3D de l'objet
+    # # Transformation des points 3D de l'objet
     ones_column = np.ones((vertices.shape[0], 1))
     homogeneous_vertices = np.hstack((vertices, ones_column))
     projected_points = np.dot(homogeneous_vertices, projection.T)
@@ -66,7 +65,8 @@ Function to project 3D object points onto an image without applying the unique c
 
     # Affichage des points projetés sur l'image
     for p in projected_points.astype(int):
-        cv2.circle(frame, (p[0], p[1]), 1, (255, 0, 0), -1)
+        if 0 <= p[0] < frame.shape[1] and 0 <= p[1] < frame.shape[0]:
+            cv2.circle(frame, (p[0], p[1]), 1, (255, 0, 0), -1)
 
     return frame
 
