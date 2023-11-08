@@ -109,30 +109,34 @@ name_model_3D = "data_exemple/FleurDeLisThing.ply"
 
 ################### Acquisition ###########################
 
-# Récupération du nuage de points en utilisant la Realsense
 name = "data_exemple/fleure"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
-# Appeler la fonction points_and_colors_realsense pour récupérer le nuage de points et les couleurs
+# Récupération du nuage de points en utilisant la Realsense
+# Appeler une fonction d'acquisition pour récupérer le nuage de points et les couleurs
+
+### Version Tinhinane (penser à décommenter la partie pour la projection)
 
 # aq.run_acquisition(name_pc, color_image_name)
-# color_image= cv2.imread(color_image_name)
 
-points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
-couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
-cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
+### Version Thibaud (penser à décommenter la partie pour la projection)
+
+# points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
+# couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
+# cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
+
 color_image= cv2.imread(color_image_name)
 
 ###########################################################
 
-# #################### Selectionner Zone ####################
+##################### Selectionner Zone ####################
 
-# Provoque des problèmes mais en théorie la fonction marche bien (en fait manque juste les dimmensions de l'image associée au nuage de points)
+# Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code  
 
 # points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,colors)
 
-# ###########################################################
+############################################################
 
 ###################### Masquage ###########################
 
@@ -142,10 +146,8 @@ points,couleurs=cv.ply_to_points_and_colors(name_pc)
 mask_hsv=get_filtre_hsv.interface_hsv_image(color_image_name)
 
 # Application du masque
-# donner le nom pour le fichier nouveau après l'application du masque
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-
 points_filtrés,colors= apply_hsv.mask(points,couleurs,mask_hsv)
 
 ###########################################################
@@ -159,10 +161,9 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 
 ###########################################################
 
-
 ######################### Redimensionnement du modèle 3D ##################################
 
-# Pour le resize pas auto 
+### Pour le resize pas auto 
 
 # Application de redimensionnement
 name_3D=name+"_model_3D"
@@ -170,7 +171,7 @@ model_3D_resized_name =name_3D + '_resized.ply'
 # scaling_factor = 0.00099 #0.0011
 # rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 
-# Pour le resize auto
+### Pour le resize auto
 name_model_3D_reduit_densite=name_model_3D
 nuage_de_point_trop_gros=True
 
@@ -225,20 +226,21 @@ M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la ve
 # M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
 # print("M_icp :",M_icp_2)
 
-# On ajuste la matrice dICP dans le repère de la caméra
+# On ajuste la matrice d'ICP dans le repère de la caméra
 angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
 print("Voici les angles de l'ICP : ",angles_ICP2)
 
-x=-angles_ICP2[0]
-y=angles_ICP2[1] # Utile ?
-z=-angles_ICP2[2]
+x=-angles_ICP2[0] # Dépend de la version choisie (Thibaud ou Tinhinane)
+y=angles_ICP2[1] # Idem
+z=-angles_ICP2[2] # Idem
 
 M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
-
 
 ###########################################################
 
 ########## Calcul des points de projections ###############
+
+#### A conserver uniquement si version de Tinhinane
 
 # # Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
 # # Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
@@ -265,21 +267,33 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer 
 
 ###########################################################
 
-################# Affiche et exporte Thiaud #######################
+################# Affiche et exporte Thibaud #######################
 
-angle = np.radians(180)
-Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0], [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+## L'idée dans cette version est de ne pas faire de projection mais plutot d'utiliser le nuage de point initialement capturé par la caméra : 
+## On va déterminer les nouvelles coordonées de notre objet 3D et chercher les points correspondant dans le nuage de la caméra.
+## On viendra alors modifier la couleur de ces points  
 
-model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
-M=Mt @ M_icp_1_inv @ M_icp_2_inv
-model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points))))
-model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
-cv.create_ply_file_without_colors(model_3D_resized_name_points,"test.ply")
-model_3D_points,_=cv.ply_to_points_and_colors("test.ply")
-
+# On récupère les points et les couleurs de notre nuage de points (et on les convertit au bon format)
+points_acquisition_originale,couleurs_acquisition_originale=cv.ply_to_points_and_colors(name_pc)
+points_acquisition_originale = [tuple(row) for row in points_acquisition_originale]
 points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_acquisition_originale], dtype=np.float64)
+couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
 
-# Créer un arbre KD à partir du second nuage de points
+# On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
+model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
+model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
+
+M=Mt @ M_icp_1_inv @ M_icp_2_inv # Matrice de "projection"
+
+name_transformed_model=name+"_transformed_3D_model.ply"
+
+model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
+cv.create_ply_file_without_colors(model_3D_resized_name_points,name_transformed_model)
+model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
+
+# On cherche maintenant à superposer les deux nuages de points 
+# Pour cela on utilise des arbres KD
+
 tree = cKDTree(points_acquisition_originale)
 
 # Liste pour stocker les indices des points les plus proches dans le second nuage
@@ -287,44 +301,31 @@ indices_des_plus_proches = []
 
 # Pour chaque point dans le premier nuage
 for point in model_3D_points:
-    # Rechercher le point le plus proche dans le second nuage
+    # On recherche le point le plus proche dans le second nuage
     distance, indice_plus_proche = tree.query(point)
     
-    # Ajouter l'indice du point le plus proche à la liste
+    # Et on concerve l'indice du point le plus proche
     indices_des_plus_proches.append(indice_plus_proche)
 
+# On modifie les couleurs des points trouvés dans l'étape précédente (c'est la ou se situe notre objet donc on va l'indiquer avec une couleurs spéciale ici bleue)
+couleur_objet=np.array([0,0,255]) # Bleu
 for indice in indices_des_plus_proches:
-    couleurs_acquisition_originale[indice][0]=0
-    couleurs_acquisition_originale[indice][1]=0
-    couleurs_acquisition_originale[indice][2]=255
-    couleurs_acquisition_originale[indice+640][0]=0
-    couleurs_acquisition_originale[indice+640][1]=0
-    couleurs_acquisition_originale[indice+640][2]=255
-    couleurs_acquisition_originale[indice-640][0]=0
-    couleurs_acquisition_originale[indice-640][1]=0
-    couleurs_acquisition_originale[indice-640][2]=255
-    couleurs_acquisition_originale[indice+640-1][0]=0
-    couleurs_acquisition_originale[indice+640-1][1]=0
-    couleurs_acquisition_originale[indice+640-1][2]=255
-    couleurs_acquisition_originale[indice-640-1][0]=0
-    couleurs_acquisition_originale[indice-640-1][1]=0
-    couleurs_acquisition_originale[indice-640-1][2]=255
-    couleurs_acquisition_originale[indice+640+1][0]=0
-    couleurs_acquisition_originale[indice+640+1][1]=0
-    couleurs_acquisition_originale[indice+640+1][2]=255
-    couleurs_acquisition_originale[indice-640+1][0]=0
-    couleurs_acquisition_originale[indice-640+1][1]=0
-    couleurs_acquisition_originale[indice-640+1][2]=255
-    couleurs_acquisition_originale[indice+1][0]=0
-    couleurs_acquisition_originale[indice+1][1]=0
-    couleurs_acquisition_originale[indice+1][2]=255
-    couleurs_acquisition_originale[indice-1][0]=0
-    couleurs_acquisition_originale[indice-1][1]=0
-    couleurs_acquisition_originale[indice-1][2]=255
+    couleurs_acquisition_originale[indice]=couleur_objet
+    # On fait un peu autour pour que ce soit plus visible
+    couleurs_acquisition_originale[indice+1]=couleur_objet
+    couleurs_acquisition_originale[indice-1]=couleur_objet
+    couleurs_acquisition_originale[indice+640]=couleur_objet
+    couleurs_acquisition_originale[indice+640+1]=couleur_objet
+    couleurs_acquisition_originale[indice+640-1]=couleur_objet
+    couleurs_acquisition_originale[indice-640-1]=couleur_objet
+    couleurs_acquisition_originale[indice-640]=couleur_objet
+    couleurs_acquisition_originale[indice-640+1]=couleur_objet
 
+# On enregistre
 cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"projection.png")
 color_image= cv2.imread(name+"projection.png")
 
+# On affiche
 while True:
     cv2.imshow("projection",color_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
