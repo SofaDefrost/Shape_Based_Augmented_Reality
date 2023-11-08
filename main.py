@@ -60,15 +60,10 @@ Ensuite, appelez la fonction `run_acquisition` en fournissant les paramètres su
     """
 import numpy as np
 import cv2
-import copy
-import open3d as o3d
-import functions.mask as msk
 import functions.icp as cp
 import functions.translation_m as tm
 import functions.repose as rp
 import functions.resize as rz
-import functions.filter_referential  as an
-#import functions.resize as rzz
 import realsense.acquisition as aq
 from functions.objloader_simple import OBJ
 import functions.project_and_display as proj
@@ -104,27 +99,29 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 
 # Charger le model 3D
 name_model_3D = "data_exemple/FleurDeLisThing.ply"
+name = "data_exemple/fleure"
+# name_model_3D = "labo_biologie/foie_spectrometre.ply"
+# name="labo_biologie/foie"
 
 ###########################################################
 
 ################### Acquisition ###########################
 
-name = "data_exemple/fleure"
 name_pc = name + '.ply'
 color_image_name = name + '.png'
 
 # Récupération du nuage de points en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de points et les couleurs
 
-### Version Tinhinane (penser à décommenter la partie pour la projection)
+### Version Tinhinane (penser à également décommenter la partie pour la projection)
 
 # aq.run_acquisition(name_pc, color_image_name)
 
-### Version Thibaud (penser à décommenter la partie pour la projection)
+### Version Thibaud (penser à également décommenter la partie pour la projection)
 
-# points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
-# couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
-# cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
+points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
+couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
+cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
 
 color_image= cv2.imread(color_image_name)
 
@@ -153,7 +150,6 @@ points_filtrés,colors= apply_hsv.mask(points,couleurs,mask_hsv)
 ###########################################################
 
 ####################### Filtrage Bruit #####################
-# Peut être pas super utile...
 
 name_bruit=name+'_filtre_bruit.ply'
 point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
@@ -240,7 +236,7 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer 
 
 ########## Calcul des points de projections ###############
 
-#### A conserver uniquement si version de Tinhinane
+#### A décommenter uniquement si version de Tinhinane
 
 # # Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
 # # Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
@@ -304,8 +300,9 @@ for point in model_3D_points:
     # On recherche le point le plus proche dans le second nuage
     distance, indice_plus_proche = tree.query(point)
     
-    # Et on concerve l'indice du point le plus proche
-    indices_des_plus_proches.append(indice_plus_proche)
+    if distance < 0.005:
+        # On concerve l'indice du point le plus proche
+        indices_des_plus_proches.append(indice_plus_proche)
 
 # On modifie les couleurs des points trouvés dans l'étape précédente (c'est la ou se situe notre objet donc on va l'indiquer avec une couleurs spéciale ici bleue)
 couleur_objet=np.array([0,0,255]) # Bleu
