@@ -98,11 +98,14 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 ############### Loading ####################
 
 # Charger le model 3D
-name_model_3D = "data_exemple/FleurDeLisThing.ply"
-name = "data_exemple/fleure"
-# name_model_3D = "labo_biologie/foie_spectrometre.ply"
-# name="labo_biologie/foie"
-
+# name_model_3D = "data_exemple/FleurDeLisThing.ply"
+# name = "data_exemple/fleure"
+name_model_3D = "labo_biologie/2eme_semaine/foie_V.ply"
+name="labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
+# Marche bien : 
+# _foie_deuxieme_jour_dedos__Thibaud3
+# _foie_deuxieme_jour_dedos__Thibaud9"
+# _foie_deuxieme_jour_dedos__Thibaud10
 ###########################################################
 
 ################### Acquisition ###########################
@@ -119,11 +122,12 @@ color_image_name = name + '.png'
 
 ### Version Thibaud (penser à également décommenter la partie pour la projection)
 
-points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
-couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
-cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
+# points_acquisition_originale,couleurs_acquisition_originale=aq.points_and_colors_realsense(color_image_name)
+# couleurs_acquisition_originale=rpc.colors_relasense_sofa(couleurs_acquisition_originale)
+# cv.create_ply_file(points_acquisition_originale,couleurs_acquisition_originale,name_pc)
 
 color_image= cv2.imread(color_image_name)
+points,couleurs=cv.ply_to_points_and_colors(name_pc)
 
 ###########################################################
 
@@ -131,7 +135,7 @@ color_image= cv2.imread(color_image_name)
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code  
 
-# points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,colors)
+points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,couleurs)
 
 ############################################################
 
@@ -139,13 +143,12 @@ color_image= cv2.imread(color_image_name)
 
 # Détermination du masque
 
-points,couleurs=cv.ply_to_points_and_colors(name_pc)
 mask_hsv=get_filtre_hsv.interface_hsv_image(color_image_name)
 
 # Application du masque
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-points_filtrés,colors= apply_hsv.mask(points,couleurs,mask_hsv)
+points_filtrés,colors= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
 
 ###########################################################
 
@@ -200,6 +203,27 @@ Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 
 ###########################################################
 
+################ Remise en place du modèle 3D #############
+
+## Que pour le foie
+
+# On inverse suivant y le sens du modèle 3D (parce que il n'est pas dans le bon sens)
+
+angle = np.radians(180)
+Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+
+# On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
+model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
+model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
+
+M=Mat_y
+
+model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
+cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
+model_3D_points,_=cv.ply_to_points_and_colors(model_3D_resized_name)
+
+###########################################################
+
 ################ Matrice de pré-rotation ###################
 
 M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
@@ -226,40 +250,13 @@ M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la ve
 angles_ICP2=transformation_matrix_to_euler_xyz(M_icp_2)
 print("Voici les angles de l'ICP : ",angles_ICP2)
 
+# Version Thibaud
 x=-angles_ICP2[0] # Dépend de la version choisie (Thibaud ou Tinhinane)
 y=angles_ICP2[1] # Idem
 z=-angles_ICP2[2] # Idem
 
+
 M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer l'inverse parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
-
-###########################################################
-
-########## Calcul des points de projections ###############
-
-#### A décommenter uniquement si version de Tinhinane
-
-# # Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
-# # Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
-
-# #### Matrice de calibration (Matrice intrinsèque) ####
-
-# calibration_matrix = rc.recover_matrix_calib()
-# M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-# M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
-# # M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
-# # M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
-
-# #### Matrice pour replaquer le modèle 3D ####
-# # (Initialement le modéle n'est pas dans la position que l'on souhaite)
-
-# angle = np.radians(-90)
-# Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-# angle = np.radians(180)
-# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-
-# #### Calcul final de la projection ####
-
-# Projection= M_in @ Mt @ Mat_y @ Mat_x 
 
 ###########################################################
 
@@ -300,7 +297,7 @@ for point in model_3D_points:
     # On recherche le point le plus proche dans le second nuage
     distance, indice_plus_proche = tree.query(point)
     
-    if distance < 0.005:
+    if True: #distance < 0.003:
         # On concerve l'indice du point le plus proche
         indices_des_plus_proches.append(indice_plus_proche)
 
@@ -320,18 +317,44 @@ for indice in indices_des_plus_proches:
 
 # On enregistre
 cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"projection.png")
-color_image= cv2.imread(name+"projection.png")
+color_image1= cv2.imread(name+"projection.png")
 
 # On affiche
 while True:
-    cv2.imshow("projection",color_image)
+    cv2.imshow("projection",color_image1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cv2.destroyAllWindows()
 
 #####################################################################
+
 ################# Affiche et exporte Tinhinane ######################
+
+# # ## Calcul des points de projections
+
+# # Matrice de projection ==> Matrice intrinsèque * Matrice extrinsèque 
+# # Matrice extrinsèque ==> ensemble des modifications (translations et rotations) à appliquer au modèle CAO
+
+# ## Matrice de calibration (Matrice intrinsèque) ####
+
+# calibration_matrix = rc.recover_matrix_calib()
+# M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+# M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
+# # M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
+# # M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
+
+# #### Matrice pour replaquer le modèle 3D ####
+# # (Initialement le modéle n'est pas dans la position que l'on souhaite)
+
+# angle = np.radians(-90)
+# Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(180)
+# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+
+# #### Calcul final de la projection ####
+
+# Projection= M_in @ Mt @ Mat_y @ Mat_x 
 
 # #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 # obj_file_name= name_3D +'.obj'
