@@ -48,7 +48,8 @@ def Resize_pas_auto(output_file, pc_resized, scaling_factor):
     # Create a new PointCloud with the scaled vertices and original colors
     cloud_resized = o3d.geometry.PointCloud()
     cloud_resized.points = o3d.utility.Vector3dVector(scaled_vertices)
-    cloud_resized.colors = o3d.utility.Vector3dVector(colors)
+    if len(colors)!=0:
+        cloud_resized.colors = o3d.utility.Vector3dVector(colors)
 
     # Export the resized mesh to the specified file.
     o3d.io.write_point_cloud(pc_resized, cloud_resized)
