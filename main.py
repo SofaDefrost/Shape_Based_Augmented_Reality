@@ -397,12 +397,11 @@ cv2.imshow("frame_avant", color_image)
 #recuperer les couleurs du l'objet 3D
 color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
 vertex_colors = np.asarray(color_3D_Model.colors)
+
 if len(vertex_colors)==0:
-    vertex_colors=[[0, 0, 255] for i in range(np.asarray(color_3D_Model.points))]
+    vertex_colors=np.asarray([[1., 0., 0.] for i in range(len(np.asarray(color_3D_Model.points)))])
 
 while True:
-
-    # frame_apres = proj.project_and_display_without_colors(color_image,obj, Projection, h, w)
     # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
     frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors)
     cv2.imshow("frame_apres", frame_apres)
