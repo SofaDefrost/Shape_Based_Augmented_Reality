@@ -35,17 +35,23 @@ def Resize_pas_auto(output_file, pc_resized, scaling_factor):
     :param pc_resized: The filename to save the resized point cloud mesh.
     :param scaling_factor: The scaling factor to resize the vertices of the mesh.
     """
-    # Load the PLY file and create a Trimesh object containing the point cloud data.
-    mesh = trimesh.load(output_file)
-    
-    # Apply scaling by multiplying the vertices' coordinates with the scaling factor.
-    scaled_vertices = mesh.vertices * scaling_factor
-    
-    # Create a new Trimesh with the scaled vertices and original faces (if available).
-    scaled_mesh = trimesh.Trimesh(scaled_vertices, faces=mesh.faces if hasattr(mesh, 'faces') else None)
-    
+    # Load the PLY file and create a PointCloud object containing the point cloud data.
+    cloud = o3d.io.read_point_cloud(output_file)
+
+    # Access vertices and colors
+    vertices = np.asarray(cloud.points)
+    colors = np.asarray(cloud.colors)
+
+    # Apply scaling to vertices
+    scaled_vertices = vertices * scaling_factor
+
+    # Create a new PointCloud with the scaled vertices and original colors
+    cloud_resized = o3d.geometry.PointCloud()
+    cloud_resized.points = o3d.utility.Vector3dVector(scaled_vertices)
+    cloud_resized.colors = o3d.utility.Vector3dVector(colors)
+
     # Export the resized mesh to the specified file.
-    scaled_mesh.export(pc_resized)
+    o3d.io.write_point_cloud(pc_resized, cloud_resized)
 
 
 def resize_auto(pc_filtred_name, model_3D_name, point_cloud_resizing):
