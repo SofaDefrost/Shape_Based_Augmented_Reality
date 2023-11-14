@@ -98,14 +98,21 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 ############### Loading ####################
 
 # Charger le model 3D
+
 # name_model_3D = "data_exemple/FleurDeLisThing.ply"
 # name = "data_exemple/fleure"
-name_model_3D = "labo_biologie/2eme_semaine/foie_V.ply"
-name="labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
-# Marche bien : 
-# _foie_deuxieme_jour_dedos__Thibaud3
-# _foie_deuxieme_jour_dedos__Thibaud9"
-# _foie_deuxieme_jour_dedos__Thibaud10
+
+name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
+name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
+
+# Marche bien (ne pas changer les paramètres) : 
+# _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
+# _foie_deuxieme_jour__Thibaud14 (icp bien mais affichage limite)
+# _foie_deuxieme_jour__Thibaud20" (icp excellent mais affichage limite)
+# _foie_deuxieme_jour_dedos__Thibaud3 (icp et affichage très bon)
+# _foie_deuxieme_jour_dedos__Thibaud9 (galère à faire converger correctement (il fait bien meurtrir le fichier avec le masque hsv) mais sinon icp et affichage bon )
+# _foie_deuxieme_jour_dedos__Thibaud10 (icp et affichage bien)
+
 ###########################################################
 
 ################### Acquisition ###########################
@@ -162,11 +169,12 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 
 ######################### Redimensionnement du modèle 3D ##################################
 
+name_3D=name+"_model_3D"
+model_3D_resized_name =name_3D + '_resized.ply'
+
 ### Pour le resize pas auto 
 
 # Application de redimensionnement
-name_3D=name+"_model_3D"
-model_3D_resized_name =name_3D + '_resized.ply'
 # scaling_factor = 0.00099 #0.0011
 # rz.Resize_pas_auto(name_model_3D, model_3D_resized_name,scaling_factor)
 
@@ -186,6 +194,17 @@ while nuage_de_point_trop_gros:
         dens.reduction_densite_pc(name_model_3D,name_model_3D_reduit_densite,0.5)
         name_model_3D=name_model_3D_reduit_densite
 
+# On s'assure également que le nuage de point récupéré par la caméra soit d'une taille simailaire à notre modèle 3D
+
+# point_model_reduit,_=cv.ply_to_points_and_colors(name_model_3D_reduit_densite)
+# point_bruits,_=cv.ply_to_points_and_colors(name_bruit)
+# name_bruit_reduit=name_bruit
+
+# while len(point_bruits) > 2*len(point_model_reduit):
+#     name_bruit_reduit=name+"bruit_reduit.ply"
+#     dens.reduction_densite_pc(name_bruit,name_bruit_reduit,0.5)
+#     name_bruit=name_bruit_reduit
+#     point_bruits,_=cv.ply_to_points_and_colors(name_bruit)
 
 ###########################################################
 
