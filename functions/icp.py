@@ -259,7 +259,7 @@ def find_the_best_pre_rotation(source_path, target_path):
 
     # Initialize the best cost.
     best_cost = np.inf
-    print("If you want faster results (for example: for tests) you can change the range of the angles (in find_the_best_pre_rotation)")
+    print("Si vous voulez des résultats plus rapides (par exemple dans le cadre de tests) vous pouvez limiter la plage de recherche des angles (dans find_the_best_pre_rotation)")
     best_angles=[]
     for angle_x in range(0, 10, 10): # En théorie il faut mettre -180, 180 (doit parcourir toutes les positions possibles)
         for angle_y in range(0, 10, 10): # Idem

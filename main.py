@@ -60,6 +60,7 @@ Ensuite, appelez la fonction `run_acquisition` en fournissant les paramètres su
     """
 import numpy as np
 import cv2
+import os
 import open3d as o3d
 import functions.icp as cp
 import functions.translation_m as tm
@@ -98,13 +99,15 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 
 ############### Loading ####################
 
+os.system('cls' if os.name == 'nt' else 'clear')
+
 # Charger le model 3D
 
-# name_model_3D = "data_exemple/FleurDeLisColored.ply"
-# name = "data_exemple/debug"
+name_model_3D = "data_exemple/FleurDeLisThing.ply"
+name = "data_exemple/debug"
 
-name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
-name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
+# name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
+# name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
 
 # Marche bien (ne pas changer les paramètres) : 
 # _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
@@ -117,6 +120,8 @@ name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
 ###########################################################
 
 ################### Acquisition ###########################
+
+print("Acquisition en cours...")
 
 name_pc = name + '.ply'
 color_image_name = name + '.png'
@@ -137,9 +142,12 @@ color_image_name = name + '.png'
 color_image= cv2.imread(color_image_name)
 points,couleurs=cv.ply_to_points_and_colors(name_pc)
 
+print("Acquisition terminée...")
 ###########################################################
 
 ##################### Selectionner Zone ####################
+
+print("Selectionnez la zone à traiter :")
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code  
 
@@ -148,6 +156,8 @@ points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,couleurs,
 ############################################################
 
 ###################### Masquage ###########################
+
+print("Determination du masque hsv :")
 
 # Détermination du masque
 
@@ -162,6 +172,8 @@ points_filtrés,colors= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
 
 ####################### Filtrage Bruit #####################
 
+print("Supression du bruit de la caméra :\nJouez avec le curseur pour augmenter le rayon de suppresion (centre = centre de masse) ")
+
 name_bruit=name+'_filtre_bruit.ply'
 point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
 cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
@@ -169,6 +181,8 @@ cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 ###########################################################
 
 ######################### Redimensionnement du modèle 3D ##################################
+
+print("Redmimensionnement en cours...")
 
 name_3D=name+"_model_3D"
 model_3D_resized_name =name_3D + '_resized.ply'
@@ -195,7 +209,7 @@ while nuage_de_point_trop_gros:
         dens.reduction_densite_pc(name_model_3D,name_model_3D_reduit_densite,0.5)
         name_model_3D=name_model_3D_reduit_densite
 
-# On s'assure également que le nuage de point récupéré par la caméra soit d'une taille simailaire à notre modèle 3D
+# On s'assure également que le nuage de point récupéré par la caméra soit d'une taille simailaire à notre modèle 3D (utile ?)
 
 # point_model_reduit,_=cv.ply_to_points_and_colors(name_model_3D_reduit_densite)
 # point_bruits,_=cv.ply_to_points_and_colors(name_bruit)
@@ -206,6 +220,8 @@ while nuage_de_point_trop_gros:
 #     dens.reduction_densite_pc(name_bruit,name_bruit_reduit,0.5)
 #     name_bruit=name_bruit_reduit
 #     point_bruits,_=cv.ply_to_points_and_colors(name_bruit)
+
+print("Redmimensionnement terminé")
 
 ###########################################################
 
@@ -220,6 +236,8 @@ translation_vector[2] = translation_vector[2]
 
 Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
 # print("Matrice de translation:",Mt)
+
+print("Repositionnement terminé")
 
 ###########################################################
 
@@ -240,11 +258,17 @@ M=Mat_y
 
 model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
 cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
-model_3D_points,_=cv.ply_to_points_and_colors(model_3D_resized_name)
+
+if len(model_3D_resized_name_coulors)!=0:
+    cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),model_3D_resized_name)
+else:
+    cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
 
 ###########################################################
 
 ################ Matrice de pré-rotation ###################
+
+print("On cherche la bonne pré-rotation à appliquer : ")
 
 M_icp_1=cp.find_the_best_pre_rotation(model_3D_resized_name,pc_reposed_name)
 model_3D_after_pre_rotations=name+"_after_pre_rotations.ply"
@@ -257,11 +281,13 @@ M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
 
 M_icp_1_inv = np.linalg.inv(M_icp_1)
 
+print("Pré-rotation trouvée")
+
 ###########################################################
 
 ###################### Matrice ICP #########################
 
-print("Please wait a moment for ICP to execute!!")
+print("Calcul de l'ICP :")
 M_icp_2, _=cp.run_icp(model_3D_after_pre_rotations,pc_reposed_name) # Pour la version avec pré-rotation
 # M_icp_2, _=cp.run_icp(model_3D_resized_name,pc_reposed_name) # Pour la version sans pré-rotation
 # print("M_icp :",M_icp_2)
@@ -304,6 +330,7 @@ if len(model_3D_resized_name_coulors)!=0:
     cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),name_transformed_model)
 else:
     cv.create_ply_file_without_colors(model_3D_resized_name_points,name_transformed_model)
+
 model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
 
 # On cherche maintenant à superposer les deux nuages de points 
@@ -348,6 +375,7 @@ cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"pr
 color_image1= cv2.imread(name+"projection.png")
 
 # On affiche
+print("Résultat final !")
 while True:
     cv2.imshow("projection",color_image1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -375,14 +403,14 @@ M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 #### Matrice pour replaquer le modèle 3D ####
 # (Initialement le modéle n'est pas dans la position que l'on souhaite)
 
-angle = np.radians(-90)
-Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-angle = np.radians(180)
-Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-angle = np.radians(90)
-Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0],  [np.sin(angle),np.cos(angle),0, 0],[0, 0, 1, 0], [0, 0, 0, 1]])
+# angle = np.radians(-90)
+# Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(180)
+# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(90)
+# Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0],  [np.sin(angle),np.cos(angle),0, 0],[0, 0, 1, 0], [0, 0, 0, 1]])
 
-#### Calcul final de la projection ####
+# #### Calcul final de la projection ####
 
 # Projection= M_in @ Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_x
 
