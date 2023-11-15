@@ -102,7 +102,7 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 
 # Charger le model 3D
 
-name_model_3D = "data_exemple/FleurDeLisThing.ply"
+name_model_3D = "data_exemple/FleurDeLisColored.ply"
 name = "data_exemple/fleure"
 
 # name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
@@ -111,7 +111,7 @@ name = "data_exemple/fleure"
 # Marche bien (ne pas changer les paramètres) : 
 # _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
 # _foie_deuxieme_jour__Thibaud14 (icp bien mais affichage limite)
-# _foie_deuxieme_jour__Thibaud20" (icp excellent mais affichage limite)
+# _foie_deuxieme_jour__Thibaud20 (icp excellent mais affichage limite)
 # _foie_deuxieme_jour_dedos__Thibaud3 (icp et affichage très bon)
 # _foie_deuxieme_jour_dedos__Thibaud9 (galère à faire converger correctement (il fait bien meurtrir le fichier avec le masque hsv) mais sinon icp et affichage bon )
 # _foie_deuxieme_jour_dedos__Thibaud10 (icp et affichage bien)
