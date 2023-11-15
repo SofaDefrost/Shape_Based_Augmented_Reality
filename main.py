@@ -307,54 +307,54 @@ model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
 cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),name_transformed_model)
 model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
 
-# # On cherche maintenant à superposer les deux nuages de points 
-# # Pour cela on utilise des arbres KD
+# On cherche maintenant à superposer les deux nuages de points 
+# Pour cela on utilise des arbres KD
 
-# tree = cKDTree(points_acquisition_originale)
+tree = cKDTree(points_acquisition_originale)
 
-# # Liste pour stocker les indices des points les plus proches dans le second nuage
-# indices_des_plus_proches = []
+# Liste pour stocker les indices des points les plus proches dans le second nuage
+indices_des_plus_proches = []
 
-# # Pour chaque point dans le premier nuage
-# for point in model_3D_points:
-#     # On recherche le point le plus proche dans le second nuage
-#     distance, indice_plus_proche = tree.query(point)
+# Pour chaque point dans le premier nuage
+for point in model_3D_points:
+    # On recherche le point le plus proche dans le second nuage
+    distance, indice_plus_proche = tree.query(point)
     
-#     if True: #distance < 0.003:
-#         # On concerve l'indice du point le plus proche
-#         indices_des_plus_proches.append(indice_plus_proche)
+    if True: #distance < 0.003:
+        # On concerve l'indice du point le plus proche
+        indices_des_plus_proches.append(indice_plus_proche)
 
-# # On modifie les couleurs des points trouvés dans l'étape précédente (c'est la ou se situe notre objet donc on va l'indiquer avec une couleurs spéciale ici bleue)
-# print(model_3D_resized_name_coulors)
-# print(len(model_3D_resized_name_coulors))
-# for indice in indices_des_plus_proches:
-#     print(indice)
-#     if len(model_3D_resized_name_coulors)==0:
-#         couleur_objet=np.array([0,0,255]) # Bleu (couleur de base)
-#     else:
-#         couleur_objet=model_3D_resized_name_coulors[indice]
-#     couleurs_acquisition_originale[indice]=couleur_objet
-#     # On fait un peu autour pour que ce soit plus visible
-#     couleurs_acquisition_originale[indice+1]=couleur_objet
-#     couleurs_acquisition_originale[indice-1]=couleur_objet
-#     couleurs_acquisition_originale[indice+640]=couleur_objet
-#     couleurs_acquisition_originale[indice+640+1]=couleur_objet
-#     couleurs_acquisition_originale[indice+640-1]=couleur_objet
-#     couleurs_acquisition_originale[indice-640-1]=couleur_objet
-#     couleurs_acquisition_originale[indice-640]=couleur_objet
-#     couleurs_acquisition_originale[indice-640+1]=couleur_objet
+# On modifie les couleurs des points trouvés dans l'étape précédente 
+# c'est la ou se situe notre objet donc on va l'indiquer avec la couleur de l'objet en question
+i=0
+for indice in indices_des_plus_proches:
+    if len(model_3D_resized_name_coulors)==0:
+        couleur_objet=np.array([0,0,255]) # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
+    else:
+        couleur_objet=model_3D_resized_name_coulors[i]
+    couleurs_acquisition_originale[indice]=couleur_objet
+    # On fait un peu autour pour que ce soit plus visible
+    couleurs_acquisition_originale[indice+1]=couleur_objet
+    couleurs_acquisition_originale[indice-1]=couleur_objet
+    couleurs_acquisition_originale[indice+640]=couleur_objet
+    couleurs_acquisition_originale[indice+640+1]=couleur_objet
+    couleurs_acquisition_originale[indice+640-1]=couleur_objet
+    couleurs_acquisition_originale[indice-640-1]=couleur_objet
+    couleurs_acquisition_originale[indice-640]=couleur_objet
+    couleurs_acquisition_originale[indice-640+1]=couleur_objet
+    i+=1
 
-# # On enregistre
-# cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"projection.png")
-# color_image1= cv2.imread(name+"projection.png")
+# On enregistre
+cv.creer_image_a_partir_de_liste(couleurs_acquisition_originale,640,480,name+"projection.png")
+color_image1= cv2.imread(name+"projection.png")
 
-# # On affiche
-# while True:
-#     cv2.imshow("projection",color_image1)
-#     if cv2.waitKey(1) & 0xFF == ord('q'):
-#         break
+# On affiche
+while True:
+    cv2.imshow("projection",color_image1)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-# cv2.destroyAllWindows()
+cv2.destroyAllWindows()
 
 #####################################################################
 
