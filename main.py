@@ -103,7 +103,7 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 # Charger le model 3D
 
 name_model_3D = "data_exemple/FleurDeLisColored.ply"
-name = "data_exemple/fleure"
+name = "data_exemple/debug"
 
 # name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
 # name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
@@ -284,27 +284,28 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer 
 
 ################# Affiche et exporte Thibaud #######################
 
-# ## L'idée dans cette version est de ne pas faire de projection mais plutot d'utiliser le nuage de point initialement capturé par la caméra : 
-# ## On va déterminer les nouvelles coordonées de notre objet 3D et chercher les points correspondant dans le nuage de la caméra.
-# ## On viendra alors modifier la couleur de ces points  
+## L'idée dans cette version est de ne pas faire de projection mais plutot d'utiliser le nuage de point initialement capturé par la caméra : 
+## On va déterminer les nouvelles coordonées de notre objet 3D et chercher les points correspondant dans le nuage de la caméra.
+## On viendra alors modifier la couleur de ces points  
 
-# # On récupère les points et les couleurs de notre nuage de points (et on les convertit au bon format)
-# points_acquisition_originale,couleurs_acquisition_originale=cv.ply_to_points_and_colors(name_pc)
-# points_acquisition_originale = [tuple(row) for row in points_acquisition_originale]
-# points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_acquisition_originale], dtype=np.float64)
-# couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
+# On récupère les points et les couleurs de notre nuage de points (et on les convertit au bon format)
+points_acquisition_originale,couleurs_acquisition_originale=cv.ply_to_points_and_colors(name_pc)
+points_acquisition_originale = [tuple(row) for row in points_acquisition_originale]
+points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_acquisition_originale], dtype=np.float64)
+couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
 
-# # On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
-# model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
-# model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
+# On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
+model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
+model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
 
-# M=Mt @ M_icp_1_inv @ M_icp_2_inv # Matrice de "projection"
+M=Mt @ M_icp_1_inv @ M_icp_2_inv # Matrice de "projection"
 
-# name_transformed_model=name+"_transformed_3D_model.ply"
+name_transformed_model=name+"_transformed_3D_model.ply"
 
-# model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
-# cv.create_ply_file_without_colors(model_3D_resized_name_points,name_transformed_model)
-# model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
+model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
+
+cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),name_transformed_model)
+model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
 
 # # On cherche maintenant à superposer les deux nuages de points 
 # # Pour cela on utilise des arbres KD
@@ -379,10 +380,12 @@ angle = np.radians(-90)
 Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
 angle = np.radians(180)
 Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+angle = np.radians(90)
+Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0],  [np.sin(angle),np.cos(angle),0, 0],[0, 0, 1, 0], [0, 0, 0, 1]])
 
 #### Calcul final de la projection ####
 
-Projection= M_in @ Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_y @ Mat_x 
+Projection= M_in @ Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_x
 
 #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
 obj_file_name= name_3D +'.obj'
@@ -399,7 +402,7 @@ color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
 vertex_colors = np.asarray(color_3D_Model.colors)
 
 if len(vertex_colors)==0:
-    vertex_colors=np.asarray([[1., 0., 0.] for i in range(len(np.asarray(color_3D_Model.points)))])
+    vertex_colors=np.asarray([[0., 0., 1.] for i in range(len(np.asarray(color_3D_Model.points)))])
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
