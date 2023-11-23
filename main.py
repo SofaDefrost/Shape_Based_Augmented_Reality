@@ -103,11 +103,11 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-# name_model_3D = "data_exemple/FleurDeLisColored.ply"
-# name = "data_exemple/debug"
+name_model_3D = "data_exemple/FleurDeLisColored.ply"
+name = "data_exemple/debug"
 
-name_model_3D = "labo_biologie/2eme_semaine/foie_V.ply"
-name="labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
+# name_model_3D = "labo_biologie/2eme_semaine/foie_V.ply"
+# name="labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # Marche bien (ne pas changer les paramètres) : 
 # _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
@@ -245,26 +245,26 @@ print("Repositionnement terminé")
 
 ################ Remise en place du modèle 3D #############
 
-# Que pour le foie
+# # Que pour le foie
 
-# On inverse suivant y le sens du modèle 3D (parce que il n'est pas dans le bon sens)
+# # On inverse suivant y le sens du modèle 3D (parce que il n'est pas dans le bon sens)
 
-angle = np.radians(180)
-Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+# angle = np.radians(180)
+# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 
-# On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
-model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
-model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
+# # On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
+# model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
+# model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(model_3D_resized_name_points)))) # On met au bon format les points (on rajoute une coordonnée de 1)
 
-M=Mat_y
+# M=Mat_y
 
-model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
-cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
+# model_3D_resized_name_points=[M @ p for p in model_3D_resized_name_points]
+# cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
 
-if len(model_3D_resized_name_coulors)!=0:
-    cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),model_3D_resized_name)
-else:
-    cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
+# if len(model_3D_resized_name_coulors)!=0:
+#     cv.create_ply_file(model_3D_resized_name_points,model_3D_resized_name_coulors.astype(int),model_3D_resized_name)
+# else:
+#     cv.create_ply_file_without_colors(model_3D_resized_name_points,model_3D_resized_name)
 
 ###########################################################
 
@@ -312,11 +312,10 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x,y,z)) #  Important de calculer 
 ## On va déterminer les nouvelles coordonées de notre objet 3D et chercher les points correspondant dans le nuage de la caméra.
 ## On viendra alors modifier la couleur de ces points  
 
-# On récupère les points et les couleurs de notre nuage de points (et on les convertit au bon format)
-points_acquisition_originale,couleurs_acquisition_originale=cv.ply_to_points_and_colors(name_pc)
-points_acquisition_originale = [tuple(row) for row in points_acquisition_originale]
-points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_acquisition_originale], dtype=np.float64)
-couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
+# On récupère les points de notre nuage de points en sortie de nos étapes de filtrages (et on les convertit au bon format)
+points_full_filtres,_=cv.ply_to_points_and_colors(name_bruit)
+points_full_filtres = [tuple(row) for row in points_full_filtres]
+points_full_filtres = np.array([(float(x), float(y), float(z)) for (x, y, z) in points_full_filtres], dtype=np.float64)
 
 # On récupère les points de notre modèle 3D et on applique les transformations (rotation et translations)
 model_3D_resized_name_points,model_3D_resized_name_coulors=cv.ply_to_points_and_colors(model_3D_resized_name)
@@ -338,7 +337,7 @@ model_3D_points,_=cv.ply_to_points_and_colors(name_transformed_model)
 # On cherche maintenant à superposer les deux nuages de points 
 # Pour cela on utilise des arbres KD
 
-tree = cKDTree(points_acquisition_originale)
+tree = cKDTree(points_full_filtres)
 
 # Liste pour stocker les indices des points les plus proches dans le second nuage
 indices_des_plus_proches = []
@@ -349,13 +348,19 @@ for point in model_3D_points:
     distance, indice_plus_proche = tree.query(point)
     
     if True: #distance < 0.003:
-        # On concerve l'indice du point le plus proche
+        # On conserve l'indice du point le plus proche
         indices_des_plus_proches.append(indice_plus_proche)
 
-# On modifie les couleurs des points trouvés dans l'étape précédente 
-# c'est la ou se situe notre objet donc on va l'indiquer avec la couleur de l'objet en question
+# On récupère la position des points de notre modèle 3D dans le nuage de point initial
+indice_dans_pc_initial=[tableau_indice_filtre_bruit[i] for i in indices_des_plus_proches]
+
+# On récupère les couleurs de notre nuage de point initial (utilie pour la projection)
+_,couleurs_acquisition_originale=cv.ply_to_points_and_colors(name_pc)
+couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
+
+# On fait les modifications de couleurs
 i=0
-for indice in indices_des_plus_proches:
+for indice in indice_dans_pc_initial:
     if len(model_3D_resized_name_coulors)==0:
         couleur_objet=np.array([0,0,255]) # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
     else:
