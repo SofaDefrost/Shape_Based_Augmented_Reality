@@ -103,11 +103,11 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-name_model_3D = "data_exemple/FleurDeLisThing.ply"
-name = "data_exemple/debug"
+# name_model_3D = "data_exemple/FleurDeLisColored.ply"
+# name = "data_exemple/debug"
 
-# name_model_3D = "labo_biologie/2eme_semaine/foie_L.ply"
-# name="labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
+name_model_3D = "labo_biologie/2eme_semaine/foie_V.ply"
+name="labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # Marche bien (ne pas changer les paramètres) : 
 # _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
@@ -142,6 +142,8 @@ color_image_name = name + '.png'
 color_image= cv2.imread(color_image_name)
 points,couleurs=cv.ply_to_points_and_colors(name_pc)
 
+tableau_indice=[i for i in range(len(points))]
+
 print("Acquisition terminée...")
 ###########################################################
 
@@ -151,7 +153,7 @@ print("Selectionnez la zone à traiter :")
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code  
 
-points_crop,couleurs_crop=cr.crop_points_cloud(color_image_name,points,couleurs,640)
+points_crop,couleurs_crop,tableau_indice_crop=cr.crop_points_cloud(color_image_name,points,couleurs,640,tableau_indice)
 
 ############################################################
 
@@ -166,7 +168,7 @@ mask_hsv=get_filtre_hsv.interface_hsv_image(color_image_name)
 # Application du masque
 
 pc_masked_name = name + '_masked.ply'  # donner le nom pour le fichier nouveau après l'application du masque
-points_filtrés,colors= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
+points_filtres_hsv,_,tableau_indice_hsv= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv,tableau_indice_crop)
 
 ###########################################################
 
@@ -175,7 +177,7 @@ points_filtrés,colors= apply_hsv.mask(points_crop,couleurs_crop,mask_hsv)
 print("Supression du bruit de la caméra :\nJouez avec le curseur pour augmenter le rayon de suppresion (centre = centre de masse) ")
 
 name_bruit=name+'_filtre_bruit.ply'
-point_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtrés,points_filtrés)[0]
+point_filtre_bruit,_,tableau_indice_filtre_bruit=bruit.interface_de_filtrage_de_points(points_filtres_hsv,points_filtres_hsv,tableau_indice_hsv)
 cv.create_ply_file_without_colors(point_filtre_bruit,name_bruit)
 
 ###########################################################
@@ -243,7 +245,7 @@ print("Repositionnement terminé")
 
 ################ Remise en place du modèle 3D #############
 
-## Que pour le foie
+# Que pour le foie
 
 # On inverse suivant y le sens du modèle 3D (parce que il n'est pas dans le bon sens)
 
@@ -397,48 +399,48 @@ cv2.destroyAllWindows()
 calibration_matrix = rc.recover_matrix_calib()
 M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
 M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
-# M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
+M_in = np.array([[382.437, 0, 319.688, 0], [0, 382.437, 240.882, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane je pense à supprimer
 # M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
 
-#### Matrice pour replaquer le modèle 3D ####
-# (Initialement le modéle n'est pas dans la position que l'on souhaite)
+### Matrice pour replaquer le modèle 3D ####
+#(Initialement le modéle n'est pas dans la position que l'on souhaite)
 
-# angle = np.radians(-90)
-# Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-# angle = np.radians(180)
-# Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-# angle = np.radians(90)
-# Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0],  [np.sin(angle),np.cos(angle),0, 0],[0, 0, 1, 0], [0, 0, 0, 1]])
+angle = np.radians(-90)
+Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0], [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
+angle = np.radians(180)
+Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+angle = np.radians(90)
+Mat_z = np.asarray([[np.cos(angle), -np.sin(angle),0, 0],  [np.sin(angle),np.cos(angle),0, 0],[0, 0, 1, 0], [0, 0, 0, 1]])
 
-# #### Calcul final de la projection ####
+#### Calcul final de la projection ####
 
-# Projection= M_in @ Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_x
+Projection= M_in @ Mt @ M_icp_1_inv @ M_icp_2_inv @ Mat_x
 
-# #Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
-# obj_file_name= name_3D +'.obj'
-# po.convert_ply_to_obj(model_3D_resized_name, obj_file_name)
-# # Chargement du fichier obj
+#Appel à la fonction permettant de convertir le fichier template.ply redimensionné au format .obj
+obj_file_name= name_3D +'.obj'
+po.convert_ply_to_obj(model_3D_resized_name, obj_file_name)
+# Chargement du fichier obj
 
-# obj = OBJ(obj_file_name, swapyz=True)
+obj = OBJ(obj_file_name, swapyz=True)
 
-# # # Affichage
-# h, w, _ = color_image.shape
-# cv2.imshow("frame_avant", color_image)
-# #recuperer les couleurs du l'objet 3D
-# color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
-# vertex_colors = np.asarray(color_3D_Model.colors)
+# # Affichage
+h, w, _ = color_image.shape
+cv2.imshow("frame_avant", color_image)
+#recuperer les couleurs du l'objet 3D
+color_3D_Model = o3d.io.read_point_cloud(model_3D_resized_name)
+vertex_colors = np.asarray(color_3D_Model.colors)
 
-# if len(vertex_colors)==0:
-#     vertex_colors=np.asarray([[0., 0., 1.] for i in range(len(np.asarray(color_3D_Model.points)))])
+if len(vertex_colors)==0:
+    vertex_colors=np.asarray([[0., 0., 1.] for i in range(len(np.asarray(color_3D_Model.points)))])
 
-# while True:
-#     # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
-#     frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors)
-#     cv2.imshow("frame_apres", frame_apres)
-#     if cv2.waitKey(1) & 0xFF == ord('q'):        
-#         break
+while True:
+    # Appel à la fonction permettant de projeter l'objet 3D avec ses couleurs spécifiques
+    frame_apres = proj.project_and_display(color_image,obj, Projection, vertex_colors)
+    cv2.imshow("frame_apres", frame_apres)
+    if cv2.waitKey(1) & 0xFF == ord('q'):        
+        break
 
-# cv2.destroyAllWindows()
+cv2.destroyAllWindows()
 
 
 
