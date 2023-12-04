@@ -144,7 +144,7 @@ points,couleurs=cv.ply_to_points_and_colors(name_pc)
 
 tableau_indice=[i for i in range(len(points))]
 
-print("Acquisition terminée...")
+print("Acquisition terminée ...")
 ###########################################################
 
 ##################### Selectionner Zone ####################
