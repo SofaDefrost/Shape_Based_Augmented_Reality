@@ -59,3 +59,54 @@ Ce programme utilise plusieurs fonctions pour effectuer les étapes suivantes :
 
 1. **Afficher les résulats** : Il ne reste plus qu'à afficher la superposition finale de notre modèle 3D sur notre nuage de points.
 
+""" 
+L'utilisateur doit prendre en compte les points suivants :
+
+**Important**:
+- **Pendant la capture, l'utilisateur devra appuyer sur la touche S du clavier et la touche Q pour arrêter la capture.**
+- Assurez-vous que tous les fichiers existent dans le même dossier.
+- Indiquez le chemin vers le modèle 3D ainsi que l'image.
+- Nommez le nuage de points acquis par la caméra Realsense.
+- Définissez le seuil de couleur et la phase de couleur.
+- Vérifiez le type de caméra utilisé pour pouvoir appliquer la matrice de calibration spécifique à cette caméra.
+- Pour arrêter l'exécution, il suffit de cliquer sur la touche Q.'
+
+Ce programme utilise plusieurs fonctions pour effectuer les étapes suivantes :
+
+1. **Acquisition** : Cette fonction permet de récupérer le nuage de points en connectant la caméra RealSense. Pour l'utiliser, 
+l'utilisateur doit d'abord initialiser le nom du fichier du nuage de points et le nom de l'image optique. 
+Ensuite, appelez la fonction `run_acquisition` en fournissant les paramètres suivants : 
+    `nom_fichier_nuage_points` (nom du fichier du nuage de points) et `nom_image_2D`.
+
+2. **Masquage** : Cette fonction permet de filtrer le nuage de points selon un filtre hsv. Elle prend les paramètres suivants :
+
+- `points` : Liste des coordonées du nuages de points
+- `couleurs` : Liste des couleurs associées à ce nuage de points
+- `mask` : Masque hsv à appliquer 
+
+3. **Filtrage Bruit** : Cette fonction permet de filtrer le nuage de points pour éviter le bruit environnant. La fonction crée une interface TKinter qui permet de selectionner la taille du rayon de filtrage (par rapport au centre de masse) :
+
+- `points` : Liste des coordonées du nuages de points
+- `couleurs` : Liste des couleurs associées à ce nuage de points
+
+4. **Repositionnement** : Cette fonction "repose" les points du nuage de points pour les repositionner correctement. (Remarque : La description ne mentionne pas de paramètres spécifiques pour cette fonction.)
+
+5. **Redimensionnement automatique** (resize_auto) : Cette fonction permet de redimensionner le modèle 3D et le nuage de points filtré et repositionné. L'utilisateur doit fournir les paramètres suivants :
+
+- `nom_nuage_points_repositionne` : Nom du fichier du nuage de points repositionnés au format PLY.
+- `nom_modele_3D` : Nom du fichier du modèle 3D au format PLY.
+- `nuage_points_redimensionne` : Nom du fichier dans lequel le nouveau nuage de points redimensionné sera enregistré au format PLY.
+
+
+
+6. **Redimensionnement avec seuil** (Resize_pas_auto) :
+    - `nom_nuage_points_repositionne`
+    - Nom du fichier de sortie après le redimensionnement
+    - Facteur de redimensionnement
+
+    
+***Remarque*** : Si l'utilisateur souhaite éviter de refaire l'acquisition à chaque fois, 
+    il peut commenter la ligne "import functions.acquisition as aq" et utiliser "aq.run_acquisition(name_pc, color_image_name)". 
+    De plus, si l'objet 3D possède ses propres couleurs spécifiques, l'utilisateur devra appeler ou décommenter l'appel à la fonction project_and_display.
+    Dans le cas contraire, il devra décommenter la ligne contenant la fonction project_and_display_without_colors.
+    """
