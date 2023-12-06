@@ -10,7 +10,9 @@ from functions.objloader_simple import OBJ
 import functions.icp as cp
 import functions.translation_m as tm
 import functions.resize as rz
+
 import functions.recover_realsense_matrix as rc
+
 import functions.transformations as tf
 import functions.project_and_display as proj
 import functions.ply2obj as po
@@ -66,7 +68,6 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 
 ############### Loading ####################
 
-
 os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
@@ -74,8 +75,8 @@ os.system('cls' if os.name == 'nt' else 'clear')
 # NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
 # NAME = "data_exemple/debug"
 
-NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
+NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_L_couleurs_h.ply"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud20"
 
 # Marche bien (ne pas changer les paramètres) :
 # Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
@@ -395,8 +396,11 @@ for indice in indices_des_plus_proches:
 cv.creer_image_a_partir_de_liste(
     couleurs_acquisition_originale, 640, 480, NAME + "projection.png")
 
-cv.create_ply_file(points_acquisition_originale,
-                   couleurs_acquisition_originale, NAME+"_projection.ply")
+POINTS_PROJECTION_V1, COULEURS_PORJECTION_V1, _ = bruit.filtrage_barycentre(
+    points_acquisition_originale, couleurs_acquisition_originale, 0.5)
+
+cv.create_ply_file(POINTS_PROJECTION_V1,
+                   COULEURS_PORJECTION_V1, NAME+"_projection.ply")
 
 color_image1 = cv2.imread(NAME + "projection.png")
 
@@ -501,8 +505,11 @@ for indice in indice_dans_pc_initial:
 cv.creer_image_a_partir_de_liste(
     couleurs_acquisition_originale, 640, 480, NAME + "projection_affinee.png")
 
-cv.create_ply_file(points_acquisition_originale,
-                   couleurs_acquisition_originale, NAME+"_projection_affinee.ply")
+POINTS_PROJECTION_V2, COULEURS_PORJECTION_V2, _ = bruit.filtrage_barycentre(
+    points_acquisition_originale, couleurs_acquisition_originale, 0.5)
+
+cv.create_ply_file(POINTS_PROJECTION_V2,
+                   COULEURS_PORJECTION_V2, NAME+"_projection_affinee.ply")
 
 color_image1 = cv2.imread(NAME + "projection_affinee.png")
 
