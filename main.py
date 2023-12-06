@@ -73,8 +73,8 @@ os.system('cls' if os.name == 'nt' else 'clear')
 # NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
 # NAME = "data_exemple/debug"
 
-NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_L_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
+NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud4"
 
 # Marche bien (ne pas changer les paramètres) :
 # Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
@@ -578,6 +578,7 @@ while True:
     frame_apres = proj.project_and_display(
         COLOR_IMAGE, obj, Projection, vertex_colors)
     cv2.imshow("Affichage_Tinhinane", frame_apres)
+    cv2.imwrite(NAME + "projection_Tinhinane.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
