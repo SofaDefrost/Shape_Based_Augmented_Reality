@@ -278,6 +278,11 @@ def find_the_best_pre_rotation(source_path, target_path):
                     best_transform_matrix = transform_matrix
                     best_cost = cost
                     best_angles=[angle_x,angle_y,angle_z]
+                # t = np.hstack((transform_matrix,  np.array([[0], [0], [0]])))
+                # t = np.vstack((t, np.array([0, 0, 0, 1])))
+                # s,p=o3d.io.read_point_cloud(source_path),o3d.io.read_point_cloud(target_path)
+                # draw_registration_result(s,p , t)
+
     
     print("We keep finally :")
     print(best_transform_matrix)

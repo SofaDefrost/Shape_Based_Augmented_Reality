@@ -9,12 +9,12 @@ from functions.objloader_simple import OBJ
 
 import functions.icp as cp
 import functions.translation_m as tm
-import functions.repose as rp
 import functions.resize as rz
 import functions.recover_realsense_matrix as rc
 import functions.transformations as tf
 import functions.project_and_display as proj
 import functions.ply2obj as po
+import realsense.utils.repose as rp
 import realsense.utils.hsv as apply_hsv
 import realsense.utils.interface_hsv_image as get_filtre_hsv
 import realsense.utils.convert as cv
@@ -75,15 +75,28 @@ os.system('cls' if os.name == 'nt' else 'clear')
 # NAME = "data_exemple/debug"
 
 NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud3"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # Marche bien (ne pas changer les paramètres) :
-# _foie_deuxieme_jour__Thibaud4 (icp ok et affichage ok)
-# _foie_deuxieme_jour__Thibaud14 (icp bien mais affichage limite)
-# _foie_deuxieme_jour__Thibaud20 (icp excellent mais affichage limite)
-# _foie_deuxieme_jour_dedos__Thibaud3 (icp et affichage très bon)
-# _foie_deuxieme_jour_dedos__Thibaud9 (galère à faire converger correctement (il fait bien meurtrir le fichier avec le masque hsv) mais sinon icp et affichage bon )
-# _foie_deuxieme_jour_dedos__Thibaud10 (icp et affichage bien)
+# Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
+
+# _foie_deuxieme_jour__Thibaud0 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud1 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud2 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud3 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud4 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud5 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud6 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud14 (marche trop bien)
+# _foie_deuxieme_jour__Thibaud16 (marche ok)
+# _foie_deuxieme_jour__Thibaud20 (marche trop bien)
+
+# _foie_deuxieme_jour_dedos__Thibaud0 (marche trop bien)
+# _foie_deuxieme_jour_dedos__Thibaud1 (marche trop bien)
+# _foie_deuxieme_jour_dedos__Thibaud3 (marche trop bien)
+# _foie_deuxieme_jour_dedos__Thibaud4 (marche trop bien)
+# _foie_deuxieme_jour_dedos__Thibaud9 (marche trop bien)
+# _foie_deuxieme_jour_dedos__Thibaud10 (marche trop bien)
 
 ###########################################################
 
@@ -206,7 +219,7 @@ while NUAGE_DE_POINTS_TROP_GROS:
 #     NAME_BRUIT = NAME_BRUIT_REDUIT
 #     POINT_BRUIT, _ = cv.ply_to_points_and_colors(NAME_BRUIT)
 
-# print("Redmimensionnement terminé")
+print("Redmimensionnement terminé")
 
 ###########################################################
 
@@ -301,6 +314,103 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 ###########################################################
 
+################# Affiche et exporte Thibaud version 1 (à supprimer ?) #######################
+
+# L'idée dans cette version est de ne pas faire de projection
+# mais plutot d'utiliser le nuage de point initialement capturé par la caméra :
+# On va déterminer les nouvelles coordonées de notre objet 3D
+# et chercher les POINTS correspondant dans le nuage de la caméra.
+# On viendra alors modifier la couleur de ces POINTS
+
+# On récupère les POINTS et les COULEURS de notre nuage de POINTS (et on les convertit au bon format)
+points_acquisition_originale, couleurs_acquisition_originale = cv.ply_to_points_and_colors(
+    NAME_PC)
+points_acquisition_originale = [tuple(row)
+                                for row in points_acquisition_originale]
+points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (
+    x, y, z) in points_acquisition_originale], dtype=np.float64)
+couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
+
+# On récupère les POINTS de notre modèle 3D et on applique les rotations et translations
+model_3D_resized_name_points, model_3D_resized_name_coulors = cv.ply_to_points_and_colors(
+    MODEL_3D_RESIZED_NAME)
+# On met au bon format les POINTS (on rajoute une coordonnée de 1)
+model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(
+    model_3D_resized_name_points))))
+
+M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
+
+NAME_TRANSFORMED_MODEL = NAME + "_transformed_3D_model.ply"
+
+model_3D_resized_name_points = [M @ p for p in model_3D_resized_name_points]
+
+if len(model_3D_resized_name_coulors) != 0:
+    cv.create_ply_file(model_3D_resized_name_points,
+                       model_3D_resized_name_coulors.astype(int), NAME_TRANSFORMED_MODEL)
+else:
+    cv.create_ply_file_without_colors(
+        model_3D_resized_name_points, NAME_TRANSFORMED_MODEL)
+
+model_3D_POINTS, _ = cv.ply_to_points_and_colors(NAME_TRANSFORMED_MODEL)
+
+# On cherche maintenant à superposer les deux nuages de POINTS
+# Pour cela on utilise des arbres KD
+
+tree = cKDTree(points_acquisition_originale)
+
+# Liste pour stocker les indices des POINTS les plus proches dans le second nuage
+indices_des_plus_proches = []
+
+# Pour chaque point dans le premier nuage
+for point in model_3D_POINTS:
+    # On recherche le point le plus proche dans le second nuage
+    distance, indice_plus_proche = tree.query(point)
+
+    if True:  # distance < 0.003:
+        # On concerve l'indice du point le plus proche
+        indices_des_plus_proches.append(indice_plus_proche)
+
+# On modifie les COULEURS des POINTS trouvés dans l'étape précédente
+# c'est la ou se situe notre objet donc on va l'indiquer avec la couleur de l'objet en question
+i = 0
+for indice in indices_des_plus_proches:
+    if len(model_3D_resized_name_coulors) == 0:
+        # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
+        couleur_objet = np.array([0, 0, 255])
+    else:
+        couleur_objet = model_3D_resized_name_coulors[i]
+        i += 1
+    couleurs_acquisition_originale[indice] = couleur_objet
+    # On fait un peu autour pour que ce soit plus visible
+    couleurs_acquisition_originale[indice+1] = couleur_objet
+    couleurs_acquisition_originale[indice-1] = couleur_objet
+    couleurs_acquisition_originale[indice+640] = couleur_objet
+    couleurs_acquisition_originale[indice+640+1] = couleur_objet
+    couleurs_acquisition_originale[indice+640-1] = couleur_objet
+    couleurs_acquisition_originale[indice-640-1] = couleur_objet
+    couleurs_acquisition_originale[indice-640] = couleur_objet
+    couleurs_acquisition_originale[indice-640+1] = couleur_objet
+
+# On enregistre
+cv.creer_image_a_partir_de_liste(
+    couleurs_acquisition_originale, 640, 480, NAME + "projection.png")
+
+cv.create_ply_file(points_acquisition_originale,
+                   couleurs_acquisition_originale, NAME+"_projection.ply")
+
+color_image1 = cv2.imread(NAME + "projection.png")
+
+# On affiche
+print("Résultat final !")
+while True:
+    cv2.imshow("Affichage_Thibaud_V1", color_image1)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cv2.destroyAllWindows()
+
+#####################################################################
+
 ################# Affiche et exporte Thibaud version affinée #######################
 
 # L'idée dans cette version est de ne pas faire de projection
@@ -389,110 +499,17 @@ for indice in indice_dans_pc_initial:
 
 # On enregistre
 cv.creer_image_a_partir_de_liste(
-    couleurs_acquisition_originale, 640, 480, NAME + "projection.png")
+    couleurs_acquisition_originale, 640, 480, NAME + "projection_affinee.png")
+
 cv.create_ply_file(points_acquisition_originale,
                    couleurs_acquisition_originale, NAME+"_projection_affinee.ply")
-color_image1 = cv2.imread(NAME + "projection.png")
+
+color_image1 = cv2.imread(NAME + "projection_affinee.png")
 
 # On affiche
 print("Résultat final !")
 while True:
     cv2.imshow("Affichage_Thibaud_V2", color_image1)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-#####################################################################
-
-################# Affiche et exporte Thibaud version 1 (à supprimer ?) #######################
-
-# L'idée dans cette version est de ne pas faire de projection
-# mais plutot d'utiliser le nuage de point initialement capturé par la caméra :
-# On va déterminer les nouvelles coordonées de notre objet 3D
-# et chercher les POINTS correspondant dans le nuage de la caméra.
-# On viendra alors modifier la couleur de ces POINTS
-
-# On récupère les POINTS et les COULEURS de notre nuage de POINTS (et on les convertit au bon format)
-points_acquisition_originale, couleurs_acquisition_originale = cv.ply_to_points_and_colors(
-    NAME_PC)
-points_acquisition_originale = [tuple(row)
-                                for row in points_acquisition_originale]
-points_acquisition_originale = np.array([(float(x), float(y), float(z)) for (
-    x, y, z) in points_acquisition_originale], dtype=np.float64)
-couleurs_acquisition_originale = couleurs_acquisition_originale.astype(int)
-
-# On récupère les POINTS de notre modèle 3D et on applique les rotations et translations
-model_3D_resized_name_points, model_3D_resized_name_coulors = cv.ply_to_points_and_colors(
-    MODEL_3D_RESIZED_NAME)
-# On met au bon format les POINTS (on rajoute une coordonnée de 1)
-model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(
-    model_3D_resized_name_points))))
-
-M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
-
-NAME_TRANSFORMED_MODEL = NAME + "_transformed_3D_model.ply"
-
-model_3D_resized_name_points = [M @ p for p in model_3D_resized_name_points]
-
-if len(model_3D_resized_name_coulors) != 0:
-    cv.create_ply_file(model_3D_resized_name_points,
-                       model_3D_resized_name_coulors.astype(int), NAME_TRANSFORMED_MODEL)
-else:
-    cv.create_ply_file_without_colors(
-        model_3D_resized_name_points, NAME_TRANSFORMED_MODEL)
-
-model_3D_POINTS, _ = cv.ply_to_points_and_colors(NAME_TRANSFORMED_MODEL)
-
-# On cherche maintenant à superposer les deux nuages de POINTS
-# Pour cela on utilise des arbres KD
-
-tree = cKDTree(points_acquisition_originale)
-
-# Liste pour stocker les indices des POINTS les plus proches dans le second nuage
-indices_des_plus_proches = []
-
-# Pour chaque point dans le premier nuage
-for point in model_3D_POINTS:
-    # On recherche le point le plus proche dans le second nuage
-    distance, indice_plus_proche = tree.query(point)
-
-    if True:  # distance < 0.003:
-        # On concerve l'indice du point le plus proche
-        indices_des_plus_proches.append(indice_plus_proche)
-
-# On modifie les COULEURS des POINTS trouvés dans l'étape précédente
-# c'est la ou se situe notre objet donc on va l'indiquer avec la couleur de l'objet en question
-i = 0
-for indice in indices_des_plus_proches:
-    if len(model_3D_resized_name_coulors) == 0:
-        # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
-        couleur_objet = np.array([0, 0, 255])
-    else:
-        couleur_objet = model_3D_resized_name_coulors[i]
-        i += 1
-    couleurs_acquisition_originale[indice] = couleur_objet
-    # On fait un peu autour pour que ce soit plus visible
-    couleurs_acquisition_originale[indice+1] = couleur_objet
-    couleurs_acquisition_originale[indice-1] = couleur_objet
-    couleurs_acquisition_originale[indice+640] = couleur_objet
-    couleurs_acquisition_originale[indice+640+1] = couleur_objet
-    couleurs_acquisition_originale[indice+640-1] = couleur_objet
-    couleurs_acquisition_originale[indice-640-1] = couleur_objet
-    couleurs_acquisition_originale[indice-640] = couleur_objet
-    couleurs_acquisition_originale[indice-640+1] = couleur_objet
-
-# On enregistre
-cv.creer_image_a_partir_de_liste(
-    couleurs_acquisition_originale, 640, 480, NAME + "projection.png")
-cv.create_ply_file(points_acquisition_originale,
-                   couleurs_acquisition_originale, NAME+"_projection.ply")
-color_image1 = cv2.imread(NAME + "projection.png")
-
-# On affiche
-print("Résultat final !")
-while True:
-    cv2.imshow("Affichage_Thibaud_V1", color_image1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

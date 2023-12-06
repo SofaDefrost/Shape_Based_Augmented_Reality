@@ -113,9 +113,10 @@ def repose_obj(pc_resized, pc_reposed):
 
     return pt_milieu
 
-# # Pour repose les fichiers issus du spectromètres (penser à recup les fonction dans convert)
+# import convert as cv
+# # Pour repose les fichiers issus du spectromètres
 
-# p,c=ply_to_points_and_colors("foie_V.ply")
+# p,c=cv.ply_to_points_and_colors("foie_L_couleurs_h.ply")
 # pr=repose_points(p)
 # c=np.array([[int(pixels) for pixels in couleur] for couleur in c])
-# create_ply_file(pr,c,"foie_V_reposed.ply")
+# cv.create_ply_file(pr,c,"foie_L_reposed.ply")
