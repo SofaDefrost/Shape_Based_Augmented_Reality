@@ -392,7 +392,7 @@ for indice in indices_des_plus_proches:
 
 # On enregistre
 cv.creer_image_a_partir_de_liste(
-    couleurs_acquisition_originale, 640, 480, NAME + "projection.png")
+    couleurs_acquisition_originale, 640, 480, NAME + "projection_Thibaud.png")
 
 POINTS_PROJECTION_V1, COULEURS_PORJECTION_V1, _ = bruit.filtrage_barycentre(
     points_acquisition_originale, couleurs_acquisition_originale, 0.5)
@@ -400,7 +400,7 @@ POINTS_PROJECTION_V1, COULEURS_PORJECTION_V1, _ = bruit.filtrage_barycentre(
 cv.create_ply_file(POINTS_PROJECTION_V1,
                    COULEURS_PORJECTION_V1, NAME+"_projection.ply")
 
-color_image1 = cv2.imread(NAME + "projection.png")
+color_image1 = cv2.imread(NAME + "projection_Thibaud.png")
 
 # On affiche
 print("Résultat final !")
@@ -501,7 +501,7 @@ for indice in indice_dans_pc_initial:
 
 # On enregistre
 cv.creer_image_a_partir_de_liste(
-    couleurs_acquisition_originale, 640, 480, NAME + "projection_affinee.png")
+    couleurs_acquisition_originale, 640, 480, NAME + "projection_Thibaud_affinee.png")
 
 POINTS_PROJECTION_V2, COULEURS_PORJECTION_V2, _ = bruit.filtrage_barycentre(
     points_acquisition_originale, couleurs_acquisition_originale, 0.5)
@@ -509,7 +509,7 @@ POINTS_PROJECTION_V2, COULEURS_PORJECTION_V2, _ = bruit.filtrage_barycentre(
 cv.create_ply_file(POINTS_PROJECTION_V2,
                    COULEURS_PORJECTION_V2, NAME+"_projection_affinee.ply")
 
-color_image1 = cv2.imread(NAME + "projection_affinee.png")
+color_image1 = cv2.imread(NAME + "projection_Thibaud_affinee.png")
 
 # On affiche
 print("Résultat final !")
