@@ -10,9 +10,7 @@ from functions.objloader_simple import OBJ
 import functions.icp as cp
 import functions.translation_m as tm
 import functions.resize as rz
-
 import functions.recover_realsense_matrix as rc
-
 import functions.transformations as tf
 import functions.project_and_display as proj
 import functions.ply2obj as po
@@ -76,7 +74,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 # NAME = "data_exemple/debug"
 
 NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_L_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud20"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour__Thibaud0"
 
 # Marche bien (ne pas changer les paramètres) :
 # Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
@@ -533,9 +531,9 @@ cv2.destroyAllWindows()
 
 ## Matrice de calibration (Matrice intrinsèque) ####
 
-calibration_matrix = rc.recover_matrix_calib()
-M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
+# calibration_matrix = rc.recover_matrix_calib()
+# M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+# M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 # Matrice intrinsèquqe Tinhinane je pense à supprimer
 M_in = np.array([[382.437, 0, 319.688, 0], [
                 0, 382.437, 240.882, 0], [0, 0, 1, 0]])

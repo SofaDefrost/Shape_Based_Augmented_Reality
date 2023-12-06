@@ -19,6 +19,6 @@ def recover_matrix_calib():
                                    [0, 0, 1]], dtype=np.float32)
     return calibration_matrix
 
-# Appel de la fonction et affichage de la matrice de calibration
-calibration_matrix = recover_matrix_calib()
-print(calibration_matrix)
+# # Appel de la fonction et affichage de la matrice de calibration
+# calibration_matrix = recover_matrix_calib()
+# print(calibration_matrix)
