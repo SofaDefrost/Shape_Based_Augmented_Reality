@@ -245,17 +245,7 @@ def weighted_average_euclidean_distance(list_a, list_b):
     return weighted_avg_distance
 
 
-def ply_to_points_and_colors(file_path):
-    # prend un fichier .ply et le converti en nuage de points et en couleur format RGB entre 0 et 255
-    ply_data = o3d.io.read_point_cloud(file_path)
-    points = np.array(ply_data.points)
-    colors = np.array(ply_data.colors)* 255
-
-    return points, colors
-
-def find_the_best_pre_rotation(source_path, target_path):
-    target,_ = ply_to_points_and_colors(target_path)
-    source,_=ply_to_points_and_colors(source_path)
+def find_the_best_pre_rotation(points_source, points_target):
 
     # Initialize the best cost.
     best_cost = np.inf
@@ -271,19 +261,14 @@ def find_the_best_pre_rotation(source_path, target_path):
                           
                 transform_matrix = M_x @ M_y @ M_z 
                 
-                source_rotated=[np.dot(point,transform_matrix) for point in source]
+                source_rotated=[np.dot(point,transform_matrix) for point in points_source]
                 
-                cost = weighted_average_euclidean_distance(source_rotated, target)
+                cost = weighted_average_euclidean_distance(source_rotated, points_target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
                     best_angles=[angle_x,angle_y,angle_z]
-                # t = np.hstack((transform_matrix,  np.array([[0], [0], [0]])))
-                # t = np.vstack((t, np.array([0, 0, 0, 1])))
-                # s,p=o3d.io.read_point_cloud(source_path),o3d.io.read_point_cloud(target_path)
-                # draw_registration_result(s,p , t)
 
-    
     print("We keep finally :")
     print(best_transform_matrix)
     print("Best angles :")

@@ -66,11 +66,16 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-# NAME = "data_exemple/debug"
+NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
 
-NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
+POINTS_MODEL_3D,COLORS_MODEL_3D = pp.get_points_and_colors_of_ply(NAME_MODEL_3D)
+
+# Nom des fichiers à enregistrer
+
+NAME = "data_exemple/debug"
+
+# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
 
 # Marche bien (ne pas changer les paramètres) :
 # Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
@@ -105,20 +110,15 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de POINTS en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
-# Version Tinhinane (penser à également décommenter la partie pour la projection)
-
-# aq.save_ply_from_realsense_with_interface(NAME_PC, COLOR_IMAGE_NAME)
-
-# Version Thibaud (penser à également décommenter la partie pour la projection)
-
-# aq.save_ply_from_realsense(NAME_PC,COLOR_IMAGE_NAME)
+# POINTS, COULEURS = aq.get_points_and_colors_from_realsense(COLOR_IMAGE_NAME) # On fait une acquisition
+POINTS, COULEURS =  pp.get_points_and_colors_of_ply(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
 
 COLOR_IMAGE = cv2.imread(COLOR_IMAGE_NAME)
-POINTS, COULEURS = pp.get_points_and_colors_of_ply(NAME_PC)
 
 TABLEAU_INDICE = [i for i in range(len(POINTS))]
 
 print("Acquisition terminée...")
+
 ###########################################################
 
 ##################### Selectionner Zone ####################
@@ -150,10 +150,7 @@ POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pa.apply_hsv_mask
 print("Supression du bruit de la caméra :")
 print("Jouez avec le curseur pour augmenter le rayon de suppresion (centre = centre de masse) ")
 
-NAME_BRUIT = NAME+'_filtre_bruit.ply'
-
-POINT_FILRE_BRUIT, _, TABLEAU_INDICE_FILTRE_BRUIT = pa.filter_array_with_sphere_on_barycentre_with_interface(POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV)
-pp.save_ply_file(NAME_BRUIT,POINT_FILRE_BRUIT)
+POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, TABLEAU_INDICE_FILTRE_BRUIT = pa.filter_array_with_sphere_on_barycentre_with_interface(POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV)
 
 ###########################################################
 
@@ -161,34 +158,20 @@ pp.save_ply_file(NAME_BRUIT,POINT_FILRE_BRUIT)
 
 print("Redmimensionnement en cours...")
 
-NAME_3D = NAME + "_model_3D"
-MODEL_3D_RESIZED_NAME = NAME_3D + '_resized.ply'
-
-# Pour le resize pas auto
-
-# Application de redimensionnement
-# SCALING_FACTOR = 0.00099 #0.0011
-# pp.resize_ply_with_scaling_factor(NAME_MODEL_3D, MODEL_3D_RESIZED_NAME,SCALING_FACTOR)
-
-# Pour le resize auto
-NAME_MODEL_3D_REDUIT_DENSITE = NAME_MODEL_3D
 NUAGE_DE_POINTS_TROP_GROS = True
 
 # On divise le nombre de point par deux jusqu'à ce que ce soit suffisant pour l'algo de resize auto
 while NUAGE_DE_POINTS_TROP_GROS:
     try:
         # Call the function to perform automatic resizing
-        pp.resize_ply_to_another_one(NAME_MODEL_3D_REDUIT_DENSITE,NAME_BRUIT,
-                       MODEL_3D_RESIZED_NAME)
+        POINTS_MODEL_3D_RESIZED = pa.resize_point_cloud_to_another_one(POINTS_MODEL_3D,POINT_FILRE_BRUIT)
         NUAGE_DE_POINTS_TROP_GROS = False
     except Exception as e:
         # Code à exécuter en cas d'erreur
         print(
             "Trop de points dans le nuage de point pour la fonction de resize automatique")
         print("on re-essaie en divisant le nombre de points du nuage par deux !")
-        NAME_MODEL_3D_REDUIT_DENSITE = NAME_3D + "_reduit_densite.ply"
-        pp.reduce_density_of_ply(NAME_MODEL_3D, NAME_MODEL_3D_REDUIT_DENSITE, 0.5)
-        NAME_MODEL_3D = NAME_MODEL_3D_REDUIT_DENSITE
+        POINTS_MODEL_3D, COLORS_MODEL_3D = pa.reduce_density_of_array(POINTS_MODEL_3D,0.5,COLORS_MODEL_3D)
 
 print("Redmimensionnement terminé")
 
@@ -198,8 +181,8 @@ print("Redmimensionnement terminé")
 
 # # Application de repositionnement
 PC_REPOSED_NAME = NAME + '_reposed.ply'
-pp.centering_ply_on_mean_points(NAME_BRUIT, PC_REPOSED_NAME)
-translation_vector = pp.get_mean_point_of_ply(NAME_BRUIT)
+POINTS_REPOSED = pa.centering_3Darray_on_mean_points(POINT_FILRE_BRUIT)
+translation_vector = pa.get_mean_point_of_3Darray(POINT_FILRE_BRUIT)
 translation_vector[0] = translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
@@ -223,18 +206,13 @@ angle = np.radians(180)
 Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [
                    0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
 
-# On récupère les points de notre modèle 3D et on applique les rotations et translations
-model_3D_resized_name_points, model_3D_resized_name_coulors = pp.get_points_and_colors_of_ply(
-    MODEL_3D_RESIZED_NAME)
-# On met au bon format les POINTS (on rajoute une coordonnée de 1)
-model_3D_resized_name_points = np.column_stack((model_3D_resized_name_points, np.ones(len(
-    model_3D_resized_name_points))))
+# On met au bon format les POINTS_MODEL_3D (on rajoute une coordonnée de 1)
+POINTS_MODEL_3D = np.column_stack((POINTS_MODEL_3D, np.ones(len(
+    POINTS_MODEL_3D))))
 
 M = Mat_y
 
-model_3D_resized_name_points = [M @ p for p in model_3D_resized_name_points]
-
-pp.save_ply_file(MODEL_3D_RESIZED_NAME, model_3D_resized_name_points,model_3D_resized_name_coulors)
+POINTS_MODEL_3D = [M @ p for p in POINTS_MODEL_3D]
 
 ###########################################################
 
@@ -242,13 +220,7 @@ pp.save_ply_file(MODEL_3D_RESIZED_NAME, model_3D_resized_name_points,model_3D_re
 
 print("On cherche la bonne pré-rotation à appliquer : ")
 
-POINTS_MODEL_3D_RESIZED_NAME,_=pp.get_points_and_colors_of_ply(MODEL_3D_RESIZED_NAME)
-POINTS_PC_REPOSED_NAME,_=pp.get_points_and_colors_of_ply(PC_REPOSED_NAME)
-M_icp_1 = cp.find_the_best_pre_rotation(POINTS_MODEL_3D_RESIZED_NAME, POINTS_PC_REPOSED_NAME)
-MODEL_3D_AFTER_PRE_ROTATIONS = NAME + "_after_pre_rotations.ply"
-p, c = pp.get_points_and_colors_of_ply(MODEL_3D_RESIZED_NAME)
-source_rotated = [np.dot(point, M_icp_1) for point in p]
-pp.save_ply_file(MODEL_3D_AFTER_PRE_ROTATIONS,source_rotated)
+M_icp_1 = cp.find_the_best_pre_rotation(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED)
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -258,7 +230,7 @@ M_ICP_1_INV = np.linalg.inv(M_icp_1)
 print("Pré-rotation trouvée")
 
 # ###########################################################
-
+# WIP HEREEEEEEEEEEEEEEEEEEEEEEEEE
 # ###################### Matrice ICP #########################
 
 print("Calcul de l'ICP :")
