@@ -66,11 +66,11 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-# NAME = "data_exemple/debug"
+NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
+NAME = "data_exemple/debug"
 
-NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
+# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
 
 # Marche bien (ne pas changer les paramètres) :
 # Globalement si ça ne marche pas c'est juste parce que l'acquisition a merdé
@@ -263,7 +263,9 @@ print("Pré-rotation trouvée")
 
 print("Calcul de l'ICP :")
 # Pour la version avec pré-rotation
-M_icp_2, _ = cp.run_icp(MODEL_3D_AFTER_PRE_ROTATIONS, PC_REPOSED_NAME)
+p1,_=pp.get_points_and_colors_of_ply(MODEL_3D_AFTER_PRE_ROTATIONS)
+p2,_=pp.get_points_and_colors_of_ply(PC_REPOSED_NAME)
+M_icp_2, _ = cp.icp(p1, p2)
 # M_icp_2, _=cp.run_icp(MODEL_3D_RESIZED_NAME,PC_REPOSED_NAME) # Pour la version sans pré-rotation
 # print("M_icp :",M_icp_2)
 
@@ -430,7 +432,6 @@ for point in model_3D_POINTS:
 # dans le nuage de POINTS de l'acquisition initiale
 indice_dans_pc_initial = [TABLEAU_INDICE_FILTRE_BRUIT[i]
                           for i in indices_des_plus_proches]
-
 # On récupère les COULEURS de notre nuage de point initial (utile pour la projection)
 points_acquisition_originale, couleurs_acquisition_originale = pp.get_points_and_colors_of_ply(
     NAME_PC)

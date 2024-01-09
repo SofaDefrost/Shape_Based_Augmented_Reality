@@ -9,22 +9,12 @@ import numpy as np
 import cv2
 
 
-def project_and_display(frame, obj, projection, colors):
-    """
-  Function to project a 3D object onto an image with the real colors of the object.
+def project_and_display(frame, points, colors,projection):
 
-  :param frame: The image frame onto which the 3D object is projected.
-  :param obj: The 3D object to be projected.
-  :param projection: The projection matrix for transforming 3D points to 2D image plane.
-   :param colors: The actual colors corresponding to the vertices of the 3D object.
-   :return: The input frame with the projected points displayed using the real colors.
-"""
-    vertices = np.array(
-        obj.vertices)  # Conversion de la liste en un tableau NumPy
     # # Transformation des points 3D de l'objet
-    ones_column = np.ones((vertices.shape[0], 1))
-    homogeneous_vertices = np.hstack((vertices, ones_column))
-    projected_points = np.dot(projection, homogeneous_vertices.T).T
+    ones_column = np.ones((points.shape[0], 1))
+    homogeneous_points = np.hstack((points, ones_column))
+    projected_points = np.dot(projection, homogeneous_points.T).T
 
     # Conversion des coordonnées 3D projetées en coordonnées 2D
     projected_points[:, 0] /= projected_points[:, 2]

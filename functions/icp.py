@@ -65,7 +65,7 @@ import open3d as o3d
 import numpy as np
 from scipy.spatial import cKDTree
 
-def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
+def find_nearest_neighbors(source_points, target_points, nearest_neigh_num):
     """
     Function to find the nearest points in the source point cloud for each point in the target point cloud.
 
@@ -75,8 +75,6 @@ def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
 
     :return: A numpy array containing the nearest points from the source point cloud for each point in the target point cloud.
     """
-    source_points = np.asarray(source_pc.points)
-    target_points = np.asarray(target_pc.points)
 
     # Create a KD-Tree from the source points
     source_kdtree = cKDTree(source_points)
@@ -89,14 +87,8 @@ def find_nearest_neighbors(source_pc, target_pc, nearest_neigh_num):
 
     return nearest_neighbors
 
-    # point_cloud_tree = o3d.geometry.KDTreeFlann(source_pc)
-    # points_arr = []
-    # for point in target_pc.points:
-    #     [_, idx, _] = point_cloud_tree.search_knn_vector_3d(point, nearest_neigh_num)
-    #     points_arr.append(source_pc.points[idx[0]])
-    # return np.asarray(points_arr)
 
-def quick_icp(source, target):
+def icp(source_points, target_points):
     
     """
 Iterative Closest Point (ICP) Alignment Function
@@ -113,65 +105,17 @@ Returns:
     transform_matrix (numpy.ndarray): The transformation matrix that aligns the source cloud with the target cloud.
     curr_cost (float): The final cost of the alignment after convergence.
 """
-    source.paint_uniform_color([0.5, 0.5, 0.5])
-    target.paint_uniform_color([0, 0, 1])
-    target_points = np.asarray(target.points)
-
-    transform_matrix = np.asarray([[0.862, 0.011, -0.507, 0.5], [-0.139, 0.967, -0.215, 0.7], [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
-    source.transform(transform_matrix)
-
-    curr_iteration = 0
-    cost_change_threshold = 0.001
-    curr_cost = 1000
-    prev_cost = 10000
-
-    
-    new_source_points = find_nearest_neighbors(source, target, 1) # Il manque la définition de la fonction find_nearest_neighbors
-
-    source_centroid = np.mean(new_source_points, axis=0)
-    target_centroid = np.mean(target_points, axis=0)
-    source_repos = np.asarray([new_source_points[ind] - source_centroid for ind in range(len(new_source_points))])
-    target_repos = np.asarray([target_points[ind] - target_centroid for ind in range(len(target_points))])
-
-    cov_mat = target_repos.transpose() @ source_repos
-
-    U, X, Vt = np.linalg.svd(cov_mat)
-    R = U @ Vt
-    t = target_centroid - R @ source_centroid
-    t = np.reshape(t, (1, 3))
-    curr_cost = np.linalg.norm(target_repos - (R @ source_repos.T).T)
-       
-    print(curr_cost)
-    
-    draw_registration_result(source, target, transform_matrix)
-    return transform_matrix, curr_cost
-
-
-def icp(source, target):
-    
-    """
-Iterative Closest Point (ICP) Alignment Function
-
-This function performs Iterative Closest Point (ICP) alignment between a source point cloud
-and a target point cloud. It aims to find the transformation matrix that aligns the source
-cloud with the target cloud by minimizing the distance between their corresponding points.
-
-Parameters:
-    source (o3d.geometry.PointCloud): The source point cloud.
-    target (o3d.geometry.PointCloud): The target point cloud.
-
-Returns:
-    transform_matrix (numpy.ndarray): The transformation matrix that aligns the source cloud with the target cloud.
-    curr_cost (float): The final cost of the alignment after convergence.
-"""
-    target_points = np.asarray(target.points)
     
     transform_matrix = np.identity(4)
     
-    source_temp = copy.deepcopy(source)
+    source_temp = source_points
 
-    source_temp.transform(transform_matrix)
+    source_temp_shaped = np.column_stack((source_temp, np.ones(len(
+    source_temp))))
 
+    source_points= np.array([(float(x), float(y), float(z)) for (
+    x, y, z,t) in [transform_matrix @ p for p in source_temp_shaped]], dtype=np.float64)
+    
     curr_iteration = 0
     cost_change_threshold = 0.001
     curr_cost = 1000
@@ -179,7 +123,7 @@ Returns:
     euler_angle_sum = [0,0,0]
     transform_matrix_cumulee=np.identity(4)
     while True:
-        new_source_points = find_nearest_neighbors(source_temp, target, 1)
+        new_source_points = find_nearest_neighbors(source_temp, target_points, 1)
 
         source_centroid = np.mean(new_source_points, axis=0)
         target_centroid = np.mean(target_points, axis=0)
@@ -204,13 +148,15 @@ Returns:
             prev_cost = curr_cost
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source_temp= source_temp.transform(transform_matrix) 
+            source_temp_shaped = np.column_stack((source_temp, np.ones(len(source_temp))))
+            source_points= np.array([(float(x), float(y), float(z)) for (x, y, z,t) in [transform_matrix @ p for p in source_temp_shaped]], dtype=np.float64)
             curr_iteration += 1
             transform_matrix_cumulee=transform_matrix_cumulee @ transform_matrix
         else:
             transform_matrix = np.hstack((R, t.T))
             transform_matrix = np.vstack((transform_matrix, np.array([0, 0, 0, 1])))
-            source_temp= source_temp.transform(transform_matrix) 
+            source_temp_shaped = np.column_stack((source_temp, np.ones(len(source_temp))))
+            source_points= np.array([(float(x), float(y), float(z)) for (x, y, z,t) in [transform_matrix @ p for p in source_temp_shaped]], dtype=np.float64)
             break
 
     return transform_matrix_cumulee, curr_cost
