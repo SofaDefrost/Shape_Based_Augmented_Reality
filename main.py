@@ -384,12 +384,12 @@ pi.save_image_from_array(COULEURS_PROJECTION_V2, NAME + "projection_Thibaud_affi
 pp.save_ply_file(NAME+"_projection_affinee.ply",POINTS,COULEURS_PROJECTION_V2)
 
 
-color_image1 = cv2.imread(NAME + "projection_Thibaud_affinee.png")
+color_image2 = cv2.imread(NAME + "projection_Thibaud_affinee.png")
 
 # On affiche
 print("Résultat final !")
 while True:
-    cv2.imshow("Affichage_Thibaud_V2", color_image1)
+    cv2.imshow("Affichage_Thibaud_V2", color_image2)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -414,31 +414,18 @@ M_in = np.array([[382.437, 0, 319.688, 0], [
                 0, 382.437, 240.882, 0], [0, 0, 1, 0]])
 # M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
 
-### Matrice pour replaquer le modèle 3D ####
-# (Initialement le modéle n'est pas dans la position que l'on souhaite)
-
-angle = np.radians(-90)
-Mat_x = np.asarray([[1, 0, 0, 0], [0, np.cos(angle), -np.sin(angle), 0],
-                   [0, np.sin(angle), np.cos(angle), 0], [0, 0, 0, 1]])
-angle = np.radians(180)
-Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [
-                   0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-angle = np.radians(90)
-Mat_z = np.asarray([[np.cos(angle), -np.sin(angle), 0, 0],
-                   [np.sin(angle), np.cos(angle), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
 #### Calcul final de la projection ####
 
-PROJECTION = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv @ Mat_x
+PROJECTION = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv
 
-if len(COULEURS) == 0:
-    COULEURS = np.asarray(
-        [[0., 0., 1.] for i in range(len(np.asarray(POINTS)))])
+if len(COLORS_MODEL_3D) == 0:
+    COLORS_MODEL_3D = np.asarray(
+        [[0., 0., 1.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
     frame_apres = proj.project_and_display(
-        COLOR_IMAGE, POINTS_MODEL_3D_RESIZED, COULEURS, PROJECTION)
+        COLOR_IMAGE, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, PROJECTION)
     cv2.imshow("Affichage_Tinhinane", frame_apres)
     cv2.imwrite(NAME + "projection_Tinhinane.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):

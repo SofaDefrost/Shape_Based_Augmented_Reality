@@ -23,7 +23,7 @@ def project_and_display(frame, points, colors,projection):
    # Display projected points on the image with the actual colors
     for i, p in enumerate(projected_points.astype(int)):
         if 0 <= p[0] < frame.shape[1] and 0 <= p[1] < frame.shape[0]:
-            color = tuple(colors[i] * 255)   # Convert color to scale 0-255
+            color = colors[i]
             color = (color[2], color[1], color[0])  # Conversion RGB
             cv2.circle(frame, (p[0], p[1]), 1, color, -1)
 
