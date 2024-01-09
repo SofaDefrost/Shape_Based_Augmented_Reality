@@ -510,7 +510,7 @@ if len(COLORS_MODEL_3D) == 0:
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
-    frame_apres = proj.project_and_display(
+    frame_apres = proj.project_and_display_Tinhinane(
         COLOR_IMAGE, POINTS_MODEL_3D, COLORS_MODEL_3D, PROJECTION)
     cv2.imshow("Affichage_Tinhinane", frame_apres)
     cv2.imwrite(NAME + "projection_Tinhinane.png", frame_apres)

@@ -69,8 +69,8 @@ os.system('cls' if os.name == 'nt' else 'clear')
 NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
 NAME = "data_exemple/debug"
 
-# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
+NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
 
 POINTS_MODEL_3D,COLORS_MODEL_3D = pp.get_points_and_colors_of_ply(NAME_MODEL_3D)
 
@@ -252,58 +252,9 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 # ################# Affiche et exporte Thibaud version 1 (à supprimer ?) #######################
 
-# L'idée dans cette version est de ne pas faire de projection
-# mais plutot d'utiliser le nuage de point initialement capturé par la caméra :
-# On va déterminer les nouvelles coordonées de notre objet 3D
-# et chercher les POINTS correspondant dans le nuage de la caméra.
-# On viendra alors modifier la couleur de ces POINTS
-
 M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-MODEL_3D_POINTS_AFTER_ICP = np.array([(float(x), float(y), float(z)) for (
-    x, y, z,t) in [M @ p for p in np.column_stack((POINTS_MODEL_3D_RESIZED, np.ones(len(
-    POINTS_MODEL_3D_RESIZED))))]], dtype=np.float64)
-pp.save_ply_file("projection.ply",MODEL_3D_POINTS_AFTER_ICP,COLORS_MODEL_3D)
-# On cherche maintenant à superposer les deux nuages de POINTS
-# Pour cela on utilise des arbres KD
-
-tree = cKDTree(POINTS)
-
-# Liste pour stocker les indices des POINTS les plus proches dans le second nuage
-indices_des_plus_proches = []
-
-# Pour chaque point dans le premier nuage
-for point in MODEL_3D_POINTS_AFTER_ICP:
-    # On recherche le point le plus proche dans le second nuage
-    distance, indice_plus_proche = tree.query(point)
-
-    if True:  # distance < 0.003:
-        # On concerve l'indice du point le plus proche
-        indices_des_plus_proches.append(indice_plus_proche)
-
-# On modifie les COULEURS des POINTS trouvés dans l'étape précédente
-# c'est la ou se situe notre objet donc on va l'indiquer avec la couleur de l'objet en question
-i = 0
-
-COULEURS_PROJECTION_V1 = np.asarray([p for p in COULEURS])
-
-for indice in indices_des_plus_proches:
-    if len(COLORS_MODEL_3D) == 0:
-        # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
-        couleur_objet = np.array([0, 0, 255])
-    else:
-        couleur_objet = COLORS_MODEL_3D[i]
-        i += 1
-    COULEURS_PROJECTION_V1[indice] = couleur_objet
-    # On fait un peu autour pour que ce soit plus visible
-    COULEURS_PROJECTION_V1[indice+1] = couleur_objet
-    COULEURS_PROJECTION_V1[indice-1] = couleur_objet
-    COULEURS_PROJECTION_V1[indice+640] = couleur_objet
-    COULEURS_PROJECTION_V1[indice+640+1] = couleur_objet
-    COULEURS_PROJECTION_V1[indice+640-1] = couleur_objet
-    COULEURS_PROJECTION_V1[indice-640-1] = couleur_objet
-    COULEURS_PROJECTION_V1[indice-640] = couleur_objet
-    COULEURS_PROJECTION_V1[indice-640+1] = couleur_objet
+COULEURS_PROJECTION_V1 = proj.project_and_display_Thibaud_V1(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
 
 # On enregistre
 pi.save_image_from_array(COULEURS_PROJECTION_V1, NAME + "projection_Thibaud.png", (640,480))
@@ -325,58 +276,7 @@ cv2.destroyAllWindows()
 
 ################# Affiche et exporte Thibaud version affinée #######################
 
-# L'idée dans cette version est de ne pas faire de projection
-# mais plutot d'utiliser le nuage de point initialement capturé par la caméra :
-# On va déterminer les nouvelles coordonées de notre objet 3D
-# et chercher points correspondants dans le nuage de la caméra (une fois le filtrage fini).
-# On viendra alors modifier la couleur des POINTS correspondants dans l'acquisition initiale
-
-# On cherche maintenant à superposer les deux nuages (model_3D_POINTS sur points_full_filtres)
-# Pour cela on utilise des arbres KD
-tree = cKDTree(POINT_FILRE_BRUIT)
-
-# Liste pour stocker les positions (indices) des POINTS du deuxième nuage (points_full_filtres)
-# les plus proches de ceux dans le premier nuage (model_3D_POINTS)
-# model_3D_POINTS[i]=points_full_filtres[indices_des_plus_proches[i]]
-indices_des_plus_proches = []
-
-# Pour chaque point dans le premier nuage (model_3D_POINTS)
-for point in MODEL_3D_POINTS_AFTER_ICP:
-    # On recherche le point le plus proche dans le second nuage
-    distance, indice_plus_proche = tree.query(point)
-
-    if True:  # distance < 0.003:
-        # On conserve l'indice du point le plus proche
-        indices_des_plus_proches.append(indice_plus_proche)
-
-# On récupère la position (indices) des POINTS (points_full_filtres) dans le nuage de point initial
-# TABLEAU_INDICE_FILTRE_BRUIT est le tableau des indices des position des POINTS filtrés
-# dans le nuage de POINTS de l'acquisition initiale
-indice_dans_pc_initial = [TABLEAU_INDICE_FILTRE_BRUIT[i]
-                          for i in indices_des_plus_proches]
-
-COULEURS_PROJECTION_V2 = np.asarray([p for p in COULEURS])
-
-# On fait les modifications de COULEURS de l'acquisition initiale
-i = 0
-for indice in indice_dans_pc_initial:
-    if len(COLORS_MODEL_3D) == 0:
-        # Bleu (couleur dans le cas ou le modèle 3D est sans couleur)
-        couleur_objet = np.array([0, 0, 255])
-    else:
-        couleur_objet = COLORS_MODEL_3D[i]
-        i += 1
-    COULEURS_PROJECTION_V2[indice] = couleur_objet
-    # On fait un peu autour pour que ce soit plus visible
-    COULEURS_PROJECTION_V2[indice+1] = couleur_objet
-    COULEURS_PROJECTION_V2[indice-1] = couleur_objet
-    COULEURS_PROJECTION_V2[indice+640] = couleur_objet
-    COULEURS_PROJECTION_V2[indice+640+1] = couleur_objet
-    COULEURS_PROJECTION_V2[indice+640-1] = couleur_objet
-    COULEURS_PROJECTION_V2[indice-640-1] = couleur_objet
-    COULEURS_PROJECTION_V2[indice-640] = couleur_objet
-    COULEURS_PROJECTION_V2[indice-640+1] = couleur_objet
-
+COULEURS_PROJECTION_V2 = proj.project_and_display_Thibaud_V2(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINT_FILRE_BRUIT,COULEURS,TABLEAU_INDICE_FILTRE_BRUIT,M)
 
 # On enregistre
 pi.save_image_from_array(COULEURS_PROJECTION_V2, NAME + "projection_Thibaud_affinee.png", (640,480))
@@ -424,7 +324,7 @@ if len(COLORS_MODEL_3D) == 0:
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
-    frame_apres = proj.project_and_display(
+    frame_apres = proj.project_and_display_Tinhinane(
         COLOR_IMAGE, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, PROJECTION)
     cv2.imshow("Affichage_Tinhinane", frame_apres)
     cv2.imwrite(NAME + "projection_Tinhinane.png", frame_apres)
