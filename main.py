@@ -2,22 +2,15 @@ import os
 
 import numpy as np
 import cv2
-import open3d as o3d
-from scipy.spatial import cKDTree
 
-from functions.objloader_simple import OBJ
-
-import functions.icp as cp
-import functions.translation_m as tm
-import functions.recover_realsense_matrix as rc
-import functions.transformations as tf
-import functions.project_and_display as proj
-import functions.ply2obj as po
+from functions import icp as cp
+from functions import project_and_display as proj
+from functions import transformations as tf
 
 from realsense import acquisition_realsense as aq
+from realsense import calibration_matrix_realsense as rc
 from realsense.utils import processing_ply as pp
 from realsense.utils import processing_array as pa
-from realsense.utils import display_function_Tkinter as Tk
 from realsense.utils import processing_img as pi
 
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
@@ -185,7 +178,7 @@ translation_vector[0] = translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
 
-Mt = tm.translation_matrix(translation_vector)  # Matrice de translation
+Mt = tf.translation_matrix(translation_vector)  # Matrice de translation
 # print("Matrice de translation:",Mt)
 
 print("Repositionnement terminé")
@@ -214,7 +207,7 @@ POINTS_MODEL_3D_RESIZED= np.array([(float(x), float(y), float(z)) for (
 
 print("On cherche la bonne pré-rotation à appliquer : ")
 
-M_icp_1 = cp.find_the_best_pre_rotation(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED)
+M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED)
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -234,7 +227,7 @@ MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) fo
     x, y, z,t) in [M_ICP_1_INV @ p for p in np.column_stack((POINTS_MODEL_3D_RESIZED, np.ones(len(
     POINTS_MODEL_3D_RESIZED))))]], dtype=np.float64)
     
-M_icp_2,_ = cp.icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, POINTS_REPOSED)
+M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, POINTS_REPOSED)
 
 # On ajuste la matrice d'ICP dans le repère de la caméra
 angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
@@ -250,23 +243,42 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 # ###########################################################
 
-# ################# Affiche et exporte Thibaud version 1 (à supprimer ?) #######################
+# ################# Affiche et exporte using closest points identification #######################
 
 M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-COULEURS_PROJECTION_V1 = proj.project_and_display_Thibaud_V1(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
+# Tests de Paul (à supprimer)
+scaling_factor = pa.get_scaling_factor_between_point_cloud(POINTS_MODEL_3D,POINTS_MODEL_3D_RESIZED)
+
+POINTS_TEST,COLORS_TEST=pp.get_points_and_colors_of_ply("11_11_2023_3d_beef_liver_04_corrected-TIC-1x.ply")
+
+POINTS_TEST = pa.resize_point_cloud_with_scaling_factor(POINTS_TEST,scaling_factor)
+
+POINTS_TEST = pa.centering_3Darray_on_mean_points(POINTS_TEST)
+
+angle = np.radians(180)
+Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [
+                   0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
+
+POINTS_TEST= np.array([(float(x), float(y), float(z)) for (
+    x, y, z,t) in [Mat_y @ p for p in np.column_stack((POINTS_TEST, np.ones(len(
+    POINTS_TEST))))]], dtype=np.float64)
+
+COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_TEST,COLORS_TEST,POINTS,COULEURS,M)
+# Fin de Tests (à supprimer)
+
+# COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
 
 # On enregistre
-pi.save_image_from_array(COULEURS_PROJECTION_V1, NAME + "projection_Thibaud.png", (640,480))
+pi.save_image_from_array(COULEURS_PROJECTION_V1, NAME + "_projection_closest_points.png", (640,480))
 
-pp.save_ply_file(NAME+"_projection.ply",POINTS,COULEURS_PROJECTION_V1)
+pp.save_ply_file(NAME+"_projection_closest_points.ply",POINTS,COULEURS_PROJECTION_V1)
 
-color_image1 = cv2.imread(NAME + "projection_Thibaud.png")
+color_image1 = cv2.imread(NAME + "_projection_closest_points.png")
 
 # On affiche
-print("Résultat final !")
 while True:
-    cv2.imshow("Affichage_Thibaud_V1", color_image1)
+    cv2.imshow("Projection using closest points identification", color_image1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -274,22 +286,21 @@ cv2.destroyAllWindows()
 
 #####################################################################
 
-################# Affiche et exporte Thibaud version affinée #######################
+################# Affiche et exporte using indices identification #######################
 
-COULEURS_PROJECTION_V2 = proj.project_and_display_Thibaud_V2(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINT_FILRE_BRUIT,COULEURS,TABLEAU_INDICE_FILTRE_BRUIT,M)
+COULEURS_PROJECTION_V2 = proj.project_3D_model_on_pc_using_closest_points_and_indices(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINT_FILRE_BRUIT,COULEURS,TABLEAU_INDICE_FILTRE_BRUIT,M)
 
 # On enregistre
-pi.save_image_from_array(COULEURS_PROJECTION_V2, NAME + "projection_Thibaud_affinee.png", (640,480))
+pi.save_image_from_array(COULEURS_PROJECTION_V2, NAME + "_projection_using_indices.png", (640,480))
 
-pp.save_ply_file(NAME+"_projection_affinee.ply",POINTS,COULEURS_PROJECTION_V2)
+pp.save_ply_file(NAME+"_projection_using_indices.ply",POINTS,COULEURS_PROJECTION_V2)
 
 
-color_image2 = cv2.imread(NAME + "projection_Thibaud_affinee.png")
+color_image2 = cv2.imread(NAME + "_projection_using_indices.png")
 
 # On affiche
-print("Résultat final !")
 while True:
-    cv2.imshow("Affichage_Thibaud_V2", color_image2)
+    cv2.imshow("Projection using indices identification", color_image2)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -297,7 +308,7 @@ cv2.destroyAllWindows()
 
 #####################################################################
 
-################# Affiche et exporte Tinhinane ######################
+################# Affiche et exporte using simple projection ######################
 
 # ## Calcul des POINTS de projections
 
@@ -324,10 +335,10 @@ if len(COLORS_MODEL_3D) == 0:
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
-    frame_apres = proj.project_and_display_Tinhinane(
+    frame_apres = proj.project_3D_model_on_pc(
         COLOR_IMAGE, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, PROJECTION)
-    cv2.imshow("Affichage_Tinhinane", frame_apres)
-    cv2.imwrite(NAME + "projection_Tinhinane.png", frame_apres)
+    cv2.imshow("Projection of 3D model on pc", frame_apres)
+    cv2.imwrite(NAME + "projection.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
