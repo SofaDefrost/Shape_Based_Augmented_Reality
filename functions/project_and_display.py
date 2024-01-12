@@ -160,7 +160,7 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     for i, p in enumerate(projected_points.astype(int)):
         if 0 <= p[0] < frame.shape[1] and 0 <= p[1] < frame.shape[0]:
             color = colors[i]
-            color = (color[2], color[1], color[0])  # Convert RGB
+            color = (int(color[2]), int(color[1]), int(color[0]))  # Convert RGB
             cv2.circle(frame, (p[0], p[1]), 1, color, -1)
 
     return frame

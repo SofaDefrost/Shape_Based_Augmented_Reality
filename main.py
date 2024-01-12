@@ -9,9 +9,11 @@ from functions import transformations as tf
 
 from realsense import acquisition_realsense as aq
 from realsense import calibration_matrix_realsense as rc
-from realsense.utils import processing_ply as pp
-from realsense.utils import processing_array as pa
-from realsense.utils import processing_img as pi
+from realsense.functions import processing_ply as ply
+from realsense.functions import processing_point_cloud as pc
+from realsense.functions import processing_pixel_list as pixels
+from realsense.functions import processing_img as img
+from realsense.functions import previsualisation_application_function as Tk
 
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
 
@@ -59,13 +61,13 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-NAME = "data_exemple/debug"
+# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
+# NAME = "data_exemple/debug"
 
 NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
 NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
 
-POINTS_MODEL_3D,COLORS_MODEL_3D = pp.get_points_and_colors_of_ply(NAME_MODEL_3D)
+POINTS_MODEL_3D,COLORS_MODEL_3D = ply.get_points_and_colors(NAME_MODEL_3D)
 
 # Nom des fichiers à enregistrer
 
@@ -103,9 +105,9 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
 # POINTS, COULEURS = aq.get_points_and_colors_from_realsense(COLOR_IMAGE_NAME) # On fait une acquisition
-POINTS, COULEURS =  pp.get_points_and_colors_of_ply(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
+POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
 
-COLOR_IMAGE = cv2.imread(COLOR_IMAGE_NAME)
+COLOR_IMAGE = img.load(COLOR_IMAGE_NAME)
 
 TABLEAU_INDICE = [i for i in range(len(POINTS))]
 
@@ -119,7 +121,7 @@ print("Selectionnez la zone à traiter :")
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code
 
-POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP = pa.crop_pc_from_zone_selection(POINTS,COULEURS,(640,480),TABLEAU_INDICE)
+POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP = pc.crop_from_zone_selection(POINTS,COULEURS,(640,480),TABLEAU_INDICE)
 
 ############################################################
 
@@ -129,11 +131,11 @@ print("Determination du masque hsv :")
 
 # Détermination du masque
 
-MASK_HSV = pi.get_hsv_mask_with_sliders(COLOR_IMAGE_NAME)
+MASK_HSV = pixels.get_hsv_mask_with_sliders(COLOR_IMAGE)
 
 # Application du masque
 
-POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pa.apply_hsv_mask_to_pc(POINTS_CROP,COULEURS_CROP,MASK_HSV,TABLEAU_INDICE_CROP)
+POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pc.apply_hsv_mask(POINTS_CROP,COULEURS_CROP,MASK_HSV,TABLEAU_INDICE_CROP)
 
 ###########################################################
 
@@ -142,7 +144,9 @@ POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pa.apply_hsv_mask
 print("Supression du bruit de la caméra :")
 print("Jouez avec le curseur pour augmenter le rayon de suppresion (centre = centre de masse) ")
 
-POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, TABLEAU_INDICE_FILTRE_BRUIT = pa.filter_array_with_sphere_on_barycentre_with_interface(POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV)
+radius = Tk.get_parameter_using_preview(POINTS_FILTRES_HSV,pc.filter_with_sphere_on_barycentre,"Radius")
+
+POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, TABLEAU_INDICE_FILTRE_BRUIT = pc.filter_with_sphere_on_barycentre(POINTS_FILTRES_HSV,radius, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV)
 
 ###########################################################
 
@@ -156,14 +160,14 @@ NUAGE_DE_POINTS_TROP_GROS = True
 while NUAGE_DE_POINTS_TROP_GROS:
     try:
         # Call the function to perform automatic resizing
-        POINTS_MODEL_3D_RESIZED = pa.resize_point_cloud_to_another_one(POINTS_MODEL_3D,POINT_FILRE_BRUIT)
+        POINTS_MODEL_3D_RESIZED = pc.resize_point_cloud_to_another_one(POINTS_MODEL_3D,POINT_FILRE_BRUIT)
         NUAGE_DE_POINTS_TROP_GROS = False
     except Exception as e:
         # Code à exécuter en cas d'erreur
         print(
             "Trop de points dans le nuage de point pour la fonction de resize automatique")
         print("on re-essaie en divisant le nombre de points du nuage par deux !")
-        POINTS_MODEL_3D, COLORS_MODEL_3D = pa.reduce_density_of_array(POINTS_MODEL_3D,0.5,COLORS_MODEL_3D)
+        POINTS_MODEL_3D, COLORS_MODEL_3D = pc.reduce_density(POINTS_MODEL_3D,0.5,COLORS_MODEL_3D)
 
 print("Redmimensionnement terminé")
 
@@ -172,8 +176,8 @@ print("Redmimensionnement terminé")
 ################## Repositionnment du repère de la caméra dans celui de l'objet ####################
 
 # # Application de repositionnement
-POINTS_REPOSED = pa.centering_3Darray_on_mean_points(POINT_FILRE_BRUIT)
-translation_vector = pa.get_mean_point_of_3Darray(POINT_FILRE_BRUIT)
+POINTS_REPOSED = pc.centering_on_mean_points(POINT_FILRE_BRUIT)
+translation_vector = pc.get_mean_point(POINT_FILRE_BRUIT)
 translation_vector[0] = translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
@@ -247,38 +251,19 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-# Tests de Paul (à supprimer)
-scaling_factor = pa.get_scaling_factor_between_point_cloud(POINTS_MODEL_3D,POINTS_MODEL_3D_RESIZED)
-
-POINTS_TEST,COLORS_TEST=pp.get_points_and_colors_of_ply("11_11_2023_3d_beef_liver_04_corrected-TIC-1x.ply")
-
-POINTS_TEST = pa.resize_point_cloud_with_scaling_factor(POINTS_TEST,scaling_factor)
-
-POINTS_TEST = pa.centering_3Darray_on_mean_points(POINTS_TEST)
-
-angle = np.radians(180)
-Mat_y = np.asarray([[np.cos(angle), 0, np.sin(angle), 0], [
-                   0, 1, 0, 0], [-np.sin(angle), 0, np.cos(angle), 0], [0, 0, 0, 1]])
-
-POINTS_TEST= np.array([(float(x), float(y), float(z)) for (
-    x, y, z,t) in [Mat_y @ p for p in np.column_stack((POINTS_TEST, np.ones(len(
-    POINTS_TEST))))]], dtype=np.float64)
-
-COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_TEST,COLORS_TEST,POINTS,COULEURS,M)
-# Fin de Tests (à supprimer)
-
-# COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
+COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
 
 # On enregistre
-pi.save_image_from_array(COULEURS_PROJECTION_V1, NAME + "_projection_closest_points.png", (640,480))
+img.save(COULEURS_PROJECTION_V1, NAME + "_projection_closest_points.png", (480,640))
 
-pp.save_ply_file(NAME+"_projection_closest_points.ply",POINTS,COULEURS_PROJECTION_V1)
+ply.save(NAME+"_projection_closest_points.ply",POINTS,COULEURS_PROJECTION_V1)
 
-color_image1 = cv2.imread(NAME + "_projection_closest_points.png")
+
+color_image1=img.load(NAME + "_projection_closest_points.png")
 
 # On affiche
 while True:
-    cv2.imshow("Projection using closest points identification", color_image1)
+    cv2.imshow("Projection using closest points identification", color_image1[:, :, ::-1])
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -291,16 +276,15 @@ cv2.destroyAllWindows()
 COULEURS_PROJECTION_V2 = proj.project_3D_model_on_pc_using_closest_points_and_indices(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINT_FILRE_BRUIT,COULEURS,TABLEAU_INDICE_FILTRE_BRUIT,M)
 
 # On enregistre
-pi.save_image_from_array(COULEURS_PROJECTION_V2, NAME + "_projection_using_indices.png", (640,480))
+img.save(COULEURS_PROJECTION_V2, NAME + "_projection_using_indices.png", (480,640))
 
-pp.save_ply_file(NAME+"_projection_using_indices.ply",POINTS,COULEURS_PROJECTION_V2)
+ply.save(NAME+"_projection_using_indices.ply",POINTS,COULEURS_PROJECTION_V2)
 
-
-color_image2 = cv2.imread(NAME + "_projection_using_indices.png")
+color_image2=img.load(NAME + "_projection_using_indices.png")
 
 # On affiche
 while True:
-    cv2.imshow("Projection using indices identification", color_image2)
+    cv2.imshow("Projection using indices identification", color_image2[:, :, ::-1])
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -332,6 +316,8 @@ PROJECTION = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv
 if len(COLORS_MODEL_3D) == 0:
     COLORS_MODEL_3D = np.asarray(
         [[0., 0., 1.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
+
+COLOR_IMAGE=cv2.imread(COLOR_IMAGE_NAME)
 
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
