@@ -9,6 +9,7 @@ from functions import transformations as tf
 
 from realsense import acquisition_realsense as aq
 from realsense import calibration_matrix_realsense as rc
+from realsense.functions.utils import array as array
 from realsense.functions import processing_ply as ply
 from realsense.functions import processing_point_cloud as pc
 from realsense.functions import processing_pixel_list as pixels
@@ -16,7 +17,6 @@ from realsense.functions import processing_img as img
 from realsense.functions import previsualisation_application_function as Tk
 
 # Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
-
 
 def transformation_matrix_to_euler_xyz(transformation_matrix):
     """
@@ -67,6 +67,9 @@ os.system('cls' if os.name == 'nt' else 'clear')
 NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
 NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
 
+# NAME_MODEL_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
+# NAME = "labo_biologie/3eme_semaine/2_poulet_12"
+
 POINTS_MODEL_3D,COLORS_MODEL_3D = ply.get_points_and_colors(NAME_MODEL_3D)
 
 # Nom des fichiers à enregistrer
@@ -104,7 +107,10 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de POINTS en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
-# POINTS, COULEURS = aq.get_points_and_colors_from_realsense(COLOR_IMAGE_NAME) # On fait une acquisition
+
+# pipeline = aq.init_realsense(640,480) # On fait une acquisition
+# aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+# POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline,COLOR_IMAGE_NAME) # On fait une acquisition
 POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
 
 COLOR_IMAGE = img.load(COLOR_IMAGE_NAME)
@@ -121,7 +127,7 @@ print("Selectionnez la zone à traiter :")
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code
 
-POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP = pc.crop_from_zone_selection(POINTS,COULEURS,(640,480),TABLEAU_INDICE)
+POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP = pc.crop_from_zone_selection(points=POINTS,colors=COULEURS,shape=(640,480),tableau_indice=TABLEAU_INDICE)
 
 ############################################################
 
@@ -135,7 +141,7 @@ MASK_HSV = pixels.get_hsv_mask_with_sliders(COLOR_IMAGE)
 
 # Application du masque
 
-POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pc.apply_hsv_mask(POINTS_CROP,COULEURS_CROP,MASK_HSV,TABLEAU_INDICE_CROP)
+POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pc.apply_hsv_mask(POINTS_CROP,array.to_line(COULEURS_CROP),MASK_HSV,TABLEAU_INDICE_CROP)
 
 ###########################################################
 
@@ -249,6 +255,8 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 # ################# Affiche et exporte using closest points identification #######################
 
+COULEURS=array.to_line(COULEURS)
+
 M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
 COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINTS,COULEURS,M)
@@ -272,7 +280,6 @@ cv2.destroyAllWindows()
 #####################################################################
 
 ################# Affiche et exporte using indices identification #######################
-
 COULEURS_PROJECTION_V2 = proj.project_3D_model_on_pc_using_closest_points_and_indices(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,POINT_FILRE_BRUIT,COULEURS,TABLEAU_INDICE_FILTRE_BRUIT,M)
 
 # On enregistre

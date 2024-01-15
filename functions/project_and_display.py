@@ -24,6 +24,8 @@ def find_nearest_neighbors(source_points: np.ndarray, target_points: np.ndarray,
     Returns:
     - Tuple[np.ndarray, np.ndarray]: Nearest neighbor points and their indices in the source point cloud.
     """
+    source_points=np.array([np.array([point[0],point[1],point[2]]) for point in source_points])
+
     # Create a KD-Tree from the source points
     source_kdtree = cKDTree(source_points)
 
