@@ -9,6 +9,7 @@ import numpy as np
 import cv2
 
 from scipy.spatial import cKDTree
+from realsense.functions.utils import array as array
 
 from typing import Tuple
 
@@ -52,6 +53,7 @@ def project_3D_model_on_pc_using_closest_points_identification(points_model_3D: 
     Returns:
     - np.ndarray: Updated colors of the point cloud after projecting the 3D model onto it.
     """
+    colors_pc=array.to_line(colors_pc)
     # Transform 3D model points using the projection matrix
     model_3D_points_after_projection = np.array([(float(x), float(y), float(z)) for (
     x, y, z,t) in [projection_matrix @ p for p in np.column_stack((points_model_3D, np.ones(len(
@@ -98,6 +100,7 @@ def project_3D_model_on_pc_using_closest_points_and_indices(points_model_3D: np.
     Returns:
     - np.ndarray: Updated colors of the initial point cloud after projecting the 3D model onto it.
     """
+    colors_pc=array.to_line(colors_pc)
     # Transform 3D model points using the projection matrix
     model_3d_points_after_projections = np.array(
         [(float(x), float(y), float(z)) for (x, y, z, t) in [
