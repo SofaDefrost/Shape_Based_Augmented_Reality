@@ -174,8 +174,8 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
             color = (int(color[2]), int(color[1]), int(color[0]))  # Convert RGB
             cv2.circle(frame, (p[0], p[1]), 1, color, -1)
     # Remise en forme
-    cv2.normalize(frame_apres, frame_apres, 0, 255, cv2.NORM_MINMAX)
-    frame_apres = frame_apres.astype(np.uint8)
-    frame_apres=array.line_to_3Darray(frame_apres,(480,640))
+    cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
+    frame = frame.astype(np.uint8)
+    frame=array.line_to_3Darray(frame,(480,640))
     return frame
 
