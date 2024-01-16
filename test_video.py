@@ -76,7 +76,7 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de points en utilisant la Realsense
 
 pipeline = aq.init_realsense(640,480)
-
+aq.get_points_and_colors_from_realsense(pipeline)
 POINTS, COLORS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 
 ###########################################################
@@ -217,35 +217,37 @@ while True:
 
     # ICP
     
-    MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
-    x, y, z,t) in [M_base_rotation @ p for p in np.column_stack((point_model_3D_resize, np.ones(len(
-    point_model_3D_resize))))]], dtype=np.float64)
+    # MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
+    # x, y, z,t) in [M_base_rotation @ p for p in np.column_stack((point_model_3D_resize, np.ones(len(
+    # point_model_3D_resize))))]], dtype=np.float64)
     
-    M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, points_reposed)
+    # M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, points_reposed)
 
-    angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
+    # angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
 
-    x = -angles_ICP2[0]
-    y = angles_ICP2[1]
-    z = -angles_ICP2[2]
+    # x = -angles_ICP2[0]
+    # y = angles_ICP2[1]
+    # z = -angles_ICP2[2]
 
-    M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
+    # M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
     
-    M_base_rotation = M_base_rotation @ M_icp_2_inv
+    # M_base_rotation = M_base_rotation @ M_icp_2_inv
     
     # Calcul de projection 
     
-    M_projection = Mt @ M_base_rotation  # Matrice de "projection"
-
-    colors_image = proj.project_3D_model_on_pc_using_closest_points_and_indices(point_model_3D_resize,COLORS_MODEL_3D,points_filtres,colors,tableau_indice,M_projection)
-
-    colors_image = array.line_to_3Darray(colors_image, (480,640)).astype(np.uint8)
+    M_in = np.array([[382.437, 0, 319.688, 0], [
+                0, 382.437, 240.882, 0], [0, 0, 1, 0]])
     
+    M_projection = M_in @ Mt @ M_base_rotation  # Matrice de "projection"
+
+    colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection)
+
     # Affichage 
      
-    cv2.imshow("Color Image", colors_image[:, :, ::-1])
+    cv2.imshow("Color Image", colors_image)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        pipeline.stop()
         break
 
 cv2.destroyAllWindows()
