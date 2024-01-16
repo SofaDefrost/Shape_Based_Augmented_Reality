@@ -24,9 +24,7 @@ def find_nearest_neighbors(source_points: np.ndarray, target_points: np.ndarray,
 
     Returns:
     - Tuple[np.ndarray, np.ndarray]: Nearest neighbor points and their indices in the source point cloud.
-    """
-    source_points=np.array([np.array([point[0],point[1],point[2]]) for point in source_points])
-
+    """    
     # Create a KD-Tree from the source points
     source_kdtree = cKDTree(source_points)
 
@@ -34,8 +32,9 @@ def find_nearest_neighbors(source_points: np.ndarray, target_points: np.ndarray,
     distances, indices = source_kdtree.query(target_points, k=nearest_neigh_num)
 
     # Retrieve the nearest neighbor points
-    nearest_neighbors = source_points[indices]
     
+    nearest_neighbors = source_points[indices]
+
     return nearest_neighbors, np.array(indices)
 
 
@@ -61,11 +60,11 @@ def project_3D_model_on_pc_using_closest_points_identification(points_model_3D: 
     
     # Find the indices of the closest points in the point cloud for each transformed model point
     _,indices_of_closest_points=find_nearest_neighbors(points_pc,model_3D_points_after_projection,1)
-
-    # Update the colors of the identified points in the point cloud with the colors of the 3D model
-    colors_projection = np.asarray([p for p in colors_pc])
     
+    # Update the colors of the identified points in the point cloud with the colors of the 3D model
+    colors_projection = np.copy(colors_pc)
     i = 0
+    size = len (colors_projection)
     for indice in indices_of_closest_points:
         if len(colors_model_3D) == 0:
             # Blue (color in case the 3D model is without color)
@@ -79,8 +78,9 @@ def project_3D_model_on_pc_using_closest_points_identification(points_model_3D: 
 
         # Make the color change more visible in the surrounding points
         for offset in [-1, 0, 1, -640, -640 - 1, -640 + 1, 640, 640 - 1, 640 + 1]:
-            colors_projection[indice + offset] = couleur_objet
-
+            if indice + offset <= size:
+                colors_projection[indice + offset] = couleur_objet
+            
     return colors_projection
 
 
@@ -112,15 +112,15 @@ def project_3D_model_on_pc_using_closest_points_and_indices(points_model_3D: np.
 
     # Find the indices of the closest points in the point cloud for each transformed model point
     _,indices_of_closest_points = find_nearest_neighbors(
-        points_pc, model_3d_points_after_projections[:, :3],1)
+        points_pc, model_3d_points_after_projections,1)
 
     # Retrieve the indices of the points in the initial point cloud
     indices_in_initial_pc = [table_of_indice_pc[i]
                              for i in indices_of_closest_points]
-
-    colors_projection = np.asarray([p for p in colors_pc])
-
+    
+    colors_projection = np.copy(colors_pc)
     # Update the colors of the initial point cloud with the colors of the 3D model
+    size = len (colors_projection)
     i = 0
     for indice in indices_in_initial_pc:
         if len(colors_model_3D) == 0:
@@ -135,7 +135,8 @@ def project_3D_model_on_pc_using_closest_points_and_indices(points_model_3D: np.
 
         # Make the color change more visible in the surrounding points
         for offset in [-1, 0, 1, -640, -640 - 1, -640 + 1, 640, 640 - 1, 640 + 1]:
-            colors_projection[indice + offset] = couleur_objet
+            if indice + offset <= size:
+                colors_projection[indice + offset] = couleur_objet
 
     return colors_projection
 
@@ -152,6 +153,11 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     Returns:
     - np.ndarray: Image frame with the 3D model projected onto it.
     """
+    # Remise en forme
+    
+    frame = array.line_to_3Darray(frame,(480,640))
+    frame = np.array(frame[:, :, ::-1])
+    
     # Transformation of 3D model points
     ones_column = np.ones((points.shape[0], 1))
     homogeneous_points = np.hstack((points, ones_column))
@@ -167,5 +173,9 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
             color = colors[i]
             color = (int(color[2]), int(color[1]), int(color[0]))  # Convert RGB
             cv2.circle(frame, (p[0], p[1]), 1, color, -1)
-
+    # Remise en forme
+    cv2.normalize(frame_apres, frame_apres, 0, 255, cv2.NORM_MINMAX)
+    frame_apres = frame_apres.astype(np.uint8)
+    frame_apres=array.line_to_3Darray(frame_apres,(480,640))
     return frame
+

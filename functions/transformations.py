@@ -255,6 +255,37 @@ def rotation_matrix_z(gamma):
         [0, 0, 1]
     ])
 
+def rotation_matrix_xyz(angle_x, angle_y, angle_z):
+    """
+    Create a rotation matrix for rotations around X, Y, and Z axes.
+
+    Args:
+    - angle_x (float): Angle of rotation around the X-axis in radians.
+    - angle_y (float): Angle of rotation around the Y-axis in radians.
+    - angle_z (float): Angle of rotation around the Z-axis in radians.
+
+    Returns:
+    - np.ndarray: Combined rotation matrix.
+    """
+    # Rotation around X-axis
+    R_x = numpy.array([[1, 0, 0],
+                    [0, numpy.cos(angle_x), -numpy.sin(angle_x)],
+                    [0, numpy.sin(angle_x), numpy.cos(angle_x)]])
+
+    # Rotation around Y-axis
+    R_y = numpy.array([[numpy.cos(angle_y), 0, numpy.sin(angle_y)],
+                    [0, 1, 0],
+                    [-numpy.sin(angle_y), 0, numpy.cos(angle_y)]])
+
+    # Rotation around Z-axis
+    R_z = numpy.array([[numpy.cos(angle_z), -numpy.sin(angle_z), 0],
+                    [numpy.sin(angle_z), numpy.cos(angle_z), 0],
+                    [0, 0, 1]])
+
+    # Combine the rotations
+    R_combined = numpy.dot(R_z, numpy.dot(R_y, R_x))
+
+    return R_combined
 
 def translation_from_matrix(matrix):
     """Return translation vector from translation matrix.

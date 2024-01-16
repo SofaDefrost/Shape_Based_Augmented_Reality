@@ -87,48 +87,40 @@ def weighted_average_euclidean_distance(array_a:np.ndarray, array_b:np.ndarray)-
     Returns:
     - float: Weighted average Euclidean distance.
     """
-    # If the lists have different dimensions, adjust them to have the same dimension by adding zeros
-    if len(array_a) > len(array_b):
-        num_zeros = len(array_a) - len(array_b)
-        zero_array = np.zeros((num_zeros, len(array_b[0])))
-        array_b = np.concatenate((array_b, zero_array))
-    elif len(array_b) > len(array_a):
-        num_zeros = len(array_b) - len(array_a)
-        zero_array = np.zeros((num_zeros, len(array_a[0])))
-        array_a = np.concatenate((array_a, zero_array))
-        
-    total_distance = 0
-    for coord_a in array_a:
-        # Calculate the Euclidean distance between coord_a and all elements in array_b
-        distances = np.linalg.norm(array_b - coord_a, axis=1)
-        
-        # Select the minimum distance for coord_a
-        min_distance = np.min(distances)
-        
-        total_distance += min_distance
 
-    weighted_avg_distance = total_distance / len(array_a)
+    # Calculate Euclidean distances between each point in array_a and all points in array_b
+    distances = np.linalg.norm(array_a[:, np.newaxis, :] - array_b, axis=2)
+
+    # Select the minimum distance for each point in array_a
+    min_distances = np.min(distances, axis=1)
+
+    # Calculate the weighted average Euclidean distance
+    weighted_avg_distance = np.mean(min_distances)
+
     return weighted_avg_distance
 
 
-
-def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_target:np.ndarray)->np.ndarray:
+import time
+def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_target:np.ndarray,range_angle_x=[-180, 180, 10],range_angle_y=[-180, 180, 10],range_angle_z=[-180, 180, 10])->np.ndarray:
     """
     Find the best pre-rotation matrix to align a source set of points to a target set of points.
 
     Args:
     - points_source (np.ndarray): Source set of 3D coordinates.
     - points_target (np.ndarray): Target set of 3D coordinates.
+    - range_angle_x (list, optional): Range of angles for rotation around the X-axis (default: [-180, 180, 10]).
+    - range_angle_y (list, optional): Range of angles for rotation around the Y-axis (default: [-180, 180, 10]).
+    - range_angle_z (list, optional): Range of angles for rotation around the Z-axis (default: [-180, 180, 10]).
 
     Returns:
     - np.ndarray: Best pre-rotation matrix.
     """
     # Initialize the best cost.
     best_cost = np.inf
-    for angle_x in range(0, 10, 10): # In theory, it should be -180, 180 (should cover all possible positions)
-        for angle_y in range(0, 10, 10): # Idem
-            for angle_z in range(-180, 180, 10): # Idem
-                print([angle_x,angle_y,angle_z])
+    for angle_x in range(range_angle_x[0],range_angle_x[1],range_angle_x[2]): 
+        for angle_y in range(range_angle_y[0],range_angle_y[1],range_angle_y[2]): 
+            for angle_z in range(range_angle_z[0],range_angle_z[1],range_angle_z[2]): 
+                
                 M_x = tf.rotation_matrix_x(np.radians(angle_x))
                 M_y = tf.rotation_matrix_y(np.radians(angle_y))
                 M_z = tf.rotation_matrix_z(np.radians(angle_z))
@@ -136,11 +128,11 @@ def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_
                 transform_matrix = M_x @ M_y @ M_z 
                 
                 source_rotated=np.array([np.dot(point,transform_matrix) for point in points_source])
-                
+
                 cost = weighted_average_euclidean_distance(source_rotated, points_target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
-                                           
+         
     return best_transform_matrix
 

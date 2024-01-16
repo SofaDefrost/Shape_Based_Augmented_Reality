@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import cv2
+import time
 
 from functions import icp as cp
 from functions import project_and_display as proj
@@ -217,7 +218,9 @@ POINTS_MODEL_3D_RESIZED= np.array([(float(x), float(y), float(z)) for (
 
 print("On cherche la bonne pré-rotation à appliquer : ")
 
-M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED)
+POINTS_MODEL_3D_REDUCE_DENSITY,_ = pc.reduce_density(POINTS_MODEL_3D_RESIZED,0.05)
+
+M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 10]) # Utile avoir des résultats plus vite
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -227,6 +230,7 @@ M_ICP_1_INV = np.linalg.inv(M_icp_1)
 print("Pré-rotation trouvée")
 
 ###########################################################
+
 ###################### Matrice ICP #########################
 
 print("Calcul de l'ICP :")
@@ -327,7 +331,7 @@ COLOR_IMAGE=cv2.imread(COLOR_IMAGE_NAME)
 while True:
     # Appel à la fonction permettant de projeter l'objet 3D avec ses COULEURS spécifiques
     frame_apres = proj.project_3D_model_on_pc(
-        COLOR_IMAGE, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, PROJECTION)
+        COULEURS, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, PROJECTION)
     cv2.imshow("Projection of 3D model on pc", frame_apres)
     cv2.imwrite(NAME + "projection.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):
