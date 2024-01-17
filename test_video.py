@@ -89,7 +89,7 @@ MASK_HSV = pixels.get_hsv_mask_with_sliders(COLORS)
 
 # Application du masque
 
-POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV,_ = pc.apply_hsv_mask(POINTS,COLORS,MASK_HSV)
+POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV,_ = pc.apply_hsv_mask(POINTS,COLORS,MASK_HSV,(480,640))
 
 ###########################################################
 
@@ -167,7 +167,7 @@ M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
 
 # Calcul de toute les autres
 
-# ################# Affiche et exporte using closest points identification #######################
+################# Affiche et exporte using closest points identification #######################
 
 M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
@@ -188,27 +188,33 @@ cv2.destroyAllWindows()
 
 M_base_rotation = M_ICP_1_INV @ M_icp_2_inv
 
+point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
+
+# # Paramètres de la vidéo
+# largeur, hauteur = 640, 480
+# fps = 30
+
+# # Créer un objet VideoWriter
+# video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+
 while True:
-    
-    point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
 
     # Acquisition   
     
     points,colors=aq.get_points_and_colors_from_realsense(pipeline)
-    tableau_indice = np.array([i for i in range(len(points))])
-
+    
     # Application du masque hsv
     
-    points_filtres,colors_filtres,tableau_indice = pc.apply_hsv_mask(points,colors,MASK_HSV,tableau_indice)
-    
+    points_filtres,colors_filtres,_ = pc.apply_hsv_mask(points,colors,MASK_HSV,(480,640))
+
     # Filtrage bruit
     
-    points_filtres, colors_filtres, tableau_indice = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres,tableau_indice)
-
+    points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
+    
     # Repositionnement
     
-    points_reposed = pc.centering_on_mean_points(points_filtres)
-    translation_vector = pc.get_mean_point(points_filtres)
+    points_reposed = pc.centering_on_mean_points(points_filtres_sphere)
+    translation_vector = pc.get_mean_point(points_filtres_sphere)
     translation_vector[0] = translation_vector[0]
     translation_vector[1] = translation_vector[1]
     translation_vector[2] = translation_vector[2]
@@ -249,5 +255,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         pipeline.stop()
         break
+    # video_writer.write(colors_image)
 
+    
 cv2.destroyAllWindows()

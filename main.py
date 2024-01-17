@@ -108,7 +108,6 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de POINTS en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
-
 pipeline = aq.init_realsense(640,480) # On fait une acquisition
 aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline,COLOR_IMAGE_NAME) # On fait une acquisition
@@ -116,7 +115,7 @@ POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline,COLOR_IMAGE_
 
 COLOR_IMAGE = img.load(COLOR_IMAGE_NAME)
 
-TABLEAU_INDICE = [i for i in range(len(POINTS))]
+TABLEAU_INDICE = np.array([i for i in range(len(POINTS))])
 
 print("Acquisition terminée...")
 
@@ -128,9 +127,10 @@ print("Selectionnez la zone à traiter :")
 
 # Fonctionne uniquement avec la version de Thibaud + doit raccorder aux restes du code
 
-POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP = pc.crop_from_zone_selection(points=POINTS,colors=COULEURS,shape=(640,480),tableau_indice=TABLEAU_INDICE)
+POINTS_CROP, COULEURS_CROP, TABLEAU_INDICE_CROP,new_shape = pc.crop_from_zone_selection(points=POINTS,colors=COULEURS,shape=(640,480),tableau_indice=TABLEAU_INDICE)
 
 ############################################################
+
 
 ###################### Masquage ###########################
 
@@ -138,11 +138,11 @@ print("Determination du masque hsv :")
 
 # Détermination du masque
 
-MASK_HSV = pixels.get_hsv_mask_with_sliders(COLOR_IMAGE)
+MASK_HSV = pixels.get_hsv_mask_with_sliders(array.line_to_3Darray(COULEURS_CROP,new_shape))
 
 # Application du masque
 
-POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pc.apply_hsv_mask(POINTS_CROP,array.to_line(COULEURS_CROP),MASK_HSV,TABLEAU_INDICE_CROP)
+POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV, TABLEAU_INDICE_HSV = pc.apply_hsv_mask(POINTS_CROP,COULEURS_CROP,MASK_HSV,new_shape,TABLEAU_INDICE_CROP)
 
 ###########################################################
 
