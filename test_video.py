@@ -61,7 +61,7 @@ def matrix_from_angles(angle_x, angle_y, angle_z):
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
+NAME_MODEL_3D = "data_exemple/FleurDeLisColoredReduceDensity.ply"
 NAME = "data_exemple/debug"
 
 POINTS_MODEL_3D,COLORS_MODEL_3D = ply.get_points_and_colors(NAME_MODEL_3D)
@@ -76,8 +76,13 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de points en utilisant la Realsense
 
 pipeline = aq.init_realsense(640,480)
-aq.get_points_and_colors_from_realsense(pipeline)
+# Bon je ne sais pas pourquoi il faut que je le fasse plusiquer fois comme ça mais si je ne fais pas, l'image affichée n'est pas la même tout le long du truc ...
 POINTS, COLORS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+pixels.display(COLORS,"Display")
+POINTS, COLORS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+pixels.display(COLORS,"Display")
+POINTS, COLORS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+pixels.display(COLORS,"Display")
 
 ###########################################################
 
@@ -99,6 +104,7 @@ radius = Tk.get_parameter_using_preview(POINTS_FILTRES_HSV,pc.filter_with_sphere
 
 POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, _ = pc.filter_with_sphere_on_barycentre(POINTS_FILTRES_HSV,radius, COULEURS_FILTRES_HSV)
 
+print(len(POINT_FILRE_BRUIT))
 ###########################################################
 
 ######################### Redimensionnement du modèle 3D ##################################
@@ -133,9 +139,7 @@ Mt = tf.translation_matrix(translation_vector)  # Matrice de translation
 
 ################ Matrice de pré-rotation ###################
 
-POINTS_MODEL_3D_REDUCE_DENSITY,_ = pc.reduce_density(POINTS_MODEL_3D_RESIZED,0.05)
-
-M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 10])
+M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 20])
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -151,7 +155,7 @@ M_ICP_1_INV = np.linalg.inv(M_icp_1)
 MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
     x, y, z,t) in [M_ICP_1_INV @ p for p in np.column_stack((POINTS_MODEL_3D_RESIZED, np.ones(len(
     POINTS_MODEL_3D_RESIZED))))]], dtype=np.float64)
-    
+
 M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, POINTS_REPOSED)
 
 # On ajuste la matrice d'ICP dans le repère de la caméra
@@ -186,8 +190,6 @@ cv2.destroyAllWindows()
 
 #####################################################################
 
-M_base_rotation = M_ICP_1_INV @ M_icp_2_inv
-
 point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
 
 # # Paramètres de la vidéo
@@ -198,11 +200,12 @@ point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
 # video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
 
 while True:
+    
+    temps_debut = time.time()
 
     # Acquisition   
     
     points,colors=aq.get_points_and_colors_from_realsense(pipeline)
-    
     # Application du masque hsv
     
     points_filtres,colors_filtres,_ = pc.apply_hsv_mask(points,colors,MASK_HSV,(480,640))
@@ -221,30 +224,36 @@ while True:
 
     Mt = tf.translation_matrix(translation_vector) 
 
+    # Pré-rotation
+    
+    M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 10, 10],[0, 10, 10],[-180, 180, 20])
+    M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
+    M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
+
+    M_ICP_1_INV = np.linalg.inv(M_icp_1)
+    
     # ICP
     
-    # MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
-    # x, y, z,t) in [M_base_rotation @ p for p in np.column_stack((point_model_3D_resize, np.ones(len(
-    # point_model_3D_resize))))]], dtype=np.float64)
+    MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
+    x, y, z,t) in [M_ICP_1_INV @ p for p in np.column_stack((point_model_3D_resize, np.ones(len(
+    point_model_3D_resize))))]], dtype=np.float64)
     
-    # M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, points_reposed)
+    M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, points_reposed)
 
-    # angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
+    angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
 
-    # x = -angles_ICP2[0]
-    # y = angles_ICP2[1]
-    # z = -angles_ICP2[2]
+    x = -angles_ICP2[0]
+    y = angles_ICP2[1]
+    z = -angles_ICP2[2]
 
-    # M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
-    
-    # M_base_rotation = M_base_rotation @ M_icp_2_inv
-    
+    M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
+       
     # Calcul de projection 
-    
+        
     M_in = np.array([[382.437, 0, 319.688, 0], [
                 0, 382.437, 240.882, 0], [0, 0, 1, 0]])
     
-    M_projection = M_in @ Mt @ M_base_rotation  # Matrice de "projection"
+    M_projection = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
     colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection)
 
@@ -256,6 +265,8 @@ while True:
         pipeline.stop()
         break
     # video_writer.write(colors_image)
-
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps d'exécution : {temps_execution} secondes")
     
 cv2.destroyAllWindows()

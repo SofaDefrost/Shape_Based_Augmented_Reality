@@ -75,7 +75,7 @@ def find_transform_matrix_to_align_points_using_icp(source_points, target_points
 
     return transform_matrix_cumulee, curr_cost
 
-
+# Plus utile pour le moment
 def weighted_average_euclidean_distance(array_a:np.ndarray, array_b:np.ndarray)->float:
     """
     Calculate the weighted average Euclidean distance between two lists of 3D coordinates.
@@ -99,8 +99,8 @@ def weighted_average_euclidean_distance(array_a:np.ndarray, array_b:np.ndarray)-
 
     return weighted_avg_distance
 
+from scipy.spatial import cKDTree
 
-import time
 def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_target:np.ndarray,range_angle_x=[-180, 180, 10],range_angle_y=[-180, 180, 10],range_angle_z=[-180, 180, 10])->np.ndarray:
     """
     Find the best pre-rotation matrix to align a source set of points to a target set of points.
@@ -129,7 +129,12 @@ def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_
                 
                 source_rotated=np.array([np.dot(point,transform_matrix) for point in points_source])
 
-                cost = weighted_average_euclidean_distance(source_rotated, points_target)
+                source_kdtree = cKDTree(source_rotated)
+
+                # Find nearest neighbors for each point in the target point cloud
+                distances, _ = source_kdtree.query(points_target, k=1)
+                cost=np.mean(distances)
+                # cost = weighted_average_euclidean_distance(source_rotated, points_target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost

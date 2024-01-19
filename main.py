@@ -62,11 +62,11 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-NAME = "data_exemple/debug2"
+# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
+# NAME = "data_exemple/debug"
 
-# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud0"
+NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # NAME_MODEL_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
 # NAME = "labo_biologie/3eme_semaine/2_poulet_12"
@@ -108,10 +108,10 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de POINTS en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
-pipeline = aq.init_realsense(640,480) # On fait une acquisition
-aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
-POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline,COLOR_IMAGE_NAME) # On fait une acquisition
-# POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
+# pipeline = aq.init_realsense(640,480) # On fait une acquisition
+# aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+# POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline,COLOR_IMAGE_NAME) # On fait une acquisition
+POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
 
 COLOR_IMAGE = img.load(COLOR_IMAGE_NAME)
 
