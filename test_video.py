@@ -104,7 +104,15 @@ radius = Tk.get_parameter_using_preview(POINTS_FILTRES_HSV,pc.filter_with_sphere
 
 POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, _ = pc.filter_with_sphere_on_barycentre(POINTS_FILTRES_HSV,radius, COULEURS_FILTRES_HSV)
 
-print(len(POINT_FILRE_BRUIT))
+# Eventuellement pour gagner en vitesse
+density = 1
+while not(1500<len(POINT_FILRE_BRUIT)*density<2000):
+    density = density - 0.1
+    if density < 0:
+        raise ValueError("Error density")
+
+POINT_FILRE_BRUIT,COULEUR_FILRE_BRUIT = pc.reduce_density(POINT_FILRE_BRUIT,density,COULEUR_FILRE_BRUIT)
+
 ###########################################################
 
 ######################### Redimensionnement du modèle 3D ##################################
@@ -120,7 +128,6 @@ while NUAGE_DE_POINTS_TROP_GROS:
     except Exception as e:
         # Code à exécuter en cas d'erreur
         POINTS_MODEL_3D, COLORS_MODEL_3D = pc.reduce_density(POINTS_MODEL_3D,0.5,COLORS_MODEL_3D)
-
 
 ###########################################################
 
@@ -214,6 +221,8 @@ while True:
     
     points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
     
+    # points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,density,colors_filtres_sphere)
+
     # Repositionnement
     
     points_reposed = pc.centering_on_mean_points(points_filtres_sphere)
@@ -223,7 +232,7 @@ while True:
     translation_vector[2] = translation_vector[2]
 
     Mt = tf.translation_matrix(translation_vector) 
-
+   
     # Pré-rotation
     
     M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 10, 10],[0, 10, 10],[-180, 180, 20])
@@ -264,6 +273,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         pipeline.stop()
         break
+               
     # video_writer.write(colors_image)
     temps_fin = time.time()
     temps_execution = temps_fin - temps_debut

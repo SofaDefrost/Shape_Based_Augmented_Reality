@@ -65,6 +65,9 @@ os.system('cls' if os.name == 'nt' else 'clear')
 # NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
 # NAME = "data_exemple/debug"
 
+# NAME_MODEL_3D = "labo_biologie/1ere_semaine/foie_spectrometre.ply"
+# NAME = "labo_biologie/1ere_semaine/foie"
+
 NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
 NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
@@ -324,7 +327,7 @@ PROJECTION = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv
 
 if len(COLORS_MODEL_3D) == 0:
     COLORS_MODEL_3D = np.asarray(
-        [[0., 0., 1.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
+        [[1., 0., 0.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
 
 COLOR_IMAGE=cv2.imread(COLOR_IMAGE_NAME)
 

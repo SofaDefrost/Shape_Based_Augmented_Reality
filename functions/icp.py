@@ -12,6 +12,7 @@ else:
     import transformations as tf
 
 from scipy.spatial.transform import Rotation as Rot
+from scipy.spatial import cKDTree
 
 
 def find_transform_matrix_to_align_points_using_icp(source_points, target_points):
@@ -99,7 +100,20 @@ def weighted_average_euclidean_distance(array_a:np.ndarray, array_b:np.ndarray)-
 
     return weighted_avg_distance
 
-from scipy.spatial import cKDTree
+def get_cost_to_align_points(points_source:np.ndarray, points_target:np.ndarray,angle_x,angle_y,angle_z):
+    M_x = tf.rotation_matrix_x(np.radians(angle_x))
+    M_y = tf.rotation_matrix_y(np.radians(angle_y))
+    M_z = tf.rotation_matrix_z(np.radians(angle_z))
+    transform_matrix = M_x @ M_y @ M_z 
+                
+    source_rotated=np.array([np.dot(point,transform_matrix) for point in points_source])
+
+    source_kdtree = cKDTree(source_rotated)
+
+    # Find nearest neighbors for each point in the target point cloud
+    distances, _ = source_kdtree.query(points_target, k=1)
+    cost=np.mean(distances)
+    return transform_matrix,cost
 
 def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_target:np.ndarray,range_angle_x=[-180, 180, 10],range_angle_y=[-180, 180, 10],range_angle_z=[-180, 180, 10])->np.ndarray:
     """
@@ -120,21 +134,8 @@ def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_
     for angle_x in range(range_angle_x[0],range_angle_x[1],range_angle_x[2]): 
         for angle_y in range(range_angle_y[0],range_angle_y[1],range_angle_y[2]): 
             for angle_z in range(range_angle_z[0],range_angle_z[1],range_angle_z[2]): 
+                transform_matrix,cost = get_cost_to_align_points(points_source,points_target,angle_x,angle_y,angle_z)
                 
-                M_x = tf.rotation_matrix_x(np.radians(angle_x))
-                M_y = tf.rotation_matrix_y(np.radians(angle_y))
-                M_z = tf.rotation_matrix_z(np.radians(angle_z))
-                          
-                transform_matrix = M_x @ M_y @ M_z 
-                
-                source_rotated=np.array([np.dot(point,transform_matrix) for point in points_source])
-
-                source_kdtree = cKDTree(source_rotated)
-
-                # Find nearest neighbors for each point in the target point cloud
-                distances, _ = source_kdtree.query(points_target, k=1)
-                cost=np.mean(distances)
-                # cost = weighted_average_euclidean_distance(source_rotated, points_target)
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost

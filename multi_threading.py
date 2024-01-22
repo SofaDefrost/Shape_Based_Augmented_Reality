@@ -1,38 +1,57 @@
 import threading
 import time
 
-# Fonction à exécuter dans le thread
-def fonction1():
-    i=1
-    while True:
-        print("Fonction 1 début")
-        time.sleep(5)  # Simule une tâche longue
-        resultat_partage.append(str(i))
-        print("Fonction 1 fin")
-        i+=1
+import functions.icp as f
+# Pas très concluant en terme de performance
 
-# Deuxième fonction à exécuter dans le thread principal
-def fonction2():
-    while True :
-        print("Fonction 2 début")
-        time.sleep(3)  # Simule une autre tâche un peu moin longue
-        print("Résultat reçu de la fonction 1 :", resultat_partage)
-        print("Fonction 2 fin")
+def fonction(points_source,points_target,angle_x,angle_y,angle_z):
+    for i in range(-180,0,20):
+        for j in range(-180,0,20):
+            for k in range(-180,180,20):
+                matrix,cost=f.get_cost_to_align_points(points_source,points_target,j,k,angle_z+i)
+                resultat_partage.append([matrix,cost])
+    
+def fonction2(points_source,points_target,angle_x,angle_y,angle_z):
+    for i in range(0,180,20):
+        for j in range(0,180,20):
+            for k in range(-180,180,20):
+                matrix,cost=f.get_cost_to_align_points(points_source,points_target,j,k,angle_z+i)
+                resultat_partage.append([matrix,cost])
 
-# Liste partagée pour stocker le résultat
-global resultat_partage
+def fonction3(points_source,points_target,angle_x,angle_y,angle_z):
+    for i in range(0,180,20):
+        for j in range(180,0,20):
+            for k in range(-180,180,20):
+                matrix,cost=f.get_cost_to_align_points(points_source,points_target,j,k,angle_z+i)
+                resultat_partage.append([matrix,cost])
+ 
+def fonction4(points_source,points_target,angle_x,angle_y,angle_z):
+    for i in range(-180,0,20):
+        for j in range(0,180,20):
+            for k in range(-180,180,20):
+                matrix,cost=f.get_cost_to_align_points(points_source,points_target,j,k,angle_z+i)
+                resultat_partage.append([matrix,cost])                
+def multi_threading(points_source,points_target):
+    # Liste partagée pour stocker le résultat
+    global resultat_partage
+    resultat_partage = []
+    
+    thread_fonction1 = threading.Thread(target=fonction, args=(points_source,points_target,0,0,0))
+    thread_fonction2 = threading.Thread(target=fonction2, args=(points_source,points_target,0,0,0))
+    thread_fonction3 = threading.Thread(target=fonction3, args=(points_source,points_target,0,0,0))
+    thread_fonction4 = threading.Thread(target=fonction4, args=(points_source,points_target,0,0,0))
 
-resultat_partage = ["0"]
 
-# Créer un thread pour la première fonction
-thread_fonction1 = threading.Thread(target=fonction1)
+    # Démarrer le thread des fonctions
 
-# Démarrer le thread de la première fonction
-thread_fonction1.start()
+    thread_fonction1.start()
+    thread_fonction2.start()
+    thread_fonction3.start()
+    thread_fonction4.start()
 
-fonction2()
+    # Attendre que tout les thread se terminent
 
-# Attendre que le thread de la première fonction se termine
-thread_fonction1.join()
-
-print("Fin du programme")
+    thread_fonction1.join()
+    thread_fonction2.join()
+    thread_fonction3.join()
+    thread_fonction4.join()
