@@ -135,13 +135,10 @@ def find_the_best_pre_rotation_to_align_points(points_source:np.ndarray, points_
     for angle_x in range(range_angle_x[0],range_angle_x[1]+1,range_angle_x[2]): 
         for angle_y in range(range_angle_y[0],range_angle_y[1]+1,range_angle_y[2]): 
             for angle_z in range(range_angle_z[0],range_angle_z[1]+1,range_angle_z[2]): 
-                print(angle_z)
                 transform_matrix,cost = get_cost_to_align_points(points_source,points_target,angle_x,angle_y,angle_z)
-                
                 if cost < best_cost:
                     best_transform_matrix = transform_matrix
                     best_cost = cost
                     best_angle = [angle_x,angle_y,angle_z]
-         
     return best_transform_matrix,best_angle
 
