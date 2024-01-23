@@ -146,7 +146,7 @@ Mt = tf.translation_matrix(translation_vector)  # Matrice de translation
 
 ################ Matrice de pré-rotation ###################
 
-M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 20])
+M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -221,7 +221,7 @@ while True:
     
     points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
     
-    # points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,density,colors_filtres_sphere)
+    points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,density,colors_filtres_sphere)
 
     # Repositionnement
     
@@ -235,7 +235,8 @@ while True:
    
     # Pré-rotation
     
-    M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 10, 10],[0, 10, 10],[-180, 180, 20])
+    # M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[best_angle[0]-20, best_angle[0]+20, 20],[best_angle[1]-20, best_angle[1]+20, 20],[best_angle[2]-20, best_angle[2]+20, 20])
+    M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
     M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
     M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
 
