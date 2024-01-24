@@ -223,7 +223,7 @@ print("On cherche la bonne pré-rotation à appliquer : ")
 
 POINTS_MODEL_3D_REDUCE_DENSITY,_ = pc.reduce_density(POINTS_MODEL_3D_RESIZED,0.05)
 
-M_icp_1 = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 10]) # Utile avoir des résultats plus vite
+M_icp_1,_ = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[0, 10, 10],[0, 10, 10],[-180, 180, 10]) # Utile avoir des résultats plus vite
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
