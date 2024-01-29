@@ -155,7 +155,7 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     """
     # Remise en forme
     
-    frame = array.line_to_3Darray(frame,(480,640))
+    frame = array.line_to_2Darray(frame,(480,640))
     frame = np.array(frame[:, :, ::-1])
     
     # Transformation of 3D model points
@@ -176,6 +176,6 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     # Remise en forme
     cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
     frame = frame.astype(np.uint8)
-    frame=array.line_to_3Darray(frame,(480,640))
+    frame=array.line_to_2Darray(frame,(480,640))
     return frame
 
