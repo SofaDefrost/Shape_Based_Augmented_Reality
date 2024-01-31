@@ -1,7 +1,4 @@
-﻿[submodule "realsense"]
-	path = realsense
-	url = git@gitlab.inria.fr:defrost/hardware/realsense.git
+﻿[submodule "Python_3D_Toolbox_for_Realsense"]
+	path = Python_3D_Toolbox_for_Realsense
+	url = https://github.com/SofaDefrost/Python_3D_Toolbox_for_Realsense.git
 	
-# [submodule "libbar"]
-# 	path = include/bar
-# 	url = git://bar.com/git/lib.git

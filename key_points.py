@@ -6,14 +6,14 @@ from functions import icp as cp
 from functions import project_and_display as proj
 from functions import transformations as tf
 
-from realsense import acquisition_realsense as aq
-from realsense import calibration_matrix_realsense as rc
-from realsense.functions import processing_ply as ply
-from realsense.functions import processing_point_cloud as pc
-from realsense.functions import processing_pixel_list as pixels
-from realsense.functions import processing_img as img
-from realsense.functions import previsualisation_application_function as Tk
-from realsense.functions.utils import array as array
+from Python_3D_Toolbox_for_Realsense import acquisition_realsense as aq
+from Python_3D_Toolbox_for_Realsense import calibration_matrix_realsense as rc
+from Python_3D_Toolbox_for_Realsense.functions import processing_ply as ply
+from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
+from Python_3D_Toolbox_for_Realsense.functions import processing_pixel_list as pixels
+from Python_3D_Toolbox_for_Realsense.functions import processing_img as img
+from Python_3D_Toolbox_for_Realsense.functions import previsualisation_application_function as Tk
+from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 def trouver_correspondances(image1, image2):
     
@@ -33,11 +33,11 @@ def trouver_correspondances(image1, image2):
     image_points2 = cv2.drawKeypoints(image2, points_interet2, None, color=(0, 255, 0), flags=0)
     # print(len(points_interet1))
     # print(len(points_interet2))
-    # # Afficher l'image avec les points d'intérêt
-    # cv2.imshow('Points d\'intérêt', image_points1)
-    # cv2.waitKey(0)
-    # cv2.imshow('Points d\'intérêt', image_points2)
-    # cv2.waitKey(0)
+    # Afficher l'image avec les points d'intérêt
+    cv2.imshow('Points d\'intérêt', image_points1)
+    cv2.waitKey(0)
+    cv2.imshow('Points d\'intérêt', image_points2)
+    cv2.waitKey(0)
     
     # Utiliser le BFMatcher avec la distance de Hamming
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -55,12 +55,12 @@ def trouver_correspondances(image1, image2):
     for i in range(len(points)):
         mask[points[i][1]][points[i][0]]=True
     # Dessiner les correspondances sur une nouvelle image
-    image_correspondances = cv2.drawMatches(image1, points_interet1, image2, points_interet2, correspondances[:20], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    image_correspondances = cv2.drawMatches(image1, points_interet1, image2, points_interet2, correspondances, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
     
-    # # Afficher l'image avec les correspondances
-    # cv2.imshow('Correspondances', image_correspondances)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    # Afficher l'image avec les correspondances
+    cv2.imshow('Correspondances', image_correspondances)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     return mask
 
 if __name__ == '__main__':
@@ -77,8 +77,5 @@ if __name__ == '__main__':
     image1 = cv2.imread(image1_path)
     # image2 = cv2.imread(image2_path)
     mask = trouver_correspondances(image1, colors)
-    colors_filtre = colors[mask]
-    points_line = array.line_to_2Darray(points, (480, 640))
-    points_filtre = points_line[mask]
-    points_filtre = array.to_line(points_filtre)
-    ply.save("test.ply",points_filtre,colors_filtre)
+    # points_filtre,colors_filtre,_ = pc.apply_binary_mask(points,colors,mask,(480,640))
+    # ply.save("test.ply",points_filtre,colors_filtre)

@@ -198,6 +198,7 @@ from __future__ import division, print_function
 import math
 
 import numpy
+import numpy as np
 
 __version__ = '2015.07.18'
 __docformat__ = 'restructuredtext en'
@@ -1982,6 +1983,44 @@ def translation_matrix(translation_vector):
     T = numpy.eye(4)  # Création d'une matrice identité 4x4
     T[:3, 3] = translation_vector  # Modification des éléments de translation
     return T
+
+
+def transformation_matrix_to_euler_xyz(transformation_matrix):
+    """
+    Convertit une matrice de transformation en angles d'Euler selon l'ordre XYZ.
+
+    Args:
+        transformation_matrix (numpy.ndarray): Matrice de transformation 4x4.
+
+    Returns:
+        Tuple[float, float, float]: Angles d'Euler (radians) selon l'ordre XYZ.
+    """
+    # Extraire la sous-matrice de rotation 3x3
+    rotation_matrix = transformation_matrix[:3, :3]
+
+    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
+    # 'sxyz' order for XYZ Euler angles
+    euler_angles = euler_from_matrix(rotation_matrix, 'sxyz')
+
+    return euler_angles
+
+
+def matrix_from_angles(angle_x, angle_y, angle_z):
+    """
+    Crée une matrice de rotation à partir des angles d'Euler en XYZ.
+
+    Args:
+        angle_x (float): Angle d'Euler autour de l'axe X en radians.
+        angle_y (float): Angle d'Euler autour de l'axe Y en radians.
+        angle_z (float): Angle d'Euler autour de l'axe Z en radians.
+
+    Returns:
+        numpy.ndarray: Matrice de rotation 4x4.
+    """
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, :3] = euler_matrix(
+        angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
+    return rotation_matrix
 
 if __name__ == "__main__":
     import doctest

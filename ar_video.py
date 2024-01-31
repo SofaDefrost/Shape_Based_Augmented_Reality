@@ -6,54 +6,14 @@ from functions import icp as cp
 from functions import project_and_display as proj
 from functions import transformations as tf
 
-from realsense import acquisition_realsense as aq
-from realsense import calibration_matrix_realsense as rc
-from realsense.functions import processing_ply as ply
-from realsense.functions import processing_point_cloud as pc
-from realsense.functions import processing_pixel_list as pixels
-from realsense.functions import processing_img as img
-from realsense.functions import previsualisation_application_function as Tk
-from realsense.functions.utils import array as array
-
-# Je ne sais pas pourquoi mais si ces fonctions ne sont pas définie dans ce fichier ça ne marche pas
-
-def transformation_matrix_to_euler_xyz(transformation_matrix):
-    """
-    Convertit une matrice de transformation en angles d'Euler selon l'ordre XYZ.
-
-    Args:
-        transformation_matrix (numpy.ndarray): Matrice de transformation 4x4.
-
-    Returns:
-        Tuple[float, float, float]: Angles d'Euler (radians) selon l'ordre XYZ.
-    """
-    # Extraire la sous-matrice de rotation 3x3
-    rotation_matrix = transformation_matrix[:3, :3]
-
-    # Utiliser la fonction euler_from_matrix pour obtenir les angles d'Euler en XYZ
-    # 'sxyz' order for XYZ Euler angles
-    euler_angles = tf.euler_from_matrix(rotation_matrix, 'sxyz')
-
-    return euler_angles
-
-
-def matrix_from_angles(angle_x, angle_y, angle_z):
-    """
-    Crée une matrice de rotation à partir des angles d'Euler en XYZ.
-
-    Args:
-        angle_x (float): Angle d'Euler autour de l'axe X en radians.
-        angle_y (float): Angle d'Euler autour de l'axe Y en radians.
-        angle_z (float): Angle d'Euler autour de l'axe Z en radians.
-
-    Returns:
-        numpy.ndarray: Matrice de rotation 4x4.
-    """
-    rotation_matrix = np.eye(4)
-    rotation_matrix[:3, :3] = tf.euler_matrix(
-        angle_x, angle_y, angle_z, 'sxyz')[:3, :3]
-    return rotation_matrix
-
+from Python_3D_Toolbox_for_Realsense import acquisition_realsense as aq
+from Python_3D_Toolbox_for_Realsense import calibration_matrix_realsense as rc
+from Python_3D_Toolbox_for_Realsense.functions import processing_ply as ply
+from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
+from Python_3D_Toolbox_for_Realsense.functions import processing_pixel_list as pixels
+from Python_3D_Toolbox_for_Realsense.functions import processing_img as img
+from Python_3D_Toolbox_for_Realsense.functions import previsualisation_application_function as Tk
+from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 # Calcul de la première image
 
@@ -170,7 +130,7 @@ MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) fo
 M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, POINTS_REPOSED)
 
 # On ajuste la matrice d'ICP dans le repère de la caméra
-angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
+angles_ICP2 = tf.transformation_matrix_to_euler_xyz(M_icp_2)
 
 x = -angles_ICP2[0]
 y = angles_ICP2[1]
@@ -178,7 +138,7 @@ z = -angles_ICP2[2]
 
 # Important de calculer l'inverse
 # Parce que nous on veut faire bouger le modèle de CAO sur le nuage de points (et pas l'inverse !)
-M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
+M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 
 # Calcul de toute les autres
 
@@ -259,13 +219,13 @@ while True:
     
     M_icp_2,_ = cp.find_transform_matrix_to_align_points_using_icp(MODEL_3D_POINTS_AFTER_PRE_ROTATION, points_reposed)
 
-    angles_ICP2 = transformation_matrix_to_euler_xyz(M_icp_2)
+    angles_ICP2 = tf.transformation_matrix_to_euler_xyz(M_icp_2)
 
     x = -angles_ICP2[0]
     y = angles_ICP2[1]
     z = -angles_ICP2[2]
 
-    M_icp_2_inv = np.linalg.inv(matrix_from_angles(x, y, z))
+    M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
        
     # Calcul de projection 
         
