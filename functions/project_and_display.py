@@ -1,41 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jul 24 11:10:07 2023
-
-"""
-
 import numpy as np
 import cv2
 
 from scipy.spatial import cKDTree
-from realsense.functions.utils import array as array
-
 from typing import Tuple
 
-def find_nearest_neighbors(source_points: np.ndarray, target_points: np.ndarray, nearest_neigh_num: int) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Find the nearest neighbors in the source point cloud for each point in the target point cloud.
-
-    Args:
-    - source_points (np.ndarray): Source point cloud.
-    - target_points (np.ndarray): Target point cloud.
-    - nearest_neigh_num (int): Number of nearest neighbors to find.
-
-    Returns:
-    - Tuple[np.ndarray, np.ndarray]: Nearest neighbor points and their indices in the source point cloud.
-    """    
-    # Create a KD-Tree from the source points
-    source_kdtree = cKDTree(source_points)
-
-    # Find nearest neighbors for each point in the target point cloud
-    distances, indices = source_kdtree.query(target_points, k=nearest_neigh_num)
-
-    # Retrieve the nearest neighbor points
-    
-    nearest_neighbors = source_points[indices]
-
-    return nearest_neighbors, np.array(indices)
+from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
+from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
 
 
 def project_3D_model_on_pc_using_closest_points_identification(points_model_3D: np.ndarray,colors_model_3D: np.ndarray, points_pc: np.ndarray,colors_pc: np.ndarray,projection_matrix: np.ndarray) -> np.ndarray:
@@ -59,7 +29,7 @@ def project_3D_model_on_pc_using_closest_points_identification(points_model_3D: 
     points_model_3D))))]], dtype=np.float64)
     
     # Find the indices of the closest points in the point cloud for each transformed model point
-    _,indices_of_closest_points=find_nearest_neighbors(points_pc,model_3D_points_after_projection,1)
+    _,indices_of_closest_points=pc.find_nearest_neighbors_between_pc(points_pc,model_3D_points_after_projection,1)
     
     # Update the colors of the identified points in the point cloud with the colors of the 3D model
     colors_projection = np.copy(colors_pc)
@@ -111,7 +81,7 @@ def project_3D_model_on_pc_using_closest_points_and_indices(points_model_3D: np.
     )
 
     # Find the indices of the closest points in the point cloud for each transformed model point
-    _,indices_of_closest_points = find_nearest_neighbors(
+    _,indices_of_closest_points = pc.find_nearest_neighbors_between_pc(
         points_pc, model_3d_points_after_projections,1)
 
     # Retrieve the indices of the points in the initial point cloud

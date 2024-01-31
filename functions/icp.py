@@ -1,18 +1,11 @@
+import numpy as np
+
 from typing import Tuple
 from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation as Rot
-import numpy as np
-import sys
 
-mod_name = vars(sys.modules[__name__])['__package__']
-if mod_name:
-    # Code executed as a module
-    from . import project_and_display as proj
-    from . import transformations as tf
-else:
-    # Code executed as a script
-    import project_and_display as proj
-    import transformations as tf
+from functions import matrix_operations as tf
+from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
 
 
 def find_transform_matrix_to_align_points_using_icp(source_points, target_points):
@@ -42,7 +35,7 @@ def find_transform_matrix_to_align_points_using_icp(source_points, target_points
     prev_cost = 10000
     transform_matrix_cumulee = np.identity(4)
     while True:
-        new_source_points, _ = proj.find_nearest_neighbors(
+        new_source_points, _ = pc.find_nearest_neighbors_between_pc(
             source_temp, target_points, 1)
 
         source_centroid = np.mean(new_source_points, axis=0)

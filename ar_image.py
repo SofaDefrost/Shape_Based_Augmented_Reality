@@ -6,7 +6,7 @@ import time
 
 from functions import icp as cp
 from functions import project_and_display as proj
-from functions import transformations as tf
+from functions import matrix_operations as tf
 
 from Python_3D_Toolbox_for_Realsense import acquisition_realsense as aq
 from Python_3D_Toolbox_for_Realsense import calibration_matrix_realsense as rc
@@ -23,14 +23,14 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-NAME = "data_exemple/debug"
+# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
+# NAME = "data_exemple/debug"
 
 # NAME_MODEL_3D = "labo_biologie/1ere_semaine/foie_spectrometre.ply"
 # NAME = "labo_biologie/1ere_semaine/foie"
 
-# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
+NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # NAME_MODEL_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
 # NAME = "labo_biologie/3eme_semaine/2_poulet_12"
