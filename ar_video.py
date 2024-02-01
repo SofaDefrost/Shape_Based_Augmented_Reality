@@ -21,10 +21,14 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/FleurDeLisColoredReduceDensity.ply"
-NAME = "data_exemple/debug"
+NAME_MODEL_3D = "data_exemple/estomac_3D_model_reduced_density.ply"
+NAME = "data_exemple/test_estomac"
 
 POINTS_MODEL_3D,COLORS_MODEL_3D = ply.get_points_and_colors(NAME_MODEL_3D)
+
+if len(COLORS_MODEL_3D) == 0:
+    COLORS_MODEL_3D = np.asarray(
+        [[0., 0., 255.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
 
 ###########################################################
 
@@ -66,7 +70,7 @@ POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, _ = pc.filter_with_sphere_on_barycentre(
 
 # Eventuellement pour gagner en vitesse
 density = 1
-while not(1500<len(POINT_FILRE_BRUIT)*density<2000):
+while not(len(POINT_FILRE_BRUIT)*density<2000):
     density = density - 0.1
     if density < 0:
         raise ValueError("Error density")
@@ -142,22 +146,21 @@ M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 
 # Calcul de toute les autres
 
-################# Affiche et exporte using closest points identification #######################
+################# Affiche #######################
 
-M = Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
+M_in = np.array([[382.437, 0, 319.688, 0], [
+                0, 382.437, 240.882, 0], [0, 0, 1, 0]]) # Matrice intrinsèque de la caméra
 
-COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc_using_closest_points_identification(POINTS_MODEL_3D_RESIZED,COLORS_MODEL_3D,np.array(POINTS),COLORS,M)
+M = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-COULEURS_PROJECTION_V1 = array.line_to_2Darray(COULEURS_PROJECTION_V1, (480,640)).astype(np.uint8)
-
-# On affiche
+COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc(COLORS, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, M)
+ 
 while True:
-    cv2.imshow("Projection using closest points identification", COULEURS_PROJECTION_V1[:, :, ::-1])
+    cv2.imshow("Color Image", COULEURS_PROJECTION_V1)  
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cv2.destroyAllWindows()
-
 
 #####################################################################
 
@@ -228,10 +231,7 @@ while True:
     M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
        
     # Calcul de projection 
-        
-    M_in = np.array([[382.437, 0, 319.688, 0], [
-                0, 382.437, 240.882, 0], [0, 0, 1, 0]])
-    
+          
     M_projection = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
     colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection)

@@ -23,14 +23,14 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Charger le model 3D
 
-# NAME_MODEL_3D = "data_exemple/FleurDeLisColored.ply"
-# NAME = "data_exemple/debug"
+NAME_MODEL_3D = "data_exemple/estomac_3D_model.ply"
+NAME = "data_exemple/test_estomac"
 
 # NAME_MODEL_3D = "labo_biologie/1ere_semaine/foie_spectrometre.ply"
 # NAME = "labo_biologie/1ere_semaine/foie"
 
-NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
+# NAME_MODEL_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
+# NAME = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud10"
 
 # NAME_MODEL_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
 # NAME = "labo_biologie/3eme_semaine/2_poulet_12"
@@ -72,11 +72,11 @@ COLOR_IMAGE_NAME = NAME + '.png'
 # Récupération du nuage de POINTS en utilisant la Realsense
 # Appeler une fonction d'acquisition pour récupérer le nuage de POINTS et les COULEURS
 
-# pipeline = aq.init_realsense(640,480) # On fait une acquisition
-# aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
-# POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
-# img.save(COULEURS,COLOR_IMAGE_NAME)
-POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
+pipeline = aq.init_realsense(640,480) # On fait une acquisition
+aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+POINTS, COULEURS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+img.save(COULEURS,COLOR_IMAGE_NAME)
+# POINTS, COULEURS =  ply.get_points_and_colors(NAME_PC) # Ou alors, au lieu de faire une acquisition, on récupère les points d'un ply existant
 
 COLOR_IMAGE = img.load(COLOR_IMAGE_NAME)
 
@@ -148,8 +148,8 @@ print("Redmimensionnement terminé")
 ################## Repositionnment du repère de la caméra dans celui de l'objet ####################
 
 # # Application de repositionnement
-POINTS_REPOSED = pc.centering_on_mean_points(POINT_FILRE_BRUIT)
-translation_vector = pc.get_mean_point(POINT_FILRE_BRUIT)
+POINTS_REPOSED = pc.centers_points_on_geometry(POINT_FILRE_BRUIT)
+translation_vector = pc.get_center_geometry(POINT_FILRE_BRUIT)
 translation_vector[0] = translation_vector[0]
 translation_vector[1] = translation_vector[1]
 translation_vector[2] = translation_vector[2]
@@ -185,7 +185,7 @@ print("On cherche la bonne pré-rotation à appliquer : ")
 
 POINTS_MODEL_3D_REDUCE_DENSITY,_ = pc.reduce_density(POINTS_MODEL_3D_RESIZED,0.05)
 
-M_icp_1,_ = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[0, 0, 10],[0, 0, 10],[-180, 180, 10]) # Utile avoir des résultats plus vite
+M_icp_1,_ = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_REDUCE_DENSITY, POINTS_REPOSED,[-180, 180, 10],[-180, 180, 10],[-180, 180, 10]) # Utile avoir des résultats plus vite
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -289,7 +289,7 @@ PROJECTION = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv
 
 if len(COLORS_MODEL_3D) == 0:
     COLORS_MODEL_3D = np.asarray(
-        [[1., 0., 0.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
+        [[0., 0., 255.] for i in range(len(np.asarray(POINTS_MODEL_3D)))])
 
 COLOR_IMAGE=cv2.imread(COLOR_IMAGE_NAME)
 
