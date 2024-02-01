@@ -21,7 +21,7 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 # Charger le model 3D
 
-NAME_MODEL_3D = "data_exemple/estomac_3D_model_reduced_density.ply"
+NAME_MODEL_3D = "data_exemple/estomac_3D_model_reduced_density_colored.ply"
 NAME = "data_exemple/test_estomac"
 
 POINTS_MODEL_3D,COLORS_MODEL_3D = ply.get_points_and_colors(NAME_MODEL_3D)
@@ -69,13 +69,9 @@ radius = Tk.get_parameter_using_preview(POINTS_FILTRES_HSV,pc.filter_with_sphere
 POINT_FILRE_BRUIT, COULEUR_FILRE_BRUIT, _ = pc.filter_with_sphere_on_barycentre(POINTS_FILTRES_HSV,radius, COULEURS_FILTRES_HSV)
 
 # Eventuellement pour gagner en vitesse
-density = 1
-while not(len(POINT_FILRE_BRUIT)*density<2000):
-    density = density - 0.1
-    if density < 0:
-        raise ValueError("Error density")
 
-POINT_FILRE_BRUIT,COULEUR_FILRE_BRUIT = pc.reduce_density(POINT_FILRE_BRUIT,density,COULEUR_FILRE_BRUIT)
+if (len(POINT_FILRE_BRUIT)>2000):
+    POINT_FILRE_BRUIT,COULEUR_FILRE_BRUIT = pc.reduce_density(POINT_FILRE_BRUIT,2000/len(POINT_FILRE_BRUIT),COULEUR_FILRE_BRUIT)
 
 ###########################################################
 
@@ -114,7 +110,7 @@ Mt = tf.translation_matrix(translation_vector)  # Matrice de translation
 
 ################ Matrice de pré-rotation ###################
 
-M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
+M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, POINTS_REPOSED,[0, 0, 10],[0, 0, 10],[-180, 180, 10])
 
 M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
 M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -166,12 +162,12 @@ cv2.destroyAllWindows()
 
 point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
 
-# # Paramètres de la vidéo
-# largeur, hauteur = 640, 480
-# fps = 30
+# Paramètres de la vidéo
+largeur, hauteur = 640, 480
+fps = 5
 
-# # Créer un objet VideoWriter
-# video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+# Créer un objet VideoWriter
+video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
 
 while True:
     
@@ -188,14 +184,11 @@ while True:
     
     points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
     
-    if not(1500<len(points_filtres_sphere)*density<2000):
-        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,density,colors_filtres_sphere)
-
+    if (len(points_filtres_sphere)>2000):
+        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,2000/len(points_filtres_sphere),colors_filtres_sphere)
+    
     # Repositionnement
-    
-    # points_reposed = pc.centering_on_mean_points(points_filtres_sphere)
-    # translation_vector = pc.get_mean_point(points_filtres_sphere)
-    
+      
     points_reposed = pc.centers_points_on_geometry(points_filtres_sphere)
     translation_vector = pc.get_center_geometry(points_filtres_sphere)
     
@@ -207,7 +200,7 @@ while True:
 
     # Pré-rotation
     
-    M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[best_angle[0]-20, best_angle[0]+20, 20],[best_angle[1]-20, best_angle[1]+20, 20],[best_angle[2]-20, best_angle[2]+20, 20])
+    M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[best_angle[0]-5, best_angle[0]+5, 5],[best_angle[1]-5, best_angle[1]+5, 5],[best_angle[2]-5, best_angle[2]+5, 5])
     # M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
     M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
     M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
@@ -244,7 +237,7 @@ while True:
         pipeline.stop()
         break
                
-    # video_writer.write(colors_image)
+    video_writer.write(colors_image)
     temps_fin = time.time()
     temps_execution = temps_fin - temps_debut
     print(f"Temps d'exécution : {temps_execution} secondes")
