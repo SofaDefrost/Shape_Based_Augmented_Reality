@@ -19,8 +19,6 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 
 ############### Loading ####################
 
-os.system('cls' if os.name == 'nt' else 'clear')
-
 # Load the 3D model
 
 name_model_3D = "data_exemple/estomac_3D_model_reduced_density_colored.ply"
@@ -42,13 +40,15 @@ points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 color_image_name = name + '.png'
 
 # Get point cloud with the realsense camera
-pipeline = aq.init_realsense(640,480) # On fait une acquisition
+size_acqui = (1280,720)
+pipeline = aq.init_realsense(size_acqui[0],size_acqui[1]) # On fait une acquisition
 aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 points, colors = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 img.save(colors,color_image_name)
 
 # Or : loading an existing .ply file
 # name_pc = name + '.ply'
+# size_acqui = (640,480)
 # points, colors = ply.get_points_and_colors(name_pc)
 
 color_image = img.load(color_image_name)
@@ -58,7 +58,7 @@ tab_index = np.array([i for i in range(len(points))])
 ##################### Select Zone ####################
 
 points_crop, colors_crop, tab_index_crop, new_shape = pc.crop_from_zone_selection(
-    points=points, colors=colors, shape=(640, 480), tab_index=tab_index)
+    points=points, colors=colors, shape=size_acqui, tab_index=tab_index)
 
 ###################### Mask ###########################
 
@@ -83,12 +83,15 @@ points_filtered_noise, colors_filtered_noise, tab_index_filtered_noise = pc.filt
 
 pc_too_big = True
 
+if (len(points_filtered_noise)>2000):
+        points_for_resize_only, _ = pc.reduce_density(points_filtered_noise,2000/len(points_filtered_noise))
+
 # The resize algorithm can crash if we have too many points.
 # We check if it is the case (if yes we reduced by half the number of points in the point cloud)
 while pc_too_big:
     try:
         points_model_3D_resized = pc.resize_point_cloud_to_another_one(
-            points_model_3D, points_filtered_noise)
+            points_model_3D, points_for_resize_only)
         pc_too_big = False
     except Exception as e:
         logging.info(
@@ -135,10 +138,10 @@ M_icp_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 M = Mt @ M_pre_rot_inv @ M_icp_inv
 
 colors_projection_cpi = proj.project_3D_model_on_pc_using_closest_points_identification(
-    points_model_3D_resized, colors_model_3D, points, colors, M)
+    points_model_3D_resized, colors_model_3D, points, colors, M,size_acqui)
 
 img.save(colors_projection_cpi, name +
-         "_projection_closest_points.png", (480, 640))
+         "_projection_closest_points.png", size_acqui)
 ply.save(name+"_projection_closest_points.ply", points, colors_projection_cpi)
 
 color_image_cpi = img.load(name + "_projection_closest_points.png")
@@ -154,10 +157,10 @@ cv2.destroyAllWindows()
 ################# Display using indices identification #######################
 
 colors_projection_ii = proj.project_3D_model_on_pc_using_closest_points_and_indices(
-    points_model_3D_resized, colors_model_3D, points_filtered_noise, colors, tab_index_filtered_noise, M)
+    points_model_3D_resized, colors_model_3D, points_filtered_noise, colors, tab_index_filtered_noise, M,size_acqui)
 
 img.save(colors_projection_ii, name +
-         "_projection_using_indices.png", (480, 640))
+         "_projection_using_indices.png", size_acqui)
 ply.save(name+"_projection_using_indices.ply", points, colors_projection_ii)
 
 color_image_ii = img.load(name + "_projection_using_indices.png")
@@ -174,13 +177,9 @@ cv2.destroyAllWindows()
 
 # Calibration matrix
 
-# calibration_matrix = rc.recover_matrix_calib()
-# M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-# M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
-# Matrice intrinsèquqe Tinhinane je pense à supprimer
-M_in = np.array([[382.437, 0, 319.688, 0], [
-                0, 382.437, 240.882, 0], [0, 0, 1, 0]])
-# M_in = np.array([[423.84763, 0, 319.688, 0], [0,423.84763, 240.97697, 0], [0, 0, 1, 0]])  # Matrice intrinsèquqe Tinhinane remaster à la main je pense à supprimer
+calibration_matrix = rc.recover_matrix_calib(size_acqui[0],size_acqui[1])
+M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 
 projection = M_in @ Mt @ M_pre_rot_inv @ M_icp_inv
 
@@ -190,7 +189,7 @@ if len(colors_model_3D) == 0:
 
 while True:
     frame_apres = proj.project_3D_model_on_pc(
-        colors, points_model_3D_resized, colors_model_3D, projection)
+        colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
     cv2.imshow("projection of 3D model on pc", frame_apres)
     cv2.imwrite(name + "projection.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):
