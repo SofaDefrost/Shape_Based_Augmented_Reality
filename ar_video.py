@@ -178,37 +178,56 @@ while True:
     temps_debut = time.time()
 
     # Acquisition   
-    
+    temps_debut = time.time()
     points,colors=aq.get_points_and_colors_from_realsense(pipeline)
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps acquisition : {temps_execution} secondes")
+    #
+    # Trouver un moyen de faire fonctionner un truc comme ça demain ou alors obj : est accelèrer les deux masques (trouver éventuellement une autre manière de comment faire) 
+    # if (len(points)>100000):
+    #     points, colors = pc.reduce_density(points,100000/len(points),colors)
     # Application du masque hsv
-    
+    temps_debut = time.time()
     points_filtres,colors_filtres,_ = pc.apply_hsv_mask(points,colors,MASK_HSV,size_acqui)
-
-    # Filtrage bruit
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps mask : {temps_execution} secondes")
     
+    # Filtrage bruit
+    temps_debut = time.time()
     points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
     
     if (len(points_filtres_sphere)>2000):
-        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,200/len(points_filtres_sphere),colors_filtres_sphere)
+        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,2000/len(points_filtres_sphere),colors_filtres_sphere)
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps filtrage bruit : {temps_execution} secondes")
     
     # Repositionnement
-      
+    temps_debut = time.time()      
     points_reposed = pc.centers_points_on_geometry(points_filtres_sphere)
     translation_vector = pc.get_center_geometry(points_filtres_sphere)
 
     Mt = tf.translation_matrix(translation_vector) 
-
-    # Pré-rotation
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps repose : {temps_execution} secondes")
     
+    # Pré-rotation
+    temps_debut = time.time()    
     M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[best_angle[0]-5, best_angle[0]+5, 5],[best_angle[1]-5, best_angle[1]+5, 5],[best_angle[2]-5, best_angle[2]+5, 5])
     # M_icp_1,best_angle = cp.find_the_best_pre_rotation_to_align_points(POINTS_MODEL_3D_RESIZED, points_reposed,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
     M_icp_1 = np.hstack((M_icp_1, np.array([[0], [0], [0]])))
     M_icp_1 = np.vstack((M_icp_1, np.array([0, 0, 0, 1])))
 
     M_ICP_1_INV = np.linalg.inv(M_icp_1)
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps pre-rot : {temps_execution} secondes")
     
     # ICP
-    
+    temps_debut = time.time()    
     MODEL_3D_POINTS_AFTER_PRE_ROTATION = np.array([(float(x), float(y), float(z)) for (
     x, y, z,t) in [M_ICP_1_INV @ p for p in np.column_stack((point_model_3D_resize, np.ones(len(
     point_model_3D_resize))))]], dtype=np.float64)
@@ -222,15 +241,17 @@ while True:
     z = -angles_ICP2[2]
 
     M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
-       
+    temps_fin = time.time()
+    temps_execution = temps_fin - temps_debut
+    print(f"Temps ICP : {temps_execution} secondes")   
     # Calcul de projection 
-          
+    temps_debut = time.time()          
     M_projection = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
     colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection,size_acqui)
 
     # Affichage 
-     
+    temps_debut = time.time()     
     cv2.imshow("Color Image", colors_image)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -241,5 +262,5 @@ while True:
     # video_writer.write(colors_image)
     temps_fin = time.time()
     temps_execution = temps_fin - temps_debut
-    print(f"Temps d'exécution : {temps_execution} secondes")
+    print(f"Temps affichage : {temps_execution} secondes")
     
