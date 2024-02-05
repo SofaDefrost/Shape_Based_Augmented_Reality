@@ -38,8 +38,9 @@ NAME_PC = NAME + '.ply'
 COLOR_IMAGE_NAME = NAME + '.png'
 
 # Récupération du nuage de points en utilisant la Realsense
+size_acqui = (1280,720)
+pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
 
-pipeline = aq.init_realsense(640,480)
 # Bon je ne sais pas pourquoi il faut que je le fasse plusiquer fois comme ça mais si je ne fais pas, l'image affichée n'est pas la même tout le long du truc ...
 POINTS, COLORS = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 pixels.display(COLORS,"Display")
@@ -54,11 +55,11 @@ pixels.display(COLORS,"Display")
 
 # Détermination du masque
 
-MASK_HSV = pixels.get_hsv_mask_with_sliders(COLORS,(480,640))
+MASK_HSV = pixels.get_hsv_mask_with_sliders(COLORS,size_acqui)
 
 # Application du masque
 
-POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV,_ = pc.apply_hsv_mask(POINTS,COLORS,MASK_HSV,(480,640))
+POINTS_FILTRES_HSV, COULEURS_FILTRES_HSV,_ = pc.apply_hsv_mask(POINTS,COLORS,MASK_HSV,size_acqui)
 
 ###########################################################
 
@@ -144,12 +145,13 @@ M_icp_2_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 
 ################# Affiche #######################
 
-M_in = np.array([[382.437, 0, 319.688, 0], [
-                0, 382.437, 240.882, 0], [0, 0, 1, 0]]) # Matrice intrinsèque de la caméra
+calibration_matrix = rc.recover_matrix_calib(size_acqui[0],size_acqui[1])
+M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 
 M = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc(COLORS, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, M)
+COULEURS_PROJECTION_V1 = proj.project_3D_model_on_pc(COLORS, POINTS_MODEL_3D_RESIZED, COLORS_MODEL_3D, M,size_acqui)
  
 while True:
     cv2.imshow("Color Image", COULEURS_PROJECTION_V1)  
@@ -162,12 +164,14 @@ cv2.destroyAllWindows()
 
 point_model_3D_resize = np.copy(POINTS_MODEL_3D_RESIZED)
 
-# Paramètres de la vidéo
-largeur, hauteur = 640, 480
-fps = 5
+# # Paramètres de la vidéo
+# largeur, hauteur = size_acqui
+# fps = 5
 
-# Créer un objet VideoWriter
-video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+# # Créer un objet VideoWriter
+# video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+
+pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
 
 while True:
     
@@ -178,23 +182,19 @@ while True:
     points,colors=aq.get_points_and_colors_from_realsense(pipeline)
     # Application du masque hsv
     
-    points_filtres,colors_filtres,_ = pc.apply_hsv_mask(points,colors,MASK_HSV,(480,640))
+    points_filtres,colors_filtres,_ = pc.apply_hsv_mask(points,colors,MASK_HSV,size_acqui)
 
     # Filtrage bruit
     
     points_filtres_sphere, colors_filtres_sphere,_ = pc.filter_with_sphere_on_barycentre(points_filtres,radius, colors_filtres)
     
     if (len(points_filtres_sphere)>2000):
-        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,2000/len(points_filtres_sphere),colors_filtres_sphere)
+        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(points_filtres_sphere,200/len(points_filtres_sphere),colors_filtres_sphere)
     
     # Repositionnement
       
     points_reposed = pc.centers_points_on_geometry(points_filtres_sphere)
     translation_vector = pc.get_center_geometry(points_filtres_sphere)
-    
-    translation_vector[0] = translation_vector[0]
-    translation_vector[1] = translation_vector[1]
-    translation_vector[2] = translation_vector[2]
 
     Mt = tf.translation_matrix(translation_vector) 
 
@@ -227,7 +227,7 @@ while True:
           
     M_projection = M_in @ Mt @ M_ICP_1_INV @ M_icp_2_inv  # Matrice de "projection"
 
-    colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection)
+    colors_image = proj.project_3D_model_on_pc(colors, point_model_3D_resize, COLORS_MODEL_3D, M_projection,size_acqui)
 
     # Affichage 
      
@@ -235,11 +235,11 @@ while True:
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         pipeline.stop()
+        cv2.destroyAllWindows()
         break
                
-    video_writer.write(colors_image)
+    # video_writer.write(colors_image)
     temps_fin = time.time()
     temps_execution = temps_fin - temps_debut
     print(f"Temps d'exécution : {temps_execution} secondes")
     
-cv2.destroyAllWindows()
