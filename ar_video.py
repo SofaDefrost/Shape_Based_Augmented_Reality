@@ -34,17 +34,7 @@ if len(colors_model_3D) == 0:
 # Get point cloud with the realsense camera
 size_acqui = (1280, 720)
 pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
-
-# Bon je ne sais pas pourquoi il faut que je le fasse plusiquer fois comme ça mais si je ne fais pas, l'image affichée n'est pas la même tout le long du truc ...
-points, colors = aq.get_points_and_colors_from_realsense(
-    pipeline)  # On fait une acquisition
-pixels.display(colors, "Display")
-points, colors = aq.get_points_and_colors_from_realsense(
-    pipeline)  # On fait une acquisition
-pixels.display(colors, "Display")
-points, colors = aq.get_points_and_colors_from_realsense(
-    pipeline)  # On fait une acquisition
-pixels.display(colors, "Display")
+points, colors = aq.get_points_and_colors_from_realsense(pipeline)
 
 # Mask
 
@@ -144,9 +134,9 @@ cv2.destroyAllWindows()
 #################### For next pictures ####################
 
 # Video settings
-# largeur, hauteur = size_acqui
-# fps = 5
-# video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+largeur, hauteur = size_acqui
+fps = 5
+video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
 
 # Needed because the code that get the calibration matrix reset the pipeline
 pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
@@ -215,7 +205,7 @@ while True:
         cv2.destroyAllWindows()
         break
 
-    # video_writer.write(colors_image)
+    video_writer.write(colors_image)
     # temps_fin = time.time()
     # temps_execution = temps_fin - temps_debut
     # print(f"Temps affichage : {temps_execution} secondes")
