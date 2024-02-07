@@ -125,7 +125,7 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     Returns:
     - np.ndarray: Image frame with the 3D model projected onto it.
     """
-    # Remise en forme
+    # Reshape
 
     frame = array.line_to_2Darray(frame, (shape_image[1], shape_image[0]))
     frame = np.array(frame[:, :, ::-1])

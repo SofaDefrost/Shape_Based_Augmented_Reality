@@ -22,32 +22,33 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 # Load the 3D model
 
 name_model_3D = "data_exemple/estomac_3D_model_reduced_density_colored.ply"
-name = "data_exemple/test_estomac"
+name_for_output = "data_exemple/test_estomac"
 
 # name_model_3D = "labo_biologie/1ere_semaine/foie_spectrometre.ply"
-# name = "labo_biologie/1ere_semaine/foie"
+# name_for_output = "labo_biologie/1ere_semaine/foie"
 
 # name_model_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-# name = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud9"
+# name_for_output = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud9"
 
 # name_model_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
-# name = "labo_biologie/3eme_semaine/2_poulet_12"
+# name_for_output = "labo_biologie/3eme_semaine/2_poulet_12"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
 ################### Acquisition ###########################
 
-color_image_name = name + '.png'
+color_image_name = name_for_output + '.png' # /!\ Mettre autre chose ici pour le dépot
 
 # Get point cloud with the realsense camera
 size_acqui = (1280,720)
 pipeline = aq.init_realsense(size_acqui[0],size_acqui[1]) # On fait une acquisition
 points, colors = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 img.save(colors,color_image_name)
+ply.save("example/input/test_estomac.ply",points,colors)
 
 # Or : loading an existing .ply file
-# name_pc = name + '.ply'
-# size_acqui = (640,480)
+# name_pc = name_for_output + '.ply' # /!\ Mettre autre chose ici pour le dépot
+# size_acqui = (640,480) # The size of the acquisition
 # points, colors = ply.get_points_and_colors(name_pc)
 
 color_image = img.load(color_image_name)
@@ -108,7 +109,7 @@ Mt = tf.translation_matrix(translation_vector)
 ################ Pre-rotation matrix ###################
 
 M_pre_rot, _ = cp.find_the_best_pre_rotation_to_align_points(points_model_3D_resized, points_reposed, [
-                                                             0, 0, 10], [0, 0, 10], [-180, 180, 10])  # Utile avoir des résultats plus vite
+                                                             0, 0, 10], [0, 0, 10], [-180, 180, 10])
 
 M_pre_rot = np.hstack((M_pre_rot, np.array([[0], [0], [0]])))
 M_pre_rot = np.vstack((M_pre_rot, np.array([0, 0, 0, 1])))
@@ -139,11 +140,11 @@ M = Mt @ M_pre_rot_inv @ M_icp_inv
 colors_projection_cpi = proj.project_3D_model_on_pc_using_closest_points_identification(
     points_model_3D_resized, colors_model_3D, points, colors, M,size_acqui)
 
-img.save(colors_projection_cpi, name +
+img.save(colors_projection_cpi, name_for_output +
          "_projection_closest_points.png", size_acqui)
-ply.save(name+"_projection_closest_points.ply", points, colors_projection_cpi)
+ply.save(name_for_output+"_projection_closest_points.ply", points, colors_projection_cpi)
 
-color_image_cpi = img.load(name + "_projection_closest_points.png")
+color_image_cpi = img.load(name_for_output + "_projection_closest_points.png")
 
 while True:
     cv2.imshow("Projection using closest points identification",
@@ -158,11 +159,11 @@ cv2.destroyAllWindows()
 colors_projection_ii = proj.project_3D_model_on_pc_using_closest_points_and_indices(
     points_model_3D_resized, colors_model_3D, points_filtered_noise, colors, tab_index_filtered_noise, M,size_acqui)
 
-img.save(colors_projection_ii, name +
+img.save(colors_projection_ii, name_for_output +
          "_projection_using_indices.png", size_acqui)
-ply.save(name+"_projection_using_indices.ply", points, colors_projection_ii)
+ply.save(name_for_output+"_projection_using_indices.ply", points, colors_projection_ii)
 
-color_image_ii = img.load(name + "_projection_using_indices.png")
+color_image_ii = img.load(name_for_output + "_projection_using_indices.png")
 
 while True:
     cv2.imshow("projection using indices identification",
@@ -190,7 +191,7 @@ while True:
     frame_apres = proj.project_3D_model_on_pc(
         colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
     cv2.imshow("projection of 3D model on pc", frame_apres)
-    cv2.imwrite(name + "projection.png", frame_apres)
+    cv2.imwrite(name_for_output + "_projection.png", frame_apres)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
