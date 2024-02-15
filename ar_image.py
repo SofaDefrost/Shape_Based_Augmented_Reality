@@ -21,7 +21,7 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 
 # Load the 3D model
 
-name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
+name_model_3D = "example/input/point_cloud_test_stomach.ply"
 name_for_output = "example/output/test"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
@@ -29,14 +29,14 @@ points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 ################### Acquisition ###########################
 
 # Get point cloud with the realsense camera
-# size_acqui = (1280,720)
-# pipeline = aq.init_realsense(size_acqui[0],size_acqui[1]) # On fait une acquisition
-# points, colors = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
+size_acqui = (1280,720)
+pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
+points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
 
 # Or : loading an existing .ply file
-name_pc = "example/input/point_cloud_test_stomach.ply"
-size_acqui = (1280,720) # The size of the acquisition
-points, colors = ply.get_points_and_colors(name_pc)
+# name_pc = "example/input/point_cloud_test_stomach.ply"
+# size_acqui = (1280,720) # The size of the acquisition
+# points, colors = ply.get_points_and_colors(name_pc)
 
 tab_index = np.array([i for i in range(len(points))])
 

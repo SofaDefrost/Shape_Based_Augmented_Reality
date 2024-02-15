@@ -20,7 +20,7 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 # Load the 3D model
 
-name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
+name_model_3D = "example/input/SOFA_logo.ply"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
