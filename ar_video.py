@@ -20,8 +20,7 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 # Load the 3D model
 
-name_model_3D = "data_exemple/estomac_3D_model_reduced_density_colored.ply"
-name = "data_exemple/test_estomac"
+name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
@@ -133,17 +132,19 @@ cv2.destroyAllWindows()
 
 #################### For next pictures ####################
 
+## For video recording
 # Video settings
-largeur, hauteur = size_acqui
+width, height = size_acqui
 fps = 5
-video_writer = cv2.VideoWriter('test.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (largeur, hauteur))
+video_writer = cv2.VideoWriter('example/output/test_video.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height))
 
 # Needed because the code that get the calibration matrix reset the pipeline
 pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
 
 while True:
-
-    temps_debut = time.time()
+    
+    # For timer
+    temps_start = time.time()
 
     # Acquisition
     points, colors = aq.get_points_and_colors_from_realsense(pipeline)
@@ -204,8 +205,11 @@ while True:
         pipeline.stop()
         cv2.destroyAllWindows()
         break
-
+    
+    ## For video recording
     video_writer.write(colors_image)
-    # temps_fin = time.time()
-    # temps_execution = temps_fin - temps_debut
-    # print(f"Temps affichage : {temps_execution} secondes")
+    
+    # For timer
+    temps_end = time.time()
+    temps_processing = temps_end - temps_start
+    print(f"Time for processing: {temps_processing} seconds")

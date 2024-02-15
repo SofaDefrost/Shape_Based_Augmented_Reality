@@ -21,37 +21,22 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 
 # Load the 3D model
 
-name_model_3D = "data_exemple/estomac_3D_model_reduced_density_colored.ply"
-name_for_output = "data_exemple/test_estomac"
-
-# name_model_3D = "labo_biologie/1ere_semaine/foie_spectrometre.ply"
-# name_for_output = "labo_biologie/1ere_semaine/foie"
-
-# name_model_3D = "labo_biologie/2eme_semaine/foie_V_couleurs_h.ply"
-# name_for_output = "labo_biologie/2eme_semaine/_foie_deuxieme_jour_dedos__Thibaud9"
-
-# name_model_3D = "labo_biologie/3eme_semaine/poulet_2_3D_model.ply"
-# name_for_output = "labo_biologie/3eme_semaine/2_poulet_12"
+name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
+name_for_output = "example/output/test"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
 ################### Acquisition ###########################
 
-color_image_name = name_for_output + '.png' # /!\ Mettre autre chose ici pour le dépot
-
 # Get point cloud with the realsense camera
-size_acqui = (1280,720)
-pipeline = aq.init_realsense(size_acqui[0],size_acqui[1]) # On fait une acquisition
-points, colors = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
-img.save(colors,color_image_name)
-ply.save("example/input/test_estomac.ply",points,colors)
+# size_acqui = (1280,720)
+# pipeline = aq.init_realsense(size_acqui[0],size_acqui[1]) # On fait une acquisition
+# points, colors = aq.get_points_and_colors_from_realsense(pipeline) # On fait une acquisition
 
 # Or : loading an existing .ply file
-# name_pc = name_for_output + '.ply' # /!\ Mettre autre chose ici pour le dépot
-# size_acqui = (640,480) # The size of the acquisition
-# points, colors = ply.get_points_and_colors(name_pc)
-
-color_image = img.load(color_image_name)
+name_pc = "example/input/point_cloud_test_stomach.ply"
+size_acqui = (1280,720) # The size of the acquisition
+points, colors = ply.get_points_and_colors(name_pc)
 
 tab_index = np.array([i for i in range(len(points))])
 

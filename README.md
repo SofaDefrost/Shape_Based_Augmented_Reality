@@ -8,7 +8,7 @@ Here is a quick explanation of the pipeline of the project:
 1. Filtering of this data (based on the hue, saturation, brightness ...) to extract the 3D shape of the object.
 1. Resize of the 3D model, to match with the 3D shape extracted.
 1. Center the 3D shape on the 3D model.
-1. Find the best rotation (among given values) that align the shape and the model.
+1. Find the best rotation (among given values) that best align the shape and the model.
 1. Find the exact rotation that aligns the shape and the model (using ICP algorithms).
 1. Compute the projection matrix.
 1. Display the results.
@@ -23,7 +23,7 @@ python3 ar_image.py
 ```
 All outcomes will be stored in the 'example/output' folder.
 
-- Execute the Python script *ar_video.py*. This Python script is for video only. There are no test files for this script, but you will find a video example of possible outputs in the 'example/output' folder.
+- Execute the Python script *ar_video.py*. This Python script is for video only. There are no test files for this script, but you will find a video example of possible outputs by following this link https://www.youtube.com/watch?v=dQw4w9WgXcQ (mettre le vrai lien).
 ```console
 python3 ar_video.py
 ```
@@ -42,13 +42,13 @@ pip3 install opencv-python
 
 ## Python 3D ToolBox for Realsense
 
-The code has been developed by using the "Python 3D ToolBox for Realsense" repository. This repository is hence needed.
+The code has been developed by using the "Python 3D ToolBox for Realsense" repository. It is hence needed.
 
 You will find all the details on the Github repository of the project : https://github.com/SofaDefrost/Python_3D_Toolbox_for_Realsense
 
 ## Important Notes
 
-For the *ar_image.py* code and for the first image generated with *ar_video.py* the script, the 3D object must be in the same orientation of its 3D model for the view of the camera (only rotations around the axis of the camera are allowed).
+For the *ar_image.py* code and for the first image generated with *ar_video.py* script, the 3D object must be in the same orientation of its 3D model for the view of the camera (only rotations around the axis of the camera are allowed).
 This decision has been taken to improve performances of the algorithm and especially to be able to make quick tests and demos.
 However, you can easily change this behaviour by selecting other range of angles in the ```find_the_best_pre_rotation_to_align_points``` function (for instance ```[-180, 180, 10]``` on each axis allow to place the 3D object freely).
 
