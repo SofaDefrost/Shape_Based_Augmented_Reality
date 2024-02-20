@@ -29,14 +29,14 @@ points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 ################### Acquisition ###########################
 
 # Get point cloud with the realsense camera
-# size_acqui = (1280,720)
-# pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
-# points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
+size_acqui = (1280,720)
+pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
+points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
 
 # Or : load an existing .ply file
-name_pc = "example/input/point_cloud_test_stomach.ply"
-size_acqui = (1280,720) # The size of the acquisition
-points, colors = ply.get_points_and_colors(name_pc)
+# name_pc = "example/input/point_cloud_test_stomach.ply"
+# size_acqui = (1280,720) # The size of the acquisition
+# points, colors = ply.get_points_and_colors(name_pc)
 
 tab_index = np.array([i for i in range(len(points))])
 
