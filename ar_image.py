@@ -1,4 +1,3 @@
-import os
 import logging
 import numpy as np
 import cv2
@@ -9,7 +8,7 @@ from functions import project_and_display as proj
 from functions import matrix_operations as tf
 
 from Python_3D_Toolbox_for_Realsense import acquisition_realsense as aq
-from Python_3D_Toolbox_for_Realsense import calibration_matrix_realsense as rc
+from Python_3D_Toolbox_for_Realsense import info_realsense as ir
 from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 from Python_3D_Toolbox_for_Realsense.functions import processing_ply as ply
 from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
@@ -17,26 +16,43 @@ from Python_3D_Toolbox_for_Realsense.functions import processing_pixel_list as p
 from Python_3D_Toolbox_for_Realsense.functions import processing_img as img
 from Python_3D_Toolbox_for_Realsense.functions import previsualisation_application_function as Tk
 
+############# Mode selection ###############
+
+loading_ply_file = True
+
+# name_pc_file = "example/input/point_cloud_test_stomach.ply" # Could be umpty if loading_ply_file == False
+name_pc_file = "data/labo_biologie/4eme_semaine/chick_cont_26.ply"
+
 ############### Loading ####################
 
 # Load the 3D model
 
-name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
-name_for_output = "example/output/test"
+# name_model_3D = "example/input/SOFA_logo.ply"
+# name_for_output = "example/output/SOFA_logo"
+
+name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2.ply"
+name_for_output = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_out"
+
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
 ################### Acquisition ###########################
 
-# Get point cloud with the realsense camera
 size_acqui = (1280,720)
-pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
-points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
 
-# Or : load an existing .ply file
-# name_pc = "example/input/point_cloud_test_stomach.ply"
-# size_acqui = (1280,720) # The size of the acquisition
-# points, colors = ply.get_points_and_colors(name_pc)
+if loading_ply_file:
+    # Load an existing .ply file
+    points, colors = ply.get_points_and_colors(name_pc_file)
+    # Define calibration matrix of the camera used for creating the file
+    M_in = np.asarray([[640.05206, 0, 639.1219, 0], [0, 640.05206, 361.61005, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+else:
+    # Or, get point cloud with the realsense camera
+    pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
+    points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
+    # Get the calibration matrix (will be helpfull later)
+    calibration_matrix = ir.get_matrix_calib(size_acqui[0],size_acqui[1])
+    M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+    M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 
 tab_index = np.array([i for i in range(len(points))])
 
@@ -161,10 +177,6 @@ cv2.destroyAllWindows()
 ################# Display using projection ######################
 
 # Calibration matrix
-
-calibration_matrix = rc.recover_matrix_calib(size_acqui[0],size_acqui[1])
-M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 
 projection = M_in @ Mt @ M_pre_rot_inv @ M_icp_inv
 

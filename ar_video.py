@@ -8,7 +8,8 @@ from functions import project_and_display as proj
 from functions import matrix_operations as tf
 
 from Python_3D_Toolbox_for_Realsense import acquisition_realsense as aq
-from Python_3D_Toolbox_for_Realsense import calibration_matrix_realsense as rc
+from Python_3D_Toolbox_for_Realsense import info_realsense as ir
+from Python_3D_Toolbox_for_Realsense.functions import processing_multiple_ply as mply
 from Python_3D_Toolbox_for_Realsense.functions import processing_ply as ply
 from Python_3D_Toolbox_for_Realsense.functions import processing_point_cloud as pc
 from Python_3D_Toolbox_for_Realsense.functions import processing_pixel_list as pixels
@@ -16,24 +17,41 @@ from Python_3D_Toolbox_for_Realsense.functions import processing_img as img
 from Python_3D_Toolbox_for_Realsense.functions import previsualisation_application_function as Tk
 from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
-############## First picture ################
+############# Mode selection ###############
+
+loading_mply_file = True
+video_recording = False
+display_processing_time = True
+
+name_mply_file = "data/labo_biologie/4eme_semaine/chick_cont_2.mply" # Could be umpty if loading_video_file == False
+name_video_output = "example/output/test_check_cont_2.mp4" # Could be umpty if video_recording == False
+fps_for_video_output = 5 # Could be null if video_recording == False
+
+## Generate the first picture 
 
 # Load the 3D model
 
 name_model_3D = "example/input/SOFA_logo.ply"
+# name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_back.ply"
 
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
-if len(colors_model_3D) == 0:
-    colors_model_3D = np.asarray(
-        [[0., 0., 255.] for i in range(len(np.asarray(points_model_3D)))])
-
 # Acquisition
 
-# Get point cloud with the realsense camera
 size_acqui = (1280, 720)
-pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
-points, colors = aq.get_points_and_colors_from_realsense(pipeline)
+
+if loading_mply_file:
+    points,colors=mply.get_point_cloud(name_mply_file,1)
+    # Define calibration matrix of the camera used for creating the file
+    M_in = np.asarray([[640.05206, 0, 639.1219, 0], [0, 640.05206, 361.61005, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+else:
+    # Get point cloud with the realsense camera
+    pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
+    points, colors = aq.get_points_and_colors_from_realsense(pipeline)
+    # Get the calibration matrix (will be helpfull later)
+    calibration_matrix = ir.get_matrix_calib(size_acqui[0],size_acqui[1])
+    M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
+    M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
 
 # Mask
 
@@ -114,10 +132,6 @@ M_icp_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 
 # Display
 
-calibration_matrix = rc.recover_matrix_calib(size_acqui[0], size_acqui[1])
-M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
-M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
-
 M = M_in @ Mt @ M_pre_rot_inv @ M_icp_inv
 
 colors_projection = proj.project_3D_model_on_pc(
@@ -132,39 +146,68 @@ cv2.destroyAllWindows()
 
 #################### For next pictures ####################
 
-## For video recording
-# Video settings
-width, height = size_acqui
-fps = 5
-video_writer = cv2.VideoWriter('example/output/test_video.mp4', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height))
+if video_recording:
+    ## For video recording
+    video_writer = cv2.VideoWriter(name_video_output, cv2.VideoWriter_fourcc(*'XVID'), fps_for_video_output, (size_acqui[0], size_acqui[1]))
 
-# Needed because the code that get the calibration matrix reset the pipeline
-pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
+if loading_mply_file:
+    file = open(name_mply_file, "r")
+    line = file.readline() # mply
+    line = file.readline() # format ascii 1.0
+    number_pc = int(file.readline().strip().split()[-1:][0]) # number pc
+    size_pc = int(file.readline().strip().split()[-1:][0]) # size pc
+    while not(line.startswith("end_header")):
+        line = file.readline()
+    line = file.readline()
+    pc_numb = 1
+else:
+    # Needed because the code that get the calibration matrix reset the pipeline
+    pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
 
 while True:
-    
-    # For timer
-    temps_start = time.time()
+    if display_processing_time:
+        temps_start = time.time()
+        
+    if loading_mply_file:
+        if pc_numb<number_pc:
+            points=[]
+            colors=[]
+            for i in range(size_pc):
+                data = line.strip().split()
+                points.append([float(x) for x in data[:3]])
+                if len(data)>3:
+                    colors.append([int(x) for x in data[-3:]])
+                line = file.readline()
+            points=np.array(points)
+            colors=np.array(colors)
+            # Because we are now on the line "end_pc_"
+            line = file.readline()
+            pc_numb +=1
+        else:
+            break
+    else:
+        # Acquisition
+        points, colors = aq.get_points_and_colors_from_realsense(pipeline)
 
-    # Acquisition
-    points, colors = aq.get_points_and_colors_from_realsense(pipeline)
+    points_filtres, colors_filtres, _ = pc.apply_hsv_mask(points, colors, mask_hsv, size_acqui)
 
-    # Apply mask
-    points_filtres, colors_filtres, _ = pc.apply_hsv_mask(
-        points, colors, mask_hsv, size_acqui)
-
+    if (len(points_filtres) > 1000):
+        points_filtres, colors_filtres = pc.reduce_density(
+            points_filtres, 1000/len(points_filtres), colors_filtres)
+        
     # Remove noisy data
     points_filtres_sphere, colors_filtres_sphere, _ = pc.filter_with_sphere_on_barycentre(
         points_filtres, radius, colors_filtres)
 
-    if (len(points_filtres_sphere) > 1000):
-        points_filtres_sphere, colors_filtres_sphere = pc.reduce_density(
-            points_filtres_sphere, 1000/len(points_filtres_sphere), colors_filtres_sphere)
-
-    # Rpose objects
-    points_reposed = pc.centers_points_on_geometry(points_filtres_sphere)
-    translation_vector = pc.get_center_geometry(points_filtres_sphere)
-
+    # Repose objects
+    try:
+        points_reposed = pc.centers_points_on_geometry(points_filtres_sphere)
+        translation_vector = pc.get_center_geometry(points_filtres_sphere)
+    except:
+        ply.save("debug.ply",points,colors)
+        ply.save("debug_filtre.ply",points_filtres,colors_filtres)
+        break
+        
     Mt = tf.translation_matrix(translation_vector)
 
     # Pre-rotation
@@ -202,14 +245,15 @@ while True:
     cv2.imshow("Color Image", colors_image)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        pipeline.stop()
+        # pipeline.stop()
         cv2.destroyAllWindows()
         break
     
-    ## For video recording
-    video_writer.write(colors_image)
-    
-    # For timer
-    temps_end = time.time()
-    temps_processing = temps_end - temps_start
-    print(f"Time for processing: {temps_processing} seconds")
+    if video_recording:
+        ## For video recording
+        video_writer.write(colors_image)
+        
+    if display_processing_time: 
+        temps_end = time.time()
+        temps_processing = temps_end - temps_start
+        print(f"Time for processing: {temps_processing} seconds")
