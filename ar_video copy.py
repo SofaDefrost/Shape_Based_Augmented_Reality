@@ -25,7 +25,7 @@ display_processing_time = True
 
 name_mply_file = "data/labo_biologie/4eme_semaine/chick_cont_2.mply" # Could be umpty if loading_video_file == False
 name_video_output = "example/output/test_check_cont_2.mp4" # Could be umpty if video_recording == False
-fps_for_video_output = 5 # Could be null if video_recording == False
+fps_for_video_output = 25 # Could be null if video_recording == False
 
 ## Generate the first picture 
 
@@ -264,7 +264,7 @@ while True:
 
     # Pre-rotation
     M_pre_rot, best_angle = cp.find_the_best_pre_rotation_to_align_points(points_model_3D_resized, points_reposed, [
-                                                                        best_angle[0]-3, best_angle[0]+3, 3], [best_angle[1]-3, best_angle[1]+3, 3], [best_angle[2]-3, best_angle[2]+3, 3])
+                                                                        best_angle[0]-1, best_angle[0]+1, 1], [best_angle[1]-1, best_angle[1]+1, 1], [best_angle[2]-1, best_angle[2]+1, 1])
     # M_pre_rot,best_angle = cp.find_the_best_pre_rotation_to_align_points(points_model_3D_resized, points_reposed,[0, 0, 10],[0, 0, 10],[-180, 180, 20])
     M_pre_rot = np.hstack((M_pre_rot, np.array([[0], [0], [0]])))
     M_pre_rot = np.vstack((M_pre_rot, np.array([0, 0, 0, 1])))

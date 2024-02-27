@@ -19,32 +19,29 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 ############# Mode selection ###############
 
 loading_ply_file = True
-
 # name_pc_file = "example/input/point_cloud_test_stomach.ply" # Could be umpty if loading_ply_file == False
 name_pc_file = "data/labo_biologie/4eme_semaine/chick_cont_26.ply"
+
+# name_model_3D = "example/input/SOFA_logo.ply"
+# name_for_output = "example/output/SOFA_logo"
+name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2.ply"
+name_for_output = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_out"
+
+size_acqui = (1280,720)
+# Define calibration matrix of the camera used for creating the file
+M_in = np.asarray([[640.05206, 0, 639.1219, 0], [0, 640.05206, 361.61005, 0], [0, 0, 1, 0], [0, 0, 0, 1]])  # Could be null if loading_mply_file == False
 
 ############### Loading ####################
 
 # Load the 3D model
 
-# name_model_3D = "example/input/SOFA_logo.ply"
-# name_for_output = "example/output/SOFA_logo"
-
-name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2.ply"
-name_for_output = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_out"
-
-
 points_model_3D, colors_model_3D = ply.get_points_and_colors(name_model_3D)
 
 ################### Acquisition ###########################
 
-size_acqui = (1280,720)
-
 if loading_ply_file:
     # Load an existing .ply file
     points, colors = ply.get_points_and_colors(name_pc_file)
-    # Define calibration matrix of the camera used for creating the file
-    M_in = np.asarray([[640.05206, 0, 639.1219, 0], [0, 640.05206, 361.61005, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 else:
     # Or, get point cloud with the realsense camera
     pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
@@ -185,11 +182,13 @@ if len(colors_model_3D) == 0:
         [[0., 0., 255.] for i in range(len(np.asarray(points_model_3D)))])
 
 while True:
-    frame_apres = proj.project_3D_model_on_pc(
+    color_image_proj = proj.project_3D_model_on_pc(
         colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
-    cv2.imshow("projection of 3D model on pc", frame_apres)
-    cv2.imwrite(name_for_output + "_projection.png", frame_apres)
+    cv2.imshow("projection of 3D model on pc", color_image_proj)
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        img.save(color_image_proj[:, :, ::-1], name_for_output +
+         "_projection.png")
+        ply.save(name_for_output + "_projection.ply",points,color_image_proj[:, :, ::-1])
         break
 
 cv2.destroyAllWindows()
