@@ -189,11 +189,13 @@ if len(colors_model_3D) == 0:
         [[0., 0., 255.] for i in range(len(np.asarray(points_model_3D)))])
 
 while True:
-    frame_apres = proj.project_3D_model_on_pc(
+    color_image_proj = proj.project_3D_model_on_pc(
         colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
-    cv2.imshow("projection of 3D model on pc", frame_apres)
-    cv2.imwrite(name_for_output + "_projection.png", frame_apres)
+    cv2.imshow("projection of 3D model on pc", color_image_proj)
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        img.save(color_image_proj[:, :, ::-1], name_for_output +
+         "_projection.png")
+        ply.save(name_for_output + "_projection.ply",points,color_image_proj[:, :, ::-1])
         break
 
 cv2.destroyAllWindows()

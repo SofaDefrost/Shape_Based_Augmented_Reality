@@ -1,7 +1,6 @@
 import logging
 import numpy as np
 import cv2
-import time
 
 from functions import icp as cp
 from functions import project_and_display as proj
@@ -19,13 +18,10 @@ from Python_3D_Toolbox_for_Realsense.functions import previsualisation_applicati
 ############# Mode selection ###############
 
 loading_ply_file = True
-# name_pc_file = "example/input/point_cloud_test_stomach.ply" # Could be umpty if loading_ply_file == False
-name_pc_file = "data/labo_biologie/4eme_semaine/chick_cont_26.ply"
+name_pc_file = "example/input/point_cloud_test_stomach.ply" # Could be umpty if loading_ply_file == False
 
-# name_model_3D = "example/input/SOFA_logo.ply"
-# name_for_output = "example/output/SOFA_logo"
-name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2.ply"
-name_for_output = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_out"
+name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
+name_for_output = "example/output/test_stomach"
 
 size_acqui = (1280,720)
 # Define calibration matrix of the camera used for creating the file

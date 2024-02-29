@@ -19,29 +19,27 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 ############# Settings ###############
 
-loading_mply_file = False
-name_mply_file = "estomac.mply" # Could be umpty if loading_video_file == False
+loading_mply_file = True
+name_mply_file = "example/input/sofa.mply" # Could be umpty if loading_video_file == False
 
 video_recording = True
-name_video_output = "example/output/test_estomac.mp4" # Could be umpty if video_recording == False
-fps_for_video_output = 30 # Could be null if video_recording == False
+name_video_output = "example/output/test_sofa.mp4" # Could be umpty if video_recording == False
+fps_for_video_output = 1 # Could be null if video_recording == False
 
 display_processing_time = True
 
-# name_model_3D = "example/input/SOFA_logo.ply"
-name_model_3D = "example/input/stomach_3D_rainbow_colored.ply"
-# name_model_3D = "data/labo_biologie/4eme_semaine/chick_3D_cont_2_back.ply"
+name_model_3D = "example/input/SOFA_logo.ply"
 
 size_acqui = (1280, 720)
-# Calibration matrix of the camera used for creating the file
+# Calibration matrix of the camera (here is the one for (1280, 720) resolution) used for creating the file
 M_in = np.asarray([[640.05206, 0, 639.1219, 0], [0, 640.05206, 361.61005, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) # Could be null if loading_mply_file == False
 
 distance_x_max_points = 1 # Unit : meter
 distance_y_max_points = 1 # Unit : meter
 distance_z_max_points = 1 # Unit : meter
 
-range_for_angles_pre_rot = 1 # Unit : degree
-step_for_angles_pre_rot = 1 # Unit : degree
+range_for_angles_pre_rot = 3 # Unit : degree
+step_for_angles_pre_rot = 3 # Unit : degree
 
 #####################################
 

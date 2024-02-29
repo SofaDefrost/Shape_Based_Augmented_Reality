@@ -17,16 +17,18 @@ Here is a quick explanation of the pipeline of the project:
 
 To run the code, you can :
 
-- Execute the Python script *ar_image.py*. This Python script is for one image only. You can choose (by comment or uncomment lines in the code) if you want to load a pre-saved file (there are somes provided in the 'example/input' folder), or do a new acquisition:
+- Execute the Python script *ar_image.py*. This Python script is for one image only. You can choose (in the top of the file) if you want to load a pre-saved file (there are somes provided in the 'example/input' folder), or do a new acquisition:
 ```console
 python3 ar_image.py
 ```
-All outcomes will be stored in the 'example/output' folder.
 
-- Execute the Python script *ar_video.py*. This Python script is for video only. There are no test files for this script, but you will find a video example of possible outputs by following this link https://www.youtube.com/watch?v=dQw4w9WgXcQ (mettre le vrai lien).
+- Execute the Python script *ar_video.py*. This Python script is for video only. You can choose (in the top of the file) if you want to load a pre-saved file (there is one provided in the 'example/input' folder named 'sofa.mply'), or do new acquisitions. This pre-saved file is an *.mply*: this format (defined in the "Python 3D ToolBox for Realsense") allows storing data of multiples *.ply* files. However, you will notice that this file only generates one small video (2 frames) in a low quality. This is because *.mply* files that represent long videos are usually too heavy for the GitHub repository. We recommend you to create your own file or to check our youtube channel to see demos of possible outputs (https://www.youtube.com/watch?v=dQw4w9WgXcQ).
 ```console
 python3 ar_video.py
 ```
+
+All outcomes will be stored in the 'example/output' folder.
+
 
 ## Prerequisites
 
