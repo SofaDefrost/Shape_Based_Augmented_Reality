@@ -19,7 +19,7 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 ############# Settings ###############
 
-loading_mply_file = True
+loading_mply_file = False
 name_mply_file = "example/input/sofa.mply" # Could be umpty if loading_video_file == False
 
 video_recording = True
@@ -168,9 +168,6 @@ if loading_mply_file:
         line = file.readline()
     line = file.readline()
     pc_numb = 1
-else:
-    # Needed because the code that get the calibration matrix reset the pipeline
-    pipeline = aq.init_realsense(size_acqui[0], size_acqui[1])
 
 while True:
     if display_processing_time:

@@ -39,13 +39,14 @@ if loading_ply_file:
     # Load an existing .ply file
     points, colors = ply.get_points_and_colors(name_pc_file)
 else:
-    # Or, get point cloud with the realsense camera
-    pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
-    points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
     # Get the calibration matrix (will be helpfull later)
     calibration_matrix = ir.get_matrix_calib(size_acqui[0],size_acqui[1])
     M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
     M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
+    # Get point cloud with the realsense camera
+    pipeline = aq.init_realsense(size_acqui[0],size_acqui[1])
+    points, colors = aq.get_points_and_colors_from_realsense(pipeline) # Capture the point cloud
+    
 
 tab_index = np.array([i for i in range(len(points))])
 

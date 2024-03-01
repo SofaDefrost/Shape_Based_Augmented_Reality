@@ -128,7 +128,7 @@ def project_3D_model_on_pc(frame: np.ndarray, points: np.ndarray, colors: np.nda
     # Reshape
 
     frame = array.line_to_2Darray(frame, (shape_image[1], shape_image[0]))
-    frame = np.array(frame[:, :, ::-1])
+    frame = np.array(frame[:, :, ::-1],dtype=np.uint8)
 
     # Transformation of 3D model points
     ones_column = np.ones((points.shape[0], 1))
