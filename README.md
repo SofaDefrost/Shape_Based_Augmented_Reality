@@ -1,4 +1,4 @@
-# Augmented Reality
+# Augmented Reality COUCOCU
 
 This repository provides Python code for augmented reality algorithms. With this repository you will be able to overlay a 3D model to its 3D object in the view of a camera for pictures or real time videos. The algorithms are based on depth cameras, especially the ones developed by Intel: Realsense cameras. For the development of this repository, a D405 Realsense camera has been used.
 
