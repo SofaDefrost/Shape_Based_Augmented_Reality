@@ -1,7 +1,3 @@
-# Folder for storing data or scripts that are not usefull
-
-data/
-
 # Folder for storing tests results
 
 example/output/*
