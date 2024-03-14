@@ -13,6 +13,17 @@ Here is a quick explanation of the pipeline of the project:
 1. Compute the projection matrix.
 1. Display the results.
 
+## Installation 
+
+To install with https protocol
+
+```console
+git clone https://github.com/SofaDefrost/Shape_Based_Augmented_Reality.git
+cd ./Shape_Based_Augmented_Reality/
+git submodule update --init --recursive
+```
+
+
 ## Usage
 
 To run the code, you can :
