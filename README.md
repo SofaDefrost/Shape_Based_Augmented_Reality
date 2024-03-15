@@ -13,6 +13,11 @@ Here is a quick explanation of the pipeline of the project:
 1. Compute the projection matrix.
 1. Display the results.
 
+<img src="media/stomach_projection_side.png" alt="Projection of a stomach side" width="180" height="180">
+<img src="media/sofa_projection.png" alt="Projection of Sofa Logo" width="180" height="180">
+<img src="media/stomach_projection_front.png" alt="Projection of a stomach" width="180" height="180">
+
+
 ## Installation 
 
 To install using *https* protocol:
