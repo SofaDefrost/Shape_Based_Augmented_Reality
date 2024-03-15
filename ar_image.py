@@ -128,7 +128,7 @@ z = -angles_ICP[2]
 
 M_icp_inv = np.linalg.inv(tf.matrix_from_angles(x, y, z))
 
-################# Display using closest points identification #######################
+############## Projection using closest points identification ##############
 
 M = Mt @ M_pre_rot_inv @ M_icp_inv
 
@@ -139,17 +139,7 @@ img.save(colors_projection_cpi, name_for_output +
          "_projection_closest_points.png", size_acqui)
 ply.save(name_for_output+"_projection_closest_points.ply", points, colors_projection_cpi)
 
-color_image_cpi = img.load(name_for_output + "_projection_closest_points.png")
-
-while True:
-    cv2.imshow("Projection using closest points identification",
-               color_image_cpi[:, :, ::-1])
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-################# Display using indices identification #######################
+################# Projection using indices identification #################
 
 colors_projection_ii = proj.project_3D_model_on_pc_using_closest_points_and_indices(
     points_model_3D_resized, colors_model_3D, points_filtered_noise, colors, tab_index_filtered_noise, M,size_acqui)
@@ -158,17 +148,7 @@ img.save(colors_projection_ii, name_for_output +
          "_projection_using_indices.png", size_acqui)
 ply.save(name_for_output+"_projection_using_indices.ply", points, colors_projection_ii)
 
-color_image_ii = img.load(name_for_output + "_projection_using_indices.png")
-
-while True:
-    cv2.imshow("projection using indices identification",
-               color_image_ii[:, :, ::-1])
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-################# Display using projection ######################
+################# Projection using Calibration Matrix #################
 
 # Calibration matrix
 
@@ -178,14 +158,21 @@ if len(colors_model_3D) == 0:
     colors_model_3D = np.asarray(
         [[0., 0., 255.] for i in range(len(np.asarray(points_model_3D)))])
 
+color_image_proj = proj.project_3D_model_on_pc(colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
+
+img.save(color_image_proj[:, :, ::-1], name_for_output +"_projection.png")
+ply.save(name_for_output + "_projection.ply",points,color_image_proj[:, :, ::-1])
+
+################# Displays #################
+
 while True:
-    color_image_proj = proj.project_3D_model_on_pc(
-        colors, points_model_3D_resized, colors_model_3D, projection,size_acqui)
+    cv2.imshow("Projection using closest points identification",
+               array.line_to_2Darray(colors_projection_cpi,(size_acqui[1],size_acqui[0])).astype(np.uint8)[:, :, ::-1])
+    cv2.imshow("projection using indices identification",
+               array.line_to_2Darray(colors_projection_ii,(size_acqui[1],size_acqui[0])).astype(np.uint8)[:, :, ::-1])
     cv2.imshow("projection of 3D model on pc", color_image_proj)
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        img.save(color_image_proj[:, :, ::-1], name_for_output +
-         "_projection.png")
-        ply.save(name_for_output + "_projection.ply",points,color_image_proj[:, :, ::-1])
+        
         break
 
 cv2.destroyAllWindows()

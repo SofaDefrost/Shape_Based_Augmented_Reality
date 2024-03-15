@@ -19,7 +19,7 @@ from Python_3D_Toolbox_for_Realsense.functions.utils import array as array
 
 ############# Settings ###############
 
-loading_mply_file = False
+loading_mply_file = True
 name_mply_file = "example/input/sofa.mply" # Could be umpty if loading_video_file == False
 
 video_recording = True
@@ -38,8 +38,8 @@ distance_x_max_points = 1 # Unit : meter
 distance_y_max_points = 1 # Unit : meter
 distance_z_max_points = 1 # Unit : meter
 
-range_for_angles_pre_rot = 3 # Unit : degree
-step_for_angles_pre_rot = 3 # Unit : degree
+range_for_angles_pre_rot = 1 # Unit : degree
+step_for_angles_pre_rot = 1 # Unit : degree
 
 #####################################
 

@@ -15,7 +15,7 @@ Here is a quick explanation of the pipeline of the project:
 
 ## Installation 
 
-To install with https protocol
+To install using *https* protocol:
 
 ```console
 git clone https://github.com/SofaDefrost/Shape_Based_Augmented_Reality.git
@@ -23,10 +23,9 @@ cd ./Shape_Based_Augmented_Reality/
 git submodule update --init --recursive
 ```
 
-
 ## Usage
 
-To run the code, you can :
+To run the code, you can:
 
 - Execute the Python script *ar_image.py*. This Python script is for one image only. You can choose (in the top of the file) if you want to load a pre-saved file (there are somes provided in the 'example/input' folder), or do a new acquisition:
 ```console
@@ -57,7 +56,7 @@ pip3 install opencv-python
 
 The code has been developed by using the "Python 3D ToolBox for Realsense" repository. It is hence needed.
 
-You will find all the details on the Github repository of the project : https://github.com/SofaDefrost/Python_3D_Toolbox_for_Realsense
+You will find all the details on the Github repository of the project: https://github.com/SofaDefrost/Python_3D_Toolbox_for_Realsense
 
 ## Important Notes
 
