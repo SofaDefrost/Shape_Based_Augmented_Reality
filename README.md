@@ -15,6 +15,9 @@ Here is a quick explanation of the pipeline of the project:
 
 <img src="media/stomach_projection_side.png" alt="Projection of a stomach side" width="230" height="230"><img src="media/sofa_projection.png" alt="Projection of Sofa Logo" width="230" height="230"><img src="media/stomach_projection_front.png" alt="Projection of a stomach" width="230" height="230">
 
+<iframe width="560" height="315" src="https://www.youtube.com/watch?v=ntkH_wG3x9o&t=149s
+" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 
 ## Installation 
 
