@@ -1,7 +1,8 @@
 """ Rigid transformation class. """
 
 import numpy as np
-from splib3.numerics import Quat
+# from splib3.numerics import Quat
+from scipy.spatial.transform import Rotation as R
 
 
 class RigidTransform:
@@ -9,7 +10,8 @@ class RigidTransform:
 
     def __init__(self, state):
         self.position = np.array(state[0:3])
-        self.orientation = Quat(state[3:7])  # xyzw
+        # self.orientation = Quat(state[3:7])  # xyzw
+        self.orientation = R.from_quat(state[3:7])
         # A possible optimization is to store
         # the transformation matrix and the inverse transformation matrix
         self.transformation_matrix = None
@@ -22,7 +24,8 @@ class RigidTransform:
         """Creates a rigid transform from a position and a quaternion."""
         rigid_transformation = RigidTransform([0, 0, 0, 0, 0, 0, 1])
         rigid_transformation.position = np.array(position)
-        rigid_transformation.orientation = Quat(quaternion)
+        # rigid_transformation.orientation = Quat(quaternion)
+        rigid_transformation.orientation = R.from_quat(quaternion)
         return rigid_transformation
 
     @staticmethod
@@ -32,7 +35,7 @@ class RigidTransform:
 
         Args:
             position (np.ndarray): Position vector.
-            rpy (np.ndarray): Roll, pitch, yaw angles.
+            rpy (np.ndarray): Roll, pitch, yaw angles in radians.
 
         Returns:
             RigidTransform: Rigid transform.
@@ -40,7 +43,8 @@ class RigidTransform:
         rigid_transformation = RigidTransform([0, 0, 0, 0, 0, 0, 1])
         rigid_transformation.position = np.array(position)
         # rigid_transformation.orientation = Quat.createFromEuler(rpy, "ryxz").normalize()
-        rigid_transformation.orientation = Quat.createFromEuler(rpy, "rxyz").normalize()
+        # rigid_transformation.orientation = Quat.createFromEuler(rpy, "rxyz").normalize()
+        rigid_transformation.orientation = R.from_euler("XYZ", rpy, degrees=False)
         return rigid_transformation
 
     @staticmethod
@@ -59,9 +63,11 @@ class RigidTransform:
         )
         rigid_transformation = RigidTransform([0, 0, 0, 0, 0, 0, 1])
         rigid_transformation.position = position
-        rigid_transformation.orientation = (
-            RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix)
-        )
+        # rigid_transformation.orientation = (
+        #     RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix)
+        # )
+        # rigid_transformation.orientation = R.from_matrix(rotation_matrix)
+        rigid_transformation.orientation = R.from_quat(RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix))
         return rigid_transformation
 
     @staticmethod
@@ -90,7 +96,7 @@ class RigidTransform:
             R (numpy.ndarray): 3x3 rotation matrix.
 
         Returns:
-            numpy.ndarray: Quaternion in the form  [x, y, z, w].
+            numpy.ndarray: [x, y, z, w].
         """
         # Extract rotation matrix components
         r11, r12, r13 = rot_matrix[0, 0], rot_matrix[0, 1], rot_matrix[0, 2]
@@ -103,7 +109,7 @@ class RigidTransform:
         qy = (r13 - r31) / (4 * qw)
         qz = (r21 - r12) / (4 * qw)
 
-        return Quat([qx, qy, qz, qw])
+        return [qx, qy, qz, qw]
 
     @staticmethod
     def create_translation_matrix(rot_matrix, t_vec):
@@ -121,6 +127,12 @@ class RigidTransform:
         mat = np.concatenate((mat, [[0, 0, 0, 1]]), axis=0)
         return mat
 
+    def get_orientation_quat(self):
+        return self.orientation.as_quat(    )
+
+    def get_position(self):
+        return self.position
+    
     def transform_rigid_point(self, rigid_point):
         """
         Transforms a point using the rigid transform.
@@ -203,7 +215,7 @@ class RigidTransform:
         Returns:
             np.ndarray: Transformation matrix.
         """
-        rot_matrix = self.orientation.getMatrix()
+        rot_matrix = self.orientation.as_matrix()
         vec = self.position.reshape(3, 1)
         self.transformation_matrix = self.create_translation_matrix(rot_matrix, vec)
         return self.transformation_matrix
@@ -215,10 +227,10 @@ class RigidTransform:
         Returns:
             np.ndarray: Inverse transformation matrix.
         """
-        rot_inv = self.orientation.getInverse()
+        rot_inv = self.orientation.inv()
         self.inverse_transformation_matrix = self.create_translation_matrix(
-            rot_inv.getMatrix(),
-            -np.dot(rot_inv.getMatrix(), self.position).reshape(3, 1),
+            rot_inv.as_matrix(),
+            -np.dot(rot_inv.as_matrix(), self.position).reshape(3, 1),
         )
         return self.inverse_transformation_matrix
 
@@ -229,5 +241,5 @@ class RigidTransform:
         Returns:
             np.ndarray: Rotation matrix.
         """
-        self.rotation_matrix = self.orientation.getMatrix()
+        self.rotation_matrix = self.orientation.as_matrix()
         return self.rotation_matrix

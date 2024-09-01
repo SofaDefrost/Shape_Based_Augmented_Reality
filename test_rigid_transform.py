@@ -29,8 +29,8 @@ def test_rigid_transform_creation_case1():
         [[1, 0, 0, -1], [0, 1, 0, -2], [0, 0, 1, -3], [0, 0, 0, 1]]
     )
     # assert
-    assert np.allclose(rigid_transformation.position, position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
     assert np.allclose(
         rigid_transformation.compute_rotation_matrix(), target_rotation_matrix
     )
@@ -60,8 +60,8 @@ def test_rigid_transform_creation_case2():
         [[0, -1, 0, 5], [0, 0, -1, 6], [1, 0, 0, -4], [0, 0, 0, 1]]
     )
     # assert
-    assert np.allclose(rigid_transformation.position, position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
     assert np.allclose(
         rigid_transformation.compute_rotation_matrix(), target_rotation_matrix
     )
@@ -107,8 +107,8 @@ def test_rigid_transform_creation_case3():
         ]
     )
     # assert
-    assert np.allclose(rigid_transformation.position, position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
     assert np.allclose(
         rigid_transformation.compute_rotation_matrix(), target_rotation_matrix
     )
@@ -134,8 +134,8 @@ def test_rigid_transformaton_createion_case4():
     target_quaternion = [0.3061862, 0.1767767, 0.3061862, 0.8838835]
 
     # assert
-    assert np.allclose(rigid_transformation.position, position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
 
 
 def test_rigid_transformaton_createion_case5():
@@ -150,8 +150,8 @@ def test_rigid_transformaton_createion_case5():
     target_quaternion = [0.0, 0.0, 0.0, 1]
 
     # assert
-    assert np.allclose(rigid_transformation.position, position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
 
 
 def test_convert_rotation_matrix_to_quaternion_case1():
@@ -209,8 +209,8 @@ def test_rigid_transform_creation_tf_case1():
     target_position = [1, 2, 3]
     target_quaternion = [0, 0, 0, 1]  # xyzw
     # assert
-    assert np.allclose(rigid_transformation.position, target_position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), target_position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
 
 
 def test_rigid_transform_creation_tf_case2():
@@ -227,8 +227,8 @@ def test_rigid_transform_creation_tf_case2():
     target_quaternion = [-0.5, 0.5, -0.5, 0.5]
 
     # assert
-    assert np.allclose(rigid_transformation.position, target_position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), target_position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
 
 
 def test_rigid_transform_creation_tf_case3():
@@ -249,8 +249,8 @@ def test_rigid_transform_creation_tf_case3():
     target_position = [7, 8, 9]
     target_quaternion = [0.3061862, 0.1767767, 0.3061862, 0.8838835]
     # assert
-    assert np.allclose(rigid_transformation.position, target_position)
-    assert np.allclose(rigid_transformation.orientation, target_quaternion)
+    assert np.allclose(rigid_transformation.get_position(), target_position)
+    assert np.allclose(rigid_transformation.get_orientation_quat(), target_quaternion)
 
 
 def test_rigid_transform_vector3d_case1():
