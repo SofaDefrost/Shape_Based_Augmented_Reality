@@ -66,8 +66,9 @@ class RigidTransform:
         # rigid_transformation.orientation = (
         #     RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix)
         # )
-        # rigid_transformation.orientation = R.from_matrix(rotation_matrix)
-        rigid_transformation.orientation = R.from_quat(RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix))
+        rigid_transformation.orientation = R.from_matrix(rotation_matrix)
+        # quat = RigidTransform.computer_quaternion_from_rotation_matrix(rotation_matrix)
+        # rigid_transformation.orientation = R.from_quat(quat)
         return rigid_transformation
 
     @staticmethod
@@ -128,7 +129,11 @@ class RigidTransform:
         return mat
 
     def get_orientation_quat(self):
-        return self.orientation.as_quat(    )
+        quat = self.orientation.as_quat()
+        # update scipy and set canonical=True to avoid following step:
+        if quat[3] < 0: 
+            quat = -quat
+        return quat
 
     def get_position(self):
         return self.position
@@ -186,27 +191,28 @@ class RigidTransform:
         ]
         return result_vec
 
-    def change_to_frame(self, target_frame):
-        """
-        Transforms the current rigid transformation to the specified target frame.
+    # This function is probably wrong
+    # def change_to_frame(self, target_frame):
+    #     """
+    #     Transforms the current rigid transformation to the specified target frame.
 
-        Parameters:
-        - target_frame: The target frame to which the transformation should be changed.
+    #     Parameters:
+    #     - target_frame: The target frame to which the transformation should be changed.
 
-        Returns:
-        - A new RigidTransformation object representing the transformed rigid transformation.
-        """
-        rigid_transformation_in_target_frame = np.dot(
-            target_frame.compute_transformation_matrix(),
-            np.dot(
-                self.compute_transformation_matrix(),
-                target_frame.compute_inverse_transformation_matrix(),
-            ),
-        )
+    #     Returns:
+    #     - A new RigidTransformation object representing the transformed rigid transformation.
+    #     """
+    #     rigid_transformation_in_target_frame = np.dot(
+    #         target_frame.compute_transformation_matrix(),
+    #         np.dot(
+    #             self.compute_transformation_matrix(),
+    #             target_frame.compute_inverse_transformation_matrix(),
+    #         ),
+    #     )
 
-        return self.create_from_transformation_matrix(
-            rigid_transformation_in_target_frame
-        )
+    #     return self.create_from_transformation_matrix(
+    #         rigid_transformation_in_target_frame
+    #     )
 
     def compute_transformation_matrix(self):
         """

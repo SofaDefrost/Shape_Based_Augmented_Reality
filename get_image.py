@@ -41,10 +41,9 @@ at_detector = Detector(families='tagStandard52h13',
                        debug=0)
 
 tags = at_detector.detect(gray_image, True, [fx,fy,cx,cy], 0.029)
-pose = RigidTransform.create_from_position_quaternion(
-    tags[0].pose_t,
-    RigidTransform.computer_quaternion_from_rotation_matrix(tags[0].pose_R),
-)
+
+pose = RigidTransform.create_from_transformation_matrix(
+RigidTransform.create_translation_matrix(tags[0].pose_R, tags[0].pose_t))
 
 ##################### Select Zone ####################
 points_crop, colors_crop, tab_index_crop, new_shape = pc.crop_from_zone_selection(
@@ -80,9 +79,8 @@ if (len(points_filtered_noise)>2000):
 
 new_point_list = []
 for p in points_for_resize_only:
-    p_tf = RigidTransform([p[0], p[1], p[2], 0, 0, 0, 1])
-    point = p_tf.change_to_frame(pose)
-    new_point_list.append(point.position)
+    point = pose.transform_vector_3d(p)
+    new_point_list.append(point)
 
 new_point_list = np.array(new_point_list)
 fig = plt.figure()
