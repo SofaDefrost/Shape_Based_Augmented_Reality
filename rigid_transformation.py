@@ -211,29 +211,6 @@ class RigidTransform:
         ]
         return result_vec
 
-    # This function is probably wrong
-    # def change_to_frame(self, target_frame):
-    #     """
-    #     Transforms the current rigid transformation to the specified target frame.
-
-    #     Parameters:
-    #     - target_frame: The target frame to which the transformation should be changed.
-
-    #     Returns:
-    #     - A new RigidTransformation object representing the transformed rigid transformation.
-    #     """
-    #     rigid_transformation_in_target_frame = np.dot(
-    #         target_frame.compute_transformation_matrix(),
-    #         np.dot(
-    #             self.compute_transformation_matrix(),
-    #             target_frame.compute_inverse_transformation_matrix(),
-    #         ),
-    #     )
-
-    #     return self.create_from_transformation_matrix(
-    #         rigid_transformation_in_target_frame
-    #     )
-
     def compute_transformation_matrix(self):
         """
         Returns the transformation matrix of the rigid transform.

@@ -378,38 +378,3 @@ def test_rigid_transform_rigid_case2():
     transformed = rigid_transformation.transform_rigid_point(point)
     # assert
     assert np.allclose(transformed, [1, -1, 1, 0.7071068, 0, 0, 0.7071068])
-
-# The function to test is probably wrong
-# def test_rigid_transform_change_frame_case1():
-#     """Test change reference frame for a rigid transformation.
-#         Need better cases
-#     """
-#     # setup
-#     position = [0, 0, 0]
-#     rpy = [0, 0, 0]
-#     rigid_transformation = RigidTransform.create_from_position_rpy(
-#         position, rpy)
-
-#     target_frame_position = [0, 0, 0]
-#     target_frame_rpy = [np.pi / 2, 0, 0]
-#     target_frame = RigidTransform.create_from_position_rpy(
-#         target_frame_position, target_frame_rpy
-#     )
-
-#     expected_transformation_matrix = np.array(
-#         [
-#             [1, 0, 0, 0],
-#             [0, 1, 0, 0],
-#             [0, 0, 1, 0],
-#             [0, 0, 0, 1],
-#         ]
-#     )
-
-#     new_rigid_transformation = rigid_transformation.change_to_frame(
-#         target_frame=target_frame
-#     )
-#     assert np.allclose(
-#         new_rigid_transformation.compute_transformation_matrix(),
-#         expected_transformation_matrix,
-#     )
-
