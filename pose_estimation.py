@@ -43,12 +43,4 @@ tags = at_detector.detect(gray_image, True, [fx, fy, cx, cy], 0.029)
 
 print(tags)
 
-R = tags[0].pose_R
-
-pose = RigidTransform.create_from_position_quaternion(
-    tags[0].pose_t,
-    RigidTransform.computer_quaternion_from_rotation_matrix(tags[0].pose_R),
-)
-pose.transform_vector_3d()
-
 pipeline.stop()
