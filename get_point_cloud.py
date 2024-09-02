@@ -1,4 +1,4 @@
-""" Get Image from realsense camera """
+""" Capture a point cloud from one picture from the realsense camera and save it as a .ply file """
 import cv2
 import logging
 from dt_apriltags import Detector
