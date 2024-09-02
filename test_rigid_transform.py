@@ -161,6 +161,51 @@ def test_rigid_transformaton_createion_case5():
     assert np.allclose(
         rigid_transformation.get_orientation_quat(), target_quaternion)
 
+def test_rigid_transform_creation_case6():
+    """Test the rigid transformation class creation from position and rotation matrix."""
+    # setup
+    position = [7, 8, 9]
+    rotation_matrix = np.array(
+        [
+            [0.7500000, -0.4330127, 0.5000000],
+            [0.6495190, 0.6250000, -0.4330127],
+            [-0.1250000, 0.6495190, 0.7500000],
+        ]
+    )
+    # exercise
+    rigid_transformation = RigidTransform.create_from_position_matrix(
+        position, rotation_matrix)
+    target_quaternion = [0.3061862, 0.1767767, 0.3061862, 0.8838835]
+
+    target_transformation_matrix = np.array(
+        [
+            [0.7500000, -0.4330127, 0.5000000, 7],
+            [0.6495190, 0.6250000, -0.4330127, 8],
+            [-0.1250000, 0.6495190, 0.7500000, 9],
+            [0, 0, 0, 1],
+        ]
+    )
+    target_inverse_transformation_matrix = np.array(
+        [
+            [0.7500000, 0.649519, -0.12500, -9.32115],
+            [-0.433013, 0.625000, 0.649519, -7.81458],
+            [0.5000000, -0.433013, 0.750000, -6.7859],
+            [0, 0, 0, 1],
+        ]
+    )
+    # assert
+    assert np.allclose(rigid_transformation.get_position(), position)
+    assert np.allclose(
+        rigid_transformation.get_orientation_quat(), target_quaternion)
+    assert np.allclose(
+        rigid_transformation.compute_transformation_matrix(),
+        target_transformation_matrix,
+    )
+    assert np.allclose(
+        rigid_transformation.compute_inverse_transformation_matrix(),
+        target_inverse_transformation_matrix,
+    )
+
 
 def test_convert_rotation_matrix_to_quaternion_case1():
     """Test the conversion of a rotation matrix to a quaternion."""

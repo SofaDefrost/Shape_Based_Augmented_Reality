@@ -1,6 +1,7 @@
 """ Rigid transformation class. """
 
 import numpy as np
+
 # from splib3.numerics import Quat
 from scipy.spatial.transform import Rotation as R
 
@@ -72,6 +73,23 @@ class RigidTransform:
         return rigid_transformation
 
     @staticmethod
+    def create_from_position_matrix(pos, rot_matrix):
+        """
+        Create a new RigidTransform from a position and rotation matrix
+
+        Args:
+            pos (np.ndarray): Position vector.
+            rot_matrix (np.ndarray): Rotation matrix.
+
+        Returns:
+            RigidTransform: Rigid transform.
+        """
+        rigid_transformation = RigidTransform([0, 0, 0, 0, 0, 0, 1])
+        rigid_transformation.position = np.array(pos)
+        rigid_transformation.orientation = R.from_matrix(rot_matrix)
+        return rigid_transformation
+
+    @staticmethod
     def decompose_rigid_transformation_matrix(rigid_transformation_matrix):
         """
         Decomposes a rigid transformation matrix into a position and a rotation matrix.
@@ -129,15 +147,17 @@ class RigidTransform:
         return mat
 
     def get_orientation_quat(self):
-        quat = self.orientation.as_quat()
-        # update scipy and set canonical=True to avoid following step:
-        if quat[3] < 0: 
-            quat = -quat
+        quat = self.orientation.as_quat(canonical=True)
         return quat
 
     def get_position(self):
         return self.position
-    
+
+    def inverse(self):
+        return RigidTransform.create_from_transformation_matrix(
+            self.compute_inverse_transformation_matrix()
+        )
+
     def transform_rigid_point(self, rigid_point):
         """
         Transforms a point using the rigid transform.
