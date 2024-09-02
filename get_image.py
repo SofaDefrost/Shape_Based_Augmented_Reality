@@ -42,8 +42,7 @@ at_detector = Detector(families='tagStandard52h13',
 
 tags = at_detector.detect(gray_image, True, [fx,fy,cx,cy], 0.029)
 
-pose = RigidTransform.create_from_transformation_matrix(
-RigidTransform.create_translation_matrix(tags[0].pose_R, tags[0].pose_t))
+pose = RigidTransform.create_from_position_matrix(tags[0].pose_t, tags[0].pose_R)
 
 ##################### Select Zone ####################
 points_crop, colors_crop, tab_index_crop, new_shape = pc.crop_from_zone_selection(
@@ -63,8 +62,11 @@ points_filtered_hsv, colors_filtered_hsv, tab_index_hsv = pc.apply_hsv_mask(
 
 # ####################### Remove noisy values #####################
 
-radius = Tk.get_parameter_using_preview(
-    points_filtered_hsv, pc.filter_with_sphere_on_barycentre, "Radius")
+# radius = Tk.get_parameter_using_preview(
+#     points_filtered_hsv, pc.filter_with_sphere_on_barycentre, "Radius")
+
+
+radius = 0.08
 
 points_filtered_noise, colors_filtered_noise, tab_index_filtered_noise = pc.filter_with_sphere_on_barycentre(
     points_filtered_hsv, radius, colors_filtered_hsv, tab_index_hsv)
@@ -79,7 +81,7 @@ if (len(points_filtered_noise)>2000):
 
 new_point_list = []
 for p in points_for_resize_only:
-    point = pose.transform_vector_3d(p)
+    point = pose.inverse().transform_vector_3d(p)
     new_point_list.append(point)
 
 new_point_list = np.array(new_point_list)
@@ -88,4 +90,4 @@ ax = fig.add_subplot(111, projection='3d')
 ax.scatter(new_point_list[:, 0], new_point_list[:, 1], new_point_list[:, 2], s=1)
 plt.show()
 
-ply.save("output1.ply", new_point_list)
+ply.save("output2.ply", new_point_list)
