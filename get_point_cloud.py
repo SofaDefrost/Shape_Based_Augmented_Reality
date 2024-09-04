@@ -62,11 +62,9 @@ points_filtered_hsv, colors_filtered_hsv, tab_index_hsv = pc.apply_hsv_mask(
 
 # ####################### Remove noisy values #####################
 
-# radius = Tk.get_parameter_using_preview(
-#     points_filtered_hsv, pc.filter_with_sphere_on_barycentre, "Radius")
+radius = Tk.get_parameter_using_preview(
+    points_filtered_hsv, pc.filter_with_sphere_on_barycentre, "Radius")
 
-
-radius = 0.08
 
 points_filtered_noise, colors_filtered_noise, tab_index_filtered_noise = pc.filter_with_sphere_on_barycentre(
     points_filtered_hsv, radius, colors_filtered_hsv, tab_index_hsv)
@@ -90,4 +88,4 @@ ax = fig.add_subplot(111, projection='3d')
 ax.scatter(new_point_list[:, 0], new_point_list[:, 1], new_point_list[:, 2], s=1)
 plt.show()
 
-ply.save("output2.ply", new_point_list)
+ply.save("output.ply", new_point_list)
