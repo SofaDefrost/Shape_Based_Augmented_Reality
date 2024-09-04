@@ -7,7 +7,7 @@ https://stackoverflow.com/questions/1406029/how-to-calculate-the-volume-of-a-3d-
 import pymeshlab
 import numpy as np
 
-surface_mesh_file = "example/output/stomach_surface.ply"
+surface_mesh_file = "output_surface.ply"
 
 
 def signed_volume_of_triangle(point1, point2, point3):
