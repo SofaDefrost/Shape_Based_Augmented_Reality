@@ -24,7 +24,8 @@ from rigid_transformation import RigidTransform
 
 import time
 
-size_acqui = (1280,720)
+# size_acqui = (1280,720)
+size_acqui = (848,480)
 calibration_matrix = ir.get_matrix_calib(size_acqui[0],size_acqui[1])
 M_in = np.hstack((calibration_matrix, np.zeros((3, 1))))
 M_in = np.vstack((M_in, np.array([0, 0, 0, 1])))
