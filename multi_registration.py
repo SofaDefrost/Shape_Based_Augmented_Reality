@@ -7,7 +7,7 @@ import numpy as np
 def load_point_clouds(voxel_size=0.0):
     # pcd_data = o3d.data.DemoICPPointClouds()
     pcds = []
-    for i in range(11):
+    for i in range(3):
         pcd = o3d.io.read_point_cloud(f"output_{i}.ply")
         o3d.geometry.PointCloud.estimate_normals(pcd, search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
         pcd_down = pcd.voxel_down_sample(voxel_size=voxel_size)

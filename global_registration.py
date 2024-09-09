@@ -72,7 +72,7 @@ def point_to_point_icp(source, target, threshold, trans_init):
 
 
 
-voxel_size = 0.01  # means 5cm for this dataset
+voxel_size = 0.001  # means 5cm for this dataset
 
 source = o3d.io.read_point_cloud("output_0.ply")
 target = o3d.io.read_point_cloud("output_1.ply")
