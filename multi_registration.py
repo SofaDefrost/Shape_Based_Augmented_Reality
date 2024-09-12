@@ -6,8 +6,8 @@ from tqdm import tqdm
 
 def load_point_clouds(data_folder, voxel_size=0.0):
     pcds = []
-    for i in range(21):
-        pcd = o3d.io.read_point_cloud(f"./{data_folder}/output_{i}.ply")
+    for i in range(60):
+        pcd = o3d.io.read_point_cloud(f"./{data_folder}/cropped_{i}.ply")
         o3d.geometry.PointCloud.estimate_normals(
             pcd,
             search_param=o3d.geometry.KDTreeSearchParamHybrid(
@@ -91,7 +91,7 @@ def full_registration(
 
 if __name__ == "__main__":
     voxel_size = 0.0001
-    data_folder = "data-1712"
+    data_folder = "data-1050"
     pcds_down = load_point_clouds(data_folder, voxel_size)
     o3d.visualization.draw(pcds_down)
     print("Full registration ...")

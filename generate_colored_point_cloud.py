@@ -46,7 +46,18 @@ profile = pipeline.start(config)
 
 # Getting the depth sensor's depth scale (see rs-align example for explanation)
 depth_sensor = profile.get_device().first_depth_sensor()
-depth_sensor.set_option(rs.option.visual_preset, 3) # high accuracy
+
+preset_range = depth_sensor.get_option_range(rs.option.visual_preset)
+
+print('preset range:'+str(preset_range))
+for i in range(int(preset_range.max)):
+    visulpreset = depth_sensor.get_option_value_description(rs.option.visual_preset,i)
+    print('%02d: %s'%(i,visulpreset))
+    if visulpreset == "High Accuracy":
+        depth_sensor.set_option(rs.option.visual_preset, i)
+
+# depth_sensor.set_option(rs.option.visual_preset, 3) # high accuracy
+
 depth_scale = depth_sensor.get_depth_scale()
 print("Depth Scale is: ", depth_scale)
 
@@ -105,6 +116,7 @@ try:
         depth_image = np.asanyarray(aligned_depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
 
+
         # Remove background - Set pixels further than clipping_distance to grey
         grey_color = 153
         depth_image_3d = np.dstack(
@@ -131,26 +143,48 @@ try:
         cv2.namedWindow("Align Example", cv2.WINDOW_NORMAL)
         cv2.imshow("Align Example", images)
         key = cv2.waitKey(1)
+        frame_num += 1
         # Press esc or 'q' to close the image window
         if key & 0xFF == ord("c") or key == 27:
         # if frame_num % 10 == 0:
+            
             rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
                 o3d.geometry.Image(color_image),
                 o3d.geometry.Image(depth_image),
-                # depth_trunc=0.5,
+                depth_scale=1/depth_scale,
+                depth_trunc=1,
                 convert_rgb_to_intensity=False,
             )
             pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
                 rgbd_image, camera_intrinsics
             )
             # print(len(pcd.points))
-            
-            pcd_down = pcd.voxel_down_sample(voxel_size=0.0025)
+            pcd_down = pcd.voxel_down_sample(voxel_size=0.005)
             pcd_down.estimate_normals()
-            o3d.io.write_point_cloud(f"./data-{1712}/output_{point_cloud_id}.ply", pcd_down)
-            print("Point cloud saved")
+            o3d.io.write_point_cloud(f"./data-{1050}/output_{point_cloud_id}.ply", pcd_down)
             point_cloud_id += 1
-        frame_num += 1
+            print("Point cloud saved")
+            # if frame_num == 0:
+            #     last_pcd = pcd_down
+            #     vis = o3d.visualization.Visualizer()
+            #     vis.create_window()
+            #     vis.add_geometry(last_pcd)
+            #     vis.poll_events()
+            #     vis.update_renderer()
+            # if frame_num >= 1:
+            #     current_pcd = pcd_down
+            #     try:
+
+            #         result = colored_registration(last_pcd, current_pcd, 0.005)
+            #         last_pcd = current_pcd.transform(result.transformation)
+            #         vis.add_geometry(last_pcd)
+            #         vis.poll_events()
+            #         vis.update_renderer()
+            #         o3d.io.write_point_cloud(f"./data-{1050}/output_{point_cloud_id}.ply", last_pcd)
+            #         print("Point cloud saved")
+            #         point_cloud_id += 1
+            #     except Exception as e:
+            #         print(str(e))
         if key & 0xFF == ord("q"):
             cv2.destroyAllWindows()
             break
